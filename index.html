@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Lighthouse — What's good this weekend?</title>
+    <meta
+      name="description"
+      content="100 reels saved, 0 plans made? Lighthouse fixes that — every place worth your weekend within 300 km of Bangalore, routes, leave-by times, and voting for the group chat. Bangalore first, invites in batches."
+    />
+    <meta name="theme-color" content="#0F0F12" />
+    <link rel="canonical" href="https://letsgolighthouse.co.in/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Open Graph — the WhatsApp/Instagram unfurl card -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lighthouse" />
+    <meta
+      property="og:title"
+      content="Lighthouse — What's good this weekend?"
+    />
+    <meta
+      property="og:description"
+      content="100 reels saved, 0 plans made? Let's go. Weekend discovery for Bangalore — early access, invites in batches."
+    />
+    <meta property="og:url" content="https://letsgolighthouse.co.in/" />
+    <meta property="og:image" content="https://letsgolighthouse.co.in/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Lighthouse — What's good this weekend?"
+    />
+    <meta
+      name="twitter:description"
+      content="100 reels saved, 0 plans made? Let's go. Weekend discovery for Bangalore — early access, invites in batches."
+    />
+    <meta
+      name="twitter:image"
+      content="https://letsgolighthouse.co.in/og.png"
+    />
+
+    <!-- Fonts: Clash Display (Fontshare, body of the UI) + Syne (Fontshare,
+         headlines only — it's too wide for the compact in-phone labels) +
+         Space Grotesk (Google) -->
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=syne@600,700,800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Lenis (smooth scroll) + GSAP/ScrollTrigger (all scroll-driven motion) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/lenis@1.1.9/dist/lenis.css"
+    />
+    <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+    <!-- Fixed glass nav — hides on scroll down, returns on scroll up -->
+    <header class="nav" id="nav">
+      <a class="nav__brand" href="/"
+        >LIGHTHOUSE<span class="nav__dot">.</span></a
+      >
+      <div class="nav__right">
+        <span class="utility nav__label">BLR &middot; EARLY ACCESS</span>
+        <a class="btn btn--ghost" href="#join" data-scrollto>Join waitlist</a>
+      </div>
+    </header>
+
+    <main id="page">
+      <!-- ============ HERO ============ -->
+      <section class="hero">
+        <canvas id="beacon" class="hero__canvas" aria-hidden="true"></canvas>
+        <div class="hero__inner">
+          <div class="hero__copy">
+            <p class="utility hero__eyebrow reveal-up">
+              BANGALORE FIRST — INVITES IN BATCHES
+            </p>
+            <h1 class="hero__title reveal-up">
+              <span class="split-line"><span class="split-line__inner">The easiest way</span></span>
+              <span class="split-line"><span class="split-line__inner">to weekend. <em>Let's go.</em></span></span>
+            </h1>
+            <p class="hero__sub reveal-up">
+              Share a saved reel and Lighthouse turns it into a route, a pin,
+              and a plan your group can actually vote on.
+            </p>
+
+            <div class="hero__usps reveal-up">
+              <div class="usp usp--lead">
+                <strong class="usp__stat">100 Reels, 0 Plans</strong>
+                <span class="usp__label utility"
+                  >SOUND FAMILIAR? WE FIX THAT</span
+                >
+              </div>
+              <div class="usp">
+                <strong class="usp__stat">11-Second Import</strong>
+                <span class="usp__label utility">REEL TO ROUTE, INSTANTLY</span>
+              </div>
+              <div class="usp">
+                <strong class="usp__stat">300 KM Radius</strong>
+                <span class="usp__label utility"
+                  >EVERY WEEKEND SPOT, MAPPED</span
+                >
+              </div>
+              <div class="usp">
+                <strong class="usp__stat">Group Voting</strong>
+                <span class="usp__label utility"
+                  >MAJORITY WINS, NOBODY GHOSTS</span
+                >
+              </div>
+            </div>
+
+            <form class="waitlist reveal-up" id="join" novalidate>
+              <label class="sr-only" for="email">Email</label>
+              <div class="waitlist__field">
+                <input
+                  class="waitlist__input"
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="your@email.com"
+                  autocomplete="email"
+                  inputmode="email"
+                  required
+                />
+                <button
+                  class="btn btn--solid waitlist__btn"
+                  type="submit"
+                  data-magnetic
+                >
+                  <span class="waitlist__btn-label">Get early access</span>
+                </button>
+              </div>
+              <p class="waitlist__note utility" data-state-idle>
+                NO SPAM. ONE EMAIL WHEN WE GO LIVE.
+              </p>
+              <p
+                class="waitlist__note waitlist__note--ok utility"
+                data-state-ok
+                hidden
+              >
+                YOU'RE ON THE LIST ✦ WE'LL MAIL YOU WHEN IT'S TIME
+              </p>
+              <p
+                class="waitlist__note waitlist__note--err utility"
+                data-state-err
+                hidden
+              >
+                COULDN'T REACH THE LIGHTHOUSE — TRY AGAIN
+              </p>
+            </form>
+          </div>
+        </div>
+
+        <div class="hero__visual reveal-up" aria-hidden="true">
+          <img
+            class="hero__visual-img"
+            src="/assets/mockhands1.png"
+            alt=""
+            width="800"
+            height="658"
+          />
+          <div class="hero__screen" id="heroScreen">
+            <svg
+              class="hero__screen-route"
+              aria-hidden="true"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
+              <path
+                id="heroRoutePath"
+                fill="none"
+                stroke="#5DCAA5"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span class="hero__screen-origin"><i></i></span>
+            <span class="hero__screen-pin is-hidden" id="heroScreenPin"
+              ><i></i><b class="hero__screen-ring"></b
+            ></span>
+            <div class="hero__screen-bar" id="heroScreenBar"><i></i></div>
+            <span class="hero__screen-label" id="heroScreenLabel"
+              >Reel saved ✦</span
+            >
+          </div>
+        </div>
+
+        <a
+          class="hero__explore"
+          href="#explore"
+          data-scrollto
+          data-magnetic
+          aria-label="Explore how Lighthouse works"
+        >
+          <span class="utility">EXPLORE</span
+          ><span class="hero__explore-arrow">↓</span>
+        </a>
+      </section>
+
+      <!-- ============ MARQUEE ============ -->
+      <section class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          <span
+            >WATERFALLS ✦ SUNRISE DRIVES ✦ MONSOON TREKS ✦ FORT LOOPS ✦ LAKESIDE
+            COFFEE ✦ HIDDEN VIEWPOINTS ✦&nbsp;</span
+          >
+          <span
+            >WATERFALLS ✦ SUNRISE DRIVES ✦ MONSOON TREKS ✦ FORT LOOPS ✦ LAKESIDE
+            COFFEE ✦ HIDDEN VIEWPOINTS ✦&nbsp;</span
+          >
+          <span
+            >WATERFALLS ✦ SUNRISE DRIVES ✦ MONSOON TREKS ✦ FORT LOOPS ✦ LAKESIDE
+            COFFEE ✦ HIDDEN VIEWPOINTS ✦&nbsp;</span
+          >
+          <span
+            >WATERFALLS ✦ SUNRISE DRIVES ✦ MONSOON TREKS ✦ FORT LOOPS ✦ LAKESIDE
+            COFFEE ✦ HIDDEN VIEWPOINTS ✦&nbsp;</span
+          >
+        </div>
+      </section>
+
+      <!-- ============ EXPLORE — the categories from the ticker, live on the map ============ -->
+      <section class="explore" id="explore">
+        <div class="playground__head" id="exploreHead">
+          <p class="utility playground__eyebrow">EXPLORE BY CATEGORY</p>
+          <h2 class="playground__title">
+            Every word up there<br />is a <span class="hlkw hlkw--solid" data-magnetic>live filter</span>.
+          </h2>
+          <p class="playground__sub">
+            Waterfalls, treks, drives, hidden viewpoints — tap a category and
+            the map fills with exactly those spots near you. No feed to scroll
+            through.
+          </p>
+        </div>
+        <div class="exploredemo" aria-hidden="true">
+          <div class="phone phone--big parallax-mockup">
+            <div class="phone__body">
+              <div class="phone__screen phone__screen--explore">
+                <div class="pstat utility">
+                  <span>9:41</span
+                  ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                </div>
+                <p class="utility explore__count" id="exploreCount">
+                  14 PLACES IN RANGE
+                </p>
+                <div class="xpills" id="explorePills">
+                  <!-- chips injected by JS -->
+                </div>
+                <div class="explore__map" id="exploreMap">
+                  <!-- pins injected by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="utility playground__foot">
+          ILLUSTRATIVE DEMO · REAL FILTERS, REAL PLACES, LIVE IN THE APP
+        </p>
+      </section>
+
+      <!-- ============ THE DIVE — scroll-jacked app walkthrough ============ -->
+      <section class="dive">
+        <div class="dive__runway" id="diveRunway">
+          <div class="dive__stage" id="diveStage">
+            <div class="dive__rail" aria-hidden="true">
+              <i></i><i></i><i></i>
+              <b class="dive__dot" id="diveDot"></b>
+            </div>
+
+            <!-- SCENE 01 — share a reel -->
+            <div class="dive__scene" data-scene="0">
+              <div class="scene__copy">
+                <span class="utility scene__label">01 / SHARE A REEL</span>
+                <h2 class="scene__title">
+                  That reel becomes<br />a <em>plan</em>.
+                </h2>
+                <p class="scene__text">
+                  Share any saved reel to Lighthouse. It turns into a pin with
+                  drive time, budget and the exact time to leave. Eleven
+                  seconds, start to finish.
+                </p>
+              </div>
+              <div class="mockup-container">
+                <div class="phone parallax-mockup">
+                  <div class="phone__body">
+                    <div
+                      class="phone__screen phone__screen--map"
+                      id="scene1Screen"
+                    >
+                      <div class="pstat utility">
+                        <span>9:41</span
+                        ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                      </div>
+
+                      <div class="revstack">
+                        <!-- STEP A — the Instagram reel, about to be shared -->
+                        <div class="revstep revstep--reel" data-step="0">
+                          <div class="reel__bg"></div>
+                          <div class="reel__scrim"></div>
+                          <div class="reel__rail">
+                            <span class="reel__icon">♡</span>
+                            <span class="reel__icon">💬</span>
+                            <button
+                              class="reel__icon reel__icon--share"
+                              id="reelShareBtn"
+                              type="button"
+                              tabindex="-1"
+                              aria-hidden="true"
+                            >
+                              <span class="reel__ripple"></span>↗
+                            </button>
+                            <span class="reel__icon">⋮</span>
+                          </div>
+                          <div class="reel__caption">
+                            <strong class="reel__user">@wildkarnataka</strong>
+                            <span
+                              >hidden waterfall near Bangalore 😍 #travel
+                              #karnataka</span
+                            >
+                          </div>
+                        </div>
+
+                        <!-- STEP B — sharing into Lighthouse -->
+                        <div class="revstep revstep--share" data-step="1">
+                          <div class="shareimport">
+                            <div class="shareimport__row glass">
+                              <span class="shareimport__spark">✦</span>
+                              <div>
+                                <strong>Paste the reel you just copied?</strong>
+                                <span class="utility" id="importStatus"
+                                  >DETECTING LINK…</span
+                                >
+                              </div>
+                            </div>
+                            <div class="shareimport__bar">
+                              <i id="importBar"></i>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- STEP C — the result -->
+                        <div
+                          class="revstep revstep--result is-active"
+                          data-step="2"
+                        >
+                          <div class="pdock glass m-anim-elem">
+                            <span class="pdock__q">waterfalls near me…</span
+                            ><span class="pdock__ai">✦</span>
+                          </div>
+                          <div class="ppills m-anim-elem">
+                            <em class="ppill ppill--on">Falls</em
+                            ><em class="ppill">Treks</em
+                            ><em class="ppill">Lakes</em
+                            ><em class="ppill">Drives</em>
+                          </div>
+                          <div class="pmap">
+                            <svg
+                              class="pmap__route m-anim-elem"
+                              id="revRouteSvg"
+                              viewBox="0 0 100 100"
+                              preserveAspectRatio="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                id="revRoutePath"
+                                d="M8,92 C30,70 38,58 52,44 S78,22 88,12"
+                                fill="none"
+                                stroke="#5DCAA5"
+                                stroke-width="1.6"
+                                stroke-linecap="round"
+                              />
+                            </svg>
+                            <span
+                              class="pmap__tag utility"
+                              style="--x: 4%; --y: 80%"
+                              >BENGALURU</span
+                            >
+                            <div
+                              class="pin pin--origin m-anim-elem"
+                              style="--x: 8%; --y: 92%"
+                            >
+                              <i></i>
+                            </div>
+                            <span
+                              class="pmap__tag utility"
+                              style="--x: 36%; --y: 32%"
+                              >SAKLESHPUR</span
+                            >
+                            <div
+                              class="pin pin--amber m-anim-elem"
+                              style="--x: 52%; --y: 44%"
+                            >
+                              <i></i>
+                            </div>
+                            <div
+                              class="pin m-anim-elem"
+                              style="--x: 88%; --y: 12%"
+                            >
+                              <i></i><b class="pin__ring"></b>
+                            </div>
+                          </div>
+                          <div class="phone__card glass m-anim-elem">
+                            <strong>Dudhsagar Falls</strong>
+                            <span class="utility"
+                              >🚗 8H DRIVE · ₹2,500 · MONSOON ✦</span
+                            >
+                            <span class="phone__via utility"
+                              >VIA THAT REEL YOU SAVED</span
+                            >
+                            <div class="pactions utility">
+                              <span>♡ SAVE</span><span>ROUTE</span
+                              ><span>ADD TO PLAN</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCENE 02 — vote together -->
+            <div class="dive__scene" data-scene="1">
+              <div class="scene__copy">
+                <span class="utility scene__label">02 / VOTE TOGETHER</span>
+                <h2 class="scene__title">
+                  The group chat<br />finally <em>decides</em>.
+                </h2>
+                <p class="scene__text">
+                  Shortlist three places, send one link to the group. Everyone
+                  votes yes / maybe / no. Majority wins. Minority still comes.
+                </p>
+              </div>
+              <div class="mockup-container">
+                <div class="phone parallax-mockup">
+                  <div class="phone__body">
+                    <div
+                      class="phone__screen phone__screen--vote"
+                      id="scene2Screen"
+                    >
+                      <div class="pstat utility">
+                        <span>9:41</span
+                        ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                      </div>
+
+                      <div class="revstack">
+                        <!-- STEP A — building the shortlist -->
+                        <div class="revstep revstep--shortlist" data-step="0">
+                          <p class="utility revstep__label">
+                            BUILDING THE SHORTLIST
+                          </p>
+                          <div class="shortgrid" id="shortGrid">
+                            <div class="shortcard">
+                              <span
+                                class="shortcard__swatch shortcard__swatch--1"
+                              ></span
+                              ><strong>Abbey Falls</strong
+                              ><i class="shortcard__check">✓</i>
+                            </div>
+                            <div class="shortcard">
+                              <span
+                                class="shortcard__swatch shortcard__swatch--2"
+                              ></span
+                              ><strong>Mandalpatti Peak</strong
+                              ><i class="shortcard__check">✓</i>
+                            </div>
+                            <div class="shortcard">
+                              <span
+                                class="shortcard__swatch shortcard__swatch--3"
+                              ></span
+                              ><strong>Nisargadhama</strong
+                              ><i class="shortcard__check">✓</i>
+                            </div>
+                            <div class="shortcard">
+                              <span
+                                class="shortcard__swatch shortcard__swatch--4"
+                              ></span
+                              ><strong>Dubare Camp</strong
+                              ><i class="shortcard__check">✓</i>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- STEP B — creating the group -->
+                        <div class="revstep revstep--creategroup" data-step="1">
+                          <p class="utility revstep__label">NAME THE TRIP</p>
+                          <div class="creategroup__title glass">
+                            <span id="groupTitleTyped"></span
+                            ><span class="pdock__caret">|</span>
+                          </div>
+                          <p
+                            class="utility revstep__label"
+                            style="margin-top: 18px"
+                          >
+                            ADD YOUR CREW
+                          </p>
+                          <div class="creategroup__avatars" id="groupAvatars">
+                            <b>A</b><b>R</b><b>S</b><b>K</b><b>D</b>
+                          </div>
+                        </div>
+
+                        <!-- STEP C — sending the invite -->
+                        <div class="revstep revstep--invite" data-step="2">
+                          <div class="inviteshare glass">
+                            <span class="inviteshare__icon">🔗</span>
+                            <div>
+                              <strong>Weekend in Coorg?</strong>
+                              <span class="utility"
+                                >LH-7F3K2 · TAP TO VOTE</span
+                              >
+                            </div>
+                          </div>
+                          <p
+                            class="utility inviteshare__status"
+                            id="inviteStatus"
+                          >
+                            SENDING TO 5 FRIENDS…
+                          </p>
+                          <div class="inviteshare__avatars" id="inviteAvatars">
+                            <b>A</b><b>R</b><b>S</b><b>K</b><b>D</b>
+                          </div>
+                        </div>
+
+                        <!-- STEP D — the live poll -->
+                        <div
+                          class="revstep revstep--result is-active"
+                          data-step="3"
+                        >
+                          <div class="m-anim-elem phone__votehead">
+                            <p class="phone__votetitle">Weekend in Coorg?</p>
+                            <div class="phone__voterow-top">
+                              <p class="utility phone__votesub">
+                                CLOSES FRI 6PM
+                              </p>
+                              <div class="pavatars">
+                                <b>A</b><b>R</b><b>S</b><b>K</b><b>D</b
+                                ><b class="pavatars__more">+1</b>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="voterow m-anim-elem">
+                            <span
+                              ><i class="voterow__star">★</i> Abbey Falls</span
+                            >
+                            <div class="tally"><i style="--w: 78%"></i></div>
+                            <em class="votepill votepill--yes">yes</em>
+                          </div>
+                          <div class="voterow m-anim-elem">
+                            <span>Mandalpatti Peak</span>
+                            <div class="tally"><i style="--w: 52%"></i></div>
+                            <em class="votepill votepill--maybe">maybe</em>
+                          </div>
+                          <div class="voterow m-anim-elem">
+                            <span>Nisargadhama</span>
+                            <div class="tally"><i style="--w: 24%"></i></div>
+                            <em class="votepill votepill--no">no</em>
+                          </div>
+                          <div class="pbtn m-anim-elem">Finalize trip</div>
+                          <p class="utility phone__votefoot">
+                            5 OF 6 VOTED · YOU'RE THE ORGANIZER
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCENE 03 — the radar -->
+            <div class="dive__scene" data-scene="2">
+              <div class="scene__copy">
+                <span class="utility scene__label">03 / THE RADAR</span>
+                <h2 class="scene__title">
+                  Long weekends,<br /><em>detected early</em>.
+                </h2>
+                <p class="scene__text">
+                  India hides 8–12 long weekends a year in plain sight. The
+                  Radar pings you before they arrive — with places that fit the
+                  days you actually have.
+                </p>
+              </div>
+              <div class="mockup-container">
+                <div class="phone parallax-mockup">
+                  <div class="phone__body">
+                    <div class="phone__screen phone__screen--radar">
+                      <div class="pstat utility">
+                        <span>9:41</span
+                        ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                      </div>
+                      <div class="radar m-anim-elem">
+                        <div class="radar__sweep"></div>
+                        <b
+                          class="radar__blip m-anim-elem"
+                          style="--x: 62%; --y: 30%"
+                        ></b>
+                        <b
+                          class="radar__blip m-anim-elem"
+                          style="--x: 30%; --y: 56%"
+                        ></b>
+                        <b
+                          class="radar__blip radar__blip--amber m-anim-elem"
+                          style="--x: 70%; --y: 70%"
+                        ></b>
+                      </div>
+                      <div class="pnotif glass m-anim-elem">
+                        <strong>4-day weekend detected</strong>
+                        <span class="utility"
+                          >OCT 17–20 · 6 PLACES FIT · TAP TO PLAN</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HOW TO REACH — train, bus, car, bike ============ -->
+      <section class="reach">
+        <div class="playground__head" id="reachHead">
+          <p class="utility playground__eyebrow">HOW TO REACH</p>
+          <h2 class="playground__title">
+            Train, bus, car, or bike —<br /><em>we've already mapped it</em>.
+          </h2>
+          <p class="playground__sub">
+            Every place on Lighthouse comes with real routes for however you're
+            actually traveling. Not just "good luck getting there."
+          </p>
+        </div>
+
+        <div class="reachdemo" aria-hidden="true">
+          <div class="phone phone--big parallax-mockup">
+            <div class="phone__body">
+              <div class="phone__screen phone__screen--reach">
+                <div class="pstat utility">
+                  <span>9:41</span
+                  ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                </div>
+
+                <div class="reachhead m-anim-elem">
+                  <strong>Dudhsagar Falls</strong>
+                  <span class="utility">HOW TO REACH · FROM BENGALURU</span>
+                </div>
+
+                <div class="routecard routecard--featured m-anim-elem">
+                  <div class="routecard__top">
+                    <span class="routecard__icon">🚆</span>
+                    <div class="routecard__body">
+                      <strong>Train</strong
+                      ><span class="utility">VIA CASTLE ROCK · 4H · ₹350</span>
+                    </div>
+                  </div>
+                  <span class="routecard__badge"
+                    >INDICATIVE — VERIFY ON IRCTC</span
+                  >
+                </div>
+
+                <div class="routecard m-anim-elem">
+                  <div class="routecard__top">
+                    <span class="routecard__icon">🚌</span>
+                    <div class="routecard__body">
+                      <strong>Bus</strong><span class="utility">6H · ₹600</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="routecard m-anim-elem">
+                  <div class="routecard__top">
+                    <span class="routecard__icon">🚗</span>
+                    <div class="routecard__body">
+                      <strong>Car</strong
+                      ><span class="utility">7H · ₹2,500</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="routecard m-anim-elem">
+                  <div class="routecard__top">
+                    <span class="routecard__icon">🏍️</span>
+                    <div class="routecard__body">
+                      <strong>Bike</strong
+                      ><span class="utility">8H · ₹800</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="utility playground__foot">
+          ILLUSTRATIVE DEMO · REAL ROUTES, EVERY MODE, EVERY PLACE
+        </p>
+      </section>
+
+      <!-- ============ PLAYGROUND — the scout, watching itself work ============ -->
+      <section class="playground">
+        <div class="playground__head" id="playgroundHead">
+          <p class="utility playground__eyebrow">THE SCOUT, IN ACTION</p>
+          <h2 class="playground__title">
+            Tell us the <span class="hlkw hlkw--solid" data-magnetic>vibe</span>.<br />We find you the <span class="hlkw hlkw--solid" data-magnetic>place</span>.
+          </h2>
+          <p class="playground__sub">
+            No forms, no filters to dig through. Tell Lighthouse what you're in
+            the mood for — it zooms straight to the pin, with the route already
+            worked out.
+          </p>
+        </div>
+
+        <div class="scoutdemo" aria-hidden="true">
+          <div class="procard">
+            <span class="probadge"><i class="probadge__icon">✦</i>PRO</span>
+            <div class="phone phone--big parallax-mockup">
+              <div class="phone__body">
+                <div class="phone__screen phone__screen--scout">
+                  <div class="pstat utility">
+                    <span>9:41</span
+                    ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                  </div>
+
+                  <div class="pdock glass">
+                    <span class="pdock__ai">✦</span>
+                    <span class="pdock__typed" id="scoutTyped"></span
+                    ><span class="pdock__caret" id="scoutCaret">|</span>
+                  </div>
+
+                  <div class="pmap pmap--big" id="scoutMapWrap">
+                    <div class="pmap__zoom" id="scoutZoom">
+                      <!-- pins injected by JS -->
+                    </div>
+                  </div>
+
+                  <div class="phone__card glass" id="scoutCard">
+                    <strong id="scoutCardName"></strong>
+                    <span class="utility" id="scoutCardMeta"></span>
+                    <span class="phone__via utility" id="scoutCardNote"></span>
+                    <div class="pbtn pbtn--auto" id="scoutBtn">Let's go →</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="utility playground__foot">
+          ILLUSTRATIVE DEMO · PRO FEATURE — THE FULL CATALOG LIVES IN THE APP
+        </p>
+      </section>
+
+      <!-- ============ WEATHER PREP — know before you go ============ -->
+      <section class="weather">
+        <div class="playground__head" id="weatherHead">
+          <p class="utility playground__eyebrow">KNOW BEFORE YOU GO</p>
+          <h2 class="playground__title">
+            Check the sky,<br /><em>before you leave</em>.
+          </h2>
+          <p class="playground__sub">
+            Live conditions for every place you've saved — so "is it raining at
+            the falls right now" stops being a guess the night before.
+          </p>
+        </div>
+
+        <div class="weatherdemo" aria-hidden="true">
+          <div class="phone phone--big parallax-mockup">
+            <div class="phone__body">
+              <div
+                class="phone__screen phone__screen--weather is-rain"
+                id="weatherScreen"
+              >
+                <div class="pstat utility">
+                  <span>9:41</span
+                  ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                </div>
+
+                <div class="wfx" id="weatherFx" aria-hidden="true">
+                  <span class="wfx__cloud"></span>
+                  <span class="wfx__cloud wfx__cloud--2"></span>
+                  <span class="wfx__sun"><i></i></span>
+                  <span class="wfx__mist"></span>
+                  <span class="wfx__mist wfx__mist--2"></span>
+                </div>
+
+                <p class="utility wloc" id="weatherLoc">DUDHSAGAR FALLS</p>
+                <div class="whero">
+                  <span class="whero__icon" id="weatherIcon">🌧️</span>
+                  <div class="whero__temp">
+                    <span id="weatherTemp">24</span>°<sup>C</sup>
+                  </div>
+                  <p class="utility whero__cond" id="weatherCond">
+                    HEAVY RAIN UNTIL 9AM
+                  </p>
+                </div>
+
+                <div class="whourly" id="weatherHourly">
+                  <div class="whr">
+                    <i style="--h: 70%"></i><span class="utility">6AM</span>
+                  </div>
+                  <div class="whr">
+                    <i style="--h: 55%"></i><span class="utility">8AM</span>
+                  </div>
+                  <div class="whr">
+                    <i style="--h: 30%"></i><span class="utility">10AM</span>
+                  </div>
+                  <div class="whr">
+                    <i style="--h: 15%"></i><span class="utility">NOON</span>
+                  </div>
+                  <div class="whr">
+                    <i style="--h: 8%"></i><span class="utility">2PM</span>
+                  </div>
+                  <div class="whr">
+                    <i style="--h: 5%"></i><span class="utility">4PM</span>
+                  </div>
+                </div>
+
+                <div class="wbest glass">
+                  <span class="wbest__icon">🕐</span>
+                  <div class="wbest__body">
+                    <strong>Best time to leave</strong>
+                    <span class="utility" id="weatherBestText"
+                      >LEAVE AFTER 10AM — VISIBILITY IMPROVES</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="utility playground__foot">
+          ILLUSTRATIVE DEMO · REAL CONDITIONS PULLED FRESH IN THE APP
+        </p>
+      </section>
+
+      <!-- ============ COLLECTIONS — gets smarter with time (Pro) ============ -->
+      <section class="collection">
+        <div class="playground__head" id="collectionHead">
+          <p class="utility playground__eyebrow">GETS SMARTER WITH TIME</p>
+          <h2 class="playground__title">
+            The more you save,<br /><em>the better it gets</em>.
+          </h2>
+          <p class="playground__sub">
+            Every place you save teaches Lighthouse your taste. One tap gets you
+            a different perfect-fit suggestion — every time.
+          </p>
+        </div>
+
+        <div class="collectiondemo" aria-hidden="true">
+          <div class="procard">
+            <span class="probadge"><i class="probadge__icon">✦</i>PRO</span>
+            <div class="phone phone--big parallax-mockup">
+              <div class="phone__body">
+                <div
+                  class="phone__screen phone__screen--collection"
+                  id="collectionScreen"
+                >
+                  <div class="pstat utility">
+                    <span>9:41</span
+                    ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                  </div>
+
+                  <div class="revstack">
+                    <!-- STEP A — your collection -->
+                    <div
+                      class="revstep revstep--colbuild is-active"
+                      data-step="0"
+                    >
+                      <div class="colhead m-anim-elem">
+                        <strong>My Collections</strong>
+                        <span class="utility"
+                          ><span id="colCount">0</span> SAVED PLACES</span
+                        >
+                      </div>
+                      <div class="colgrid" id="colGrid">
+                        <span class="colswatch colswatch--1 m-anim-elem"
+                          ><em class="colswatch__label">Dudhsagar</em></span
+                        >
+                        <span class="colswatch colswatch--2 m-anim-elem"
+                          ><em class="colswatch__label">Coorg</em></span
+                        >
+                        <span class="colswatch colswatch--3 m-anim-elem"
+                          ><em class="colswatch__label">Hampi</em></span
+                        >
+                        <span class="colswatch colswatch--4 m-anim-elem"
+                          ><em class="colswatch__label">Gokarna</em></span
+                        >
+                        <span class="colswatch colswatch--5 m-anim-elem"
+                          ><em class="colswatch__label">Chikmagalur</em></span
+                        >
+                        <span class="colswatch colswatch--6 m-anim-elem"
+                          ><em class="colswatch__label">Wayanad</em></span
+                        >
+                      </div>
+                      <div class="colstat glass m-anim-elem">
+                        <span class="colstat__icon">✦</span>
+                        <span class="utility"
+                          >TOP CATEGORY: WATERFALLS · UPDATED 2 MIN AGO</span
+                        >
+                      </div>
+                    </div>
+
+                    <!-- STEP B — learning your taste -->
+                    <div class="revstep revstep--coltaste" data-step="1">
+                      <p class="utility revstep__label m-anim-elem">
+                        LEARNING YOUR TASTE
+                      </p>
+                      <div class="tastetop glass m-anim-elem">
+                        <span class="tastetop__icon">🏔️</span>
+                        <span class="utility"
+                          >TOP VIBE: <strong>OFFBEAT</strong> · FROM 24
+                          SAVES</span
+                        >
+                      </div>
+                      <div class="tastebar m-anim-elem">
+                        <span class="tastebar__label"
+                          ><i class="tastebar__icon">🏔️</i
+                          ><span class="utility">OFFBEAT</span></span
+                        >
+                        <div class="tastebar__track"><i data-w="82"></i></div>
+                        <span class="utility tastebar__pct">0%</span>
+                      </div>
+                      <div class="tastebar m-anim-elem">
+                        <span class="tastebar__label"
+                          ><i class="tastebar__icon">🌫️</i
+                          ><span class="utility">MISTY</span></span
+                        >
+                        <div class="tastebar__track"><i data-w="74"></i></div>
+                        <span class="utility tastebar__pct">0%</span>
+                      </div>
+                      <div class="tastebar m-anim-elem">
+                        <span class="tastebar__label"
+                          ><i class="tastebar__icon">🥾</i
+                          ><span class="utility">TREK</span></span
+                        >
+                        <div class="tastebar__track"><i data-w="68"></i></div>
+                        <span class="utility tastebar__pct">0%</span>
+                      </div>
+                      <div class="tastebar m-anim-elem">
+                        <span class="tastebar__label"
+                          ><i class="tastebar__icon">🌧️</i
+                          ><span class="utility">MONSOON</span></span
+                        >
+                        <div class="tastebar__track"><i data-w="55"></i></div>
+                        <span class="utility tastebar__pct">0%</span>
+                      </div>
+                      <div class="tasteinsight glass m-anim-elem">
+                        <span class="tasteinsight__icon">✦</span>
+                        <span class="utility"
+                          >MOSTLY OFFBEAT &amp; MISTY — WE'LL SUGGEST
+                          ACCORDINGLY</span
+                        >
+                      </div>
+                    </div>
+
+                    <!-- STEP C — tap for a suggestion (randomizes each time) -->
+                    <div class="revstep revstep--colsuggest" data-step="2">
+                      <p class="utility revstep__label m-anim-elem">
+                        TAP FOR A SUGGESTION
+                      </p>
+                      <div class="colsuggest glass m-anim-elem" id="colSuggest">
+                        <span class="utility colsuggest__match" id="colMatch"
+                          >— % MATCH</span
+                        >
+                        <strong id="colName">…</strong>
+                        <span class="utility" id="colTags">…</span>
+                      </div>
+                      <div
+                        class="colflow m-anim-elem"
+                        id="colFlow"
+                        aria-hidden="true"
+                      >
+                        <span class="colflow__line"></span>
+                        <b class="colflow__pulse" id="colFlowPulse"></b>
+                      </div>
+                      <button
+                        class="colshuffle glass m-anim-elem"
+                        id="colShuffleBtn"
+                        type="button"
+                        tabindex="-1"
+                        aria-hidden="true"
+                      >
+                        <span
+                          class="colshuffle__fill"
+                          id="colShuffleFill"
+                        ></span>
+                        <span class="colshuffle__icon" id="colShuffleIcon"
+                          >🎲</span
+                        ><span>Surprise me</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="utility playground__foot">
+          ILLUSTRATIVE DEMO · PRO FEATURE — LEARNS FROM YOUR SAVES
+        </p>
+      </section>
+
+      <!-- ============ VICINITY MODE — coming soon ============ -->
+      <section class="vicinity" id="vicinitySection">
+        <div class="vicinity__inner">
+          <div class="vicinity__copy">
+            <p class="utility vicinity__eyebrow vicinity-reveal">COMING SOON</p>
+            <h2 class="vicinity__title vicinity-reveal">
+              Vicinity<br /><em>Mode</em>.
+            </h2>
+            <p class="vicinity__text vicinity-reveal">
+              Already out somewhere? If a place worth a detour is near you,
+              Lighthouse taps you on the shoulder —
+              <em>"Mandalpatti Peak, 22 min from you."</em> No searching. The
+              map just knows.
+            </p>
+            <div class="vicinity__badge glass vicinity-reveal">
+              <span class="vicinity__dot"></span>
+              <span class="utility"
+                >PRO · OPT-IN ONLY · YOUR LOCATION STAYS YOURS</span
+              >
+            </div>
+          </div>
+
+          <div class="vicinity__visual" aria-hidden="true">
+            <div class="vmockup">
+              <div class="procard">
+                <span class="probadge"><i class="probadge__icon">✦</i>PRO</span>
+                <div class="phone parallax-mockup">
+                  <div class="phone__body">
+                    <div class="phone__screen phone__screen--vicinity">
+                      <div class="pstat utility">
+                        <span>9:41</span
+                        ><span class="pstat__icons"><i></i><i></i><i></i></span>
+                      </div>
+                      <div class="pchip glass">
+                        <span class="utility">EXPLORING</span>
+                      </div>
+                      <div class="v-grid" aria-hidden="true"></div>
+                      <div class="vradar">
+                        <div class="vradar__ring"></div>
+                        <div class="vradar__ring"></div>
+                        <div class="vradar__ring"></div>
+                        <span class="vradar__you"
+                          ><i class="vradar__pulse"></i
+                        ></span>
+                        <b
+                          class="radar__blip v-blip"
+                          style="--x: 82%; --y: 26%"
+                        ></b>
+                        <b
+                          class="radar__blip v-blip"
+                          style="--x: 18%; --y: 64%"
+                        ></b>
+                        <b
+                          class="radar__blip radar__blip--amber v-blip"
+                          style="--x: 74%; --y: 78%"
+                        ></b>
+                      </div>
+                      <div class="vnotif glass">
+                        <div class="vnotif__row">
+                          <div>
+                            <strong>Mandalpatti Peak</strong>
+                            <span class="utility vnotif__sub"
+                              >WORTH A DETOUR ✦ 22 MIN</span
+                            >
+                          </div>
+                          <span class="vnotif__arrow">↗</span>
+                        </div>
+                        <div class="vnotif__bar"><i></i></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ============ CLOSING MANIFESTO ============ -->
+      <section class="closing-section">
+        <div class="closing-inner">
+          <h2 class="closing__title">
+            <span class="closing-reveal">100 Reels,</span>
+            <span class="closing-reveal closing__accent">100 Trips.</span>
+          </h2>
+          <p class="closing__sub closing-reveal">
+            Every reel was a maybe. Every trip is a yes.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ PRICING — Explorer (free) vs. Lighthouse Pro ============ -->
+      <section class="pricing" id="pricingSection">
+        <div class="playground__head" id="pricingHead">
+          <p class="utility playground__eyebrow">SIMPLE PRICING</p>
+          <h2 class="playground__title">
+            <span class="hlkw hlkw--outline" data-magnetic>Free</span> to explore.<br /><span
+              class="hlkw hlkw--solid"
+              data-magnetic
+              >Pro</span
+            >
+            to plan like it's your job.
+          </h2>
+          <p class="playground__sub">
+            No hidden tiers, no surprise upsells — just two plans.
+          </p>
+        </div>
+
+        <div class="pricetoggle">
+          <span
+            class="pricetoggle__thumb"
+            id="pricetoggleThumb"
+            aria-hidden="true"
+          ></span>
+          <button
+            class="pricetoggle__btn is-active"
+            id="toggleMonthly"
+            type="button"
+          >
+            Monthly
+          </button>
+          <button class="pricetoggle__btn" id="toggleAnnual" type="button">
+            Annual <span class="pricetoggle__save">SAVE 44%</span>
+          </button>
+        </div>
+
+        <div class="pricegrid">
+          <!-- FREE -->
+          <div class="pricecard">
+            <div class="pricecard__head">
+              <span class="utility pricecard__tier">EXPLORER</span>
+              <div class="pricecard__price">
+                <span class="pricecard__amount is-shown">₹0</span>
+                <span class="utility pricecard__period">FOREVER FREE</span>
+              </div>
+            </div>
+            <p class="pricecard__sub">
+              Everything you need for weekend discovery.
+            </p>
+            <ul class="pricecard__features">
+              <li><i class="pf pf--yes">✓</i>Unlimited weekend discovery</li>
+              <li><i class="pf pf--yes">✓</i>Save up to 10 places</li>
+              <li><i class="pf pf--yes">✓</i>AI Scout — 10 queries/day</li>
+              <li><i class="pf pf--yes">✓</i>How-to-reach on every place</li>
+              <li><i class="pf pf--no">×</i>AI personal suggestions</li>
+              <li><i class="pf pf--no">×</i>Full place briefs</li>
+              <li>
+                <i class="pf pf--no">×</i>Push alerts — price &amp; crowd
+                changes
+              </li>
+              <li><i class="pf pf--no">×</i>Vicinity Mode</li>
+              <li><i class="pf pf--no">×</i>1 active trip plan only</li>
+              <li><i class="pf pf--no">×</i>Shows sponsored places</li>
+            </ul>
+            <div class="pricecard__cta btn btn--ghost">Get started</div>
+          </div>
+
+          <!-- PRO -->
+          <div class="pricecard pricecard--pro">
+            <span class="pricecard__ribbon">MOST POPULAR</span>
+            <div class="pricecard__head">
+              <span class="utility pricecard__tier">LIGHTHOUSE PRO</span>
+              <div class="pricecard__price">
+                <span class="pricecard__strike" id="proStrike">₹199</span>
+                <span class="pricecard__amount" id="proAmount">₹149</span>
+                <span class="utility pricecard__period" id="proPeriod"
+                  >/ MONTH</span
+                >
+              </div>
+              <span class="pricecard__discount glass" id="proDiscountTag"
+                >LAUNCH OFFER · SAVE 25%</span
+              >
+            </div>
+            <p class="pricecard__sub">
+              For the friend who actually organizes the trips.
+            </p>
+            <ul class="pricecard__features">
+              <li><i class="pf pf--yes">✓</i>Everything in Explorer</li>
+              <li>
+                <i class="pf pf--yes">✓</i>Unlimited saves &amp; collections
+              </li>
+              <li><i class="pf pf--yes">✓</i>AI Scout — 50 queries/day</li>
+              <li>
+                <i class="pf pf--yes">✓</i>AI personal suggestions, on tap
+              </li>
+              <li>
+                <i class="pf pf--yes">✓</i>Full place briefs — budget, tips,
+                warnings
+              </li>
+              <li>
+                <i class="pf pf--yes">✓</i>Push alerts — price &amp; crowd
+                changes
+              </li>
+              <li>
+                <i class="pf pf--yes">✓</i>Vicinity Mode — nudges for hidden
+                gems nearby
+              </li>
+              <li><i class="pf pf--yes">✓</i>Unlimited trip plans</li>
+              <li><i class="pf pf--yes">✓</i>Offline trip packs</li>
+              <li><i class="pf pf--yes">✓</i>Zero ads, ever</li>
+            </ul>
+            <div class="pricecard__cta btn btn--solid">Go Pro</div>
+          </div>
+        </div>
+        <p class="utility playground__foot">
+          CANCEL ANYTIME · PRICES SHOWN IN INR
+        </p>
+      </section>
+
+      <!-- ============ AVAILABLE ON — platform availability (last content section) ============ -->
+      <section class="platforms">
+        <div class="playground__head" id="platformsHead">
+          <p class="utility playground__eyebrow">LAUNCHING SOON</p>
+          <h2 class="playground__title">
+            Android app.<br /><em>Or just your browser.</em>
+          </h2>
+          <p class="playground__sub">
+            Install it on Android, or skip the download entirely — open
+            Lighthouse straight in the browser at your desk.
+          </p>
+        </div>
+        <div class="platformrow">
+          <div class="platformcard glass">
+            <span class="platformcard__icon" aria-hidden="true">📱</span>
+            <div class="platformcard__body">
+              <strong>Android</strong>
+              <span class="utility">GET IT ON GOOGLE PLAY</span>
+            </div>
+          </div>
+          <div class="platformcard glass">
+            <span class="platformcard__icon" aria-hidden="true">🌐</span>
+            <div class="platformcard__body">
+              <strong>Web</strong>
+              <span class="utility">OPEN IN ANY BROWSER</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ FOOTER / FINAL CTA ============ -->
+      <footer class="footer">
+        <h2 class="footer__big">Let's go<span class="footer__dot">.</span></h2>
+        <a
+          class="btn btn--solid footer__cta"
+          href="#join"
+          data-scrollto
+          data-magnetic
+          >Join the waitlist</a
+        >
+        <nav class="footer__nav">
+          <a class="footer__link utility" href="/about.html">ABOUT US</a>
+          <a class="footer__link utility" href="/support.html">SUPPORT</a>
+          <a class="footer__link utility" href="/contact.html">CONTACT</a>
+          <a class="footer__link utility" href="/terms.html"
+            >TERMS &amp; CONDITIONS</a
+          >
+          <a class="footer__link utility" href="/privacy.html"
+            >PRIVACY POLICY</a
+          >
+        </nav>
+        <div class="footer__meta">
+          <a
+            href="https://www.instagram.com/letsgolighthouse.co.in"
+            target="_blank"
+            rel="noopener"
+            class="footer__link utility"
+            >INSTAGRAM ↗</a
+          >
+          <span class="utility">MADE IN BANGALORE</span>
+          <span class="utility">© 2026 LIGHTHOUSE</span>
+        </div>
+      </footer>
+    </main>
+
+    <script src="/main.js" defer></script>
+  </body>
+</html>

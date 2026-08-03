@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Contact — Lighthouse</title>
+  <meta name="description" content="Get in touch with the Lighthouse team — press, partnerships, feedback, or just to say hello." />
+  <meta name="theme-color" content="#0F0F12" />
+  <link rel="canonical" href="https://letsgolighthouse.co.in/contact.html" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Lighthouse" />
+  <meta property="og:title" content="Contact — Lighthouse" />
+  <meta property="og:description" content="Say hello — press, partnerships, feedback, or just a hi." />
+  <meta property="og:url" content="https://letsgolighthouse.co.in/contact.html" />
+  <meta property="og:image" content="https://letsgolighthouse.co.in/og.png" />
+
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <header class="nav" id="nav">
+    <a class="nav__brand" href="/">LIGHTHOUSE<span class="nav__dot">.</span></a>
+    <div class="nav__right">
+      <span class="utility nav__label">CONTACT</span>
+      <a class="btn btn--ghost" href="/#join">Join waitlist</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="docpage__hero">
+      <p class="utility docpage__eyebrow">SAY HELLO</p>
+      <h1 class="docpage__title">Talk to us.</h1>
+      <p class="docpage__sub">Press, partnerships, a bug you found, or just a hi — we read everything ourselves.</p>
+    </section>
+
+    <div class="contactgrid">
+      <form class="contactform" id="contactForm" novalidate>
+        <div class="field">
+          <label for="cName">Name</label>
+          <input id="cName" name="name" type="text" placeholder="Your name" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="cEmail">Email</label>
+          <input id="cEmail" name="email" type="email" placeholder="you@email.com" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="cMessage">Message</label>
+          <textarea id="cMessage" name="message" placeholder="What's on your mind?" required></textarea>
+        </div>
+        <button class="btn btn--solid" type="submit" data-magnetic>
+          <span class="contactform__btn-label">Send message</span>
+        </button>
+        <p class="contactform__note utility" data-state-idle>WE TYPICALLY REPLY WITHIN 2–3 DAYS</p>
+        <p class="contactform__note contactform__note--ok utility" data-state-ok hidden>MESSAGE SENT ✦ WE'LL GET BACK TO YOU SOON</p>
+        <p class="contactform__note contactform__note--err utility" data-state-err hidden>SOMETHING WENT WRONG — TRY AGAIN</p>
+      </form>
+
+      <div class="contactchannels">
+        <div class="channelcard">
+          <span class="channelcard__icon">✉️</span>
+          <strong>Email</strong>
+          <a href="mailto:hello@letsgolighthouse.co.in">hello@letsgolighthouse.co.in</a>
+          <p>General questions, feedback, or anything that doesn't fit a category.</p>
+        </div>
+        <div class="channelcard">
+          <span class="channelcard__icon">🛟</span>
+          <strong>Need app help instead?</strong>
+          <a href="/support.html">Visit the Support page →</a>
+          <p>Common questions about accounts, Pro, and how the app works.</p>
+        </div>
+        <div class="channelcard">
+          <span class="channelcard__icon">📸</span>
+          <strong>Instagram</strong>
+          <a href="https://www.instagram.com/letsgolighthouse.co.in" target="_blank" rel="noopener">@letsgolighthouse.co.in ↗</a>
+          <p>The fastest way to catch our attention publicly.</p>
+        </div>
+        <div class="channelcard">
+          <span class="channelcard__icon">🤝</span>
+          <strong>Press &amp; partnerships</strong>
+          <a href="mailto:partners@letsgolighthouse.co.in">partners@letsgolighthouse.co.in</a>
+          <p>Operators, creators, and anyone wanting to build with us.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <h2 class="footer__big">Let's go<span class="footer__dot">.</span></h2>
+    <a class="btn btn--solid footer__cta" href="/#join" data-magnetic>Join the waitlist</a>
+    <nav class="footer__nav">
+      <a class="footer__link utility" href="/about.html">ABOUT US</a>
+      <a class="footer__link utility" href="/support.html">SUPPORT</a>
+      <a class="footer__link utility" href="/contact.html">CONTACT</a>
+      <a class="footer__link utility" href="/terms.html">TERMS &amp; CONDITIONS</a>
+      <a class="footer__link utility" href="/privacy.html">PRIVACY POLICY</a>
+    </nav>
+    <div class="footer__meta">
+      <a href="https://www.instagram.com/letsgolighthouse.co.in" target="_blank" rel="noopener" class="footer__link utility">INSTAGRAM ↗</a>
+      <span class="utility">MADE IN BANGALORE</span>
+      <span class="utility">© 2026 LIGHTHOUSE</span>
+    </div>
+  </footer>
+
+  <script src="/pages.js" defer></script>
+</body>
+</html>
