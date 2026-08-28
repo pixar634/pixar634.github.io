@@ -900,13 +900,42 @@ body.has-custom-cursor .btn { cursor: none; }
   font-family: var(--font-accent);
   font-style: italic;
   font-weight: 800;
-  color: var(--mint);
+  color: var(--text);
   -webkit-text-stroke: 0;
 }
-/* The one word worth a second look, in the brand's other accent so it reads
-   against the mint around it instead of blending into one green line. */
+/* The one word worth a second look — mint against the white "a"/"away."
+   around it, and nudged in sync with every hop the hero map makes (see
+   flyTo() in main.js) so it reads like it's actually being swiped. */
 .display__pop {
-  color: var(--amber);
+  display: inline-block;
+  color: var(--mint);
+}
+.display__pop.is-swiping {
+  animation: swipe-nudge 0.6s var(--ease-standard);
+}
+@keyframes swipe-nudge {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(15%); }
+  58% { transform: translateX(-3%); }
+  80% { transform: translateX(1%); }
+  100% { transform: translateX(0); }
+}
+/* "away." takes the hit a beat after "swipe" does — smaller push, later
+   settle — so it reads as being shoved by the word ahead of it and trying
+   to spring back to place, not as its own independent motion. */
+.display__push {
+  display: inline-block;
+}
+.display__push.is-swiping {
+  animation: swipe-nudge-away 0.72s var(--ease-standard);
+}
+@keyframes swipe-nudge-away {
+  0% { transform: translateX(0); }
+  18% { transform: translateX(0); }
+  46% { transform: translateX(7%); }
+  70% { transform: translateX(-2%); }
+  88% { transform: translateX(0.6%); }
+  100% { transform: translateX(0); }
 }
 
 @keyframes clip-up {
@@ -932,12 +961,15 @@ body.has-custom-cursor .btn { cursor: none; }
   /* Reserves space for the longest quote in the rotation (post-shrink, see
      .is-long below) so the form and the feature note below never jump around
      depending on which quote is showing — measured empirically per quote at
-     each breakpoint, not guessed (see the commit body). */
-  min-height: 118px;
-  margin: 0 0 clamp(28px, 4.5vh, 44px);
+     each breakpoint, not guessed (see the commit body). Kept tight on purpose:
+     a generous reservation leaves a dead gap under every quote shorter than
+     the longest one, which on a real short-viewport phone was pushing the
+     feature note below the fold. */
+  min-height: 106px;
+  margin: 0 0 clamp(14px, 2.4vh, 26px);
 }
 @media (min-width: 721px) {
-  .quote-cycle { min-height: 110px; }
+  .quote-cycle { min-height: 96px; }
 }
 .quote-cycle__text {
   margin: 0 0 10px;
@@ -954,8 +986,8 @@ body.has-custom-cursor .btn { cursor: none; }
    land near the rest of the set's height instead of dragging min-height up
    for everything else, which would leave a dead gap under every short one. */
 .quote-cycle__text.is-long {
-  font-size: clamp(14.5px, 1.5vw, 18px);
-  line-height: 1.4;
+  font-size: clamp(13px, 1.35vw, 16.5px);
+  line-height: 1.32;
 }
 .quote-cycle__text.is-changing {
   opacity: 0;
@@ -1134,9 +1166,10 @@ body.has-custom-cursor .btn { cursor: none; }
   .display__line--end {
     display: block;
     text-align: left;
-    font-size: 0.78em;
+    font-size: 0.6em;
     padding-top: 0.2em;
     font-weight: 800;
+    white-space: nowrap;
   }
   .hero__lede {
     max-width: none;
@@ -2857,6 +2890,8 @@ body.has-custom-cursor .btn { cursor: none; }
   .filters__chip:hover::before,
   .filters__chip:focus-visible::before { opacity: 0; animation: none !important; }
   .trip-tap { animation: none !important; }
+  .display__pop.is-swiping,
+  .display__push.is-swiping { animation: none !important; }
   .lh__wx, .hero__wx, .hero__wx > span { animation: none !important; opacity: 0 !important; }
   .display { filter: none !important; }
   .hero__map.is-pulse .hero__gl,

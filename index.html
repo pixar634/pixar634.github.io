@@ -36,30 +36,30 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Lighthouse" />
     <meta property="og:locale" content="en_IN" />
-    <meta property="og:title" content="Lighthouse — Find your kind of away." />
+    <meta property="og:title" content="Lighthouse — Your next road trip is a swipe away." />
     <meta
       property="og:description"
-      content="Find your kind of away. Let’s go."
+      content="Your next road trip is a swipe away."
     />
     <meta property="og:url" content="https://letsgolighthouse.co.in/" />
-    <meta property="og:image" content="https://letsgolighthouse.co.in/og.png?v=4" />
+    <meta property="og:image" content="https://letsgolighthouse.co.in/og.png?v=5" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Find your kind of away. Let’s go."
+      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Your next road trip is a swipe away."
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Lighthouse — Find your kind of away." />
+    <meta name="twitter:title" content="Lighthouse — Your next road trip is a swipe away." />
     <meta
       name="twitter:description"
-      content="Find your kind of away. Let’s go."
+      content="Your next road trip is a swipe away."
     />
-    <meta name="twitter:image" content="https://letsgolighthouse.co.in/og.png?v=4" />
+    <meta name="twitter:image" content="https://letsgolighthouse.co.in/og.png?v=5" />
     <meta
       name="twitter:image:alt"
-      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Find your kind of away. Let’s go."
+      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Your next road trip is a swipe away."
     />
 
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
@@ -231,7 +231,7 @@
         <h1 class="display" id="display">
           <span class="display__line"><span class="display__inner">Your next</span></span>
           <span class="display__line display__line--ghost"><span class="display__inner">road trip is</span></span>
-          <span class="display__line display__line--end"><span class="display__inner"><em>a <span class="display__pop">swipe</span> away.</em></span></span>
+          <span class="display__line display__line--end"><span class="display__inner"><em>a <span class="display__pop" id="swipeWord">swipe</span> <span class="display__push" id="awayWord">away.</span></em></span></span>
         </h1>
 
         <figure class="quote-cycle reveal" id="quoteCycle">
@@ -454,26 +454,31 @@
       </section>
 
       <section class="filters">
+        <div class="filters__map" id="filters-map" aria-hidden="true">
+          <div class="filters__gl" id="filters-gl"></div>
+        </div>
+        <div class="filters__content">
         <p class="utility filters__kicker">LIVE IN THE APP</p>
         <h2 class="filters__title">Those aren't vibes.<br /><em>They're filters.</em></h2>
         <p class="filters__lede">
           Every name on that river is a collection you can open. Finite decks of real places —
           drive time and leave-by already on the card. You pick a lane. The map fills with that lane only.
         </p>
-        <ul class="filters__list">
-          <li class="filters__chip" tabindex="0" aria-label="Wild Lakeside, 67 places"><span class="filters__chip-inner"><span class="filters__chip-name">Wild Lakeside</span><span class="filters__chip-count">67 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Summit Treks, 43 places"><span class="filters__chip-inner"><span class="filters__chip-name">Summit Treks</span><span class="filters__chip-count">43 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Night Drives, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Night Drives</span><span class="filters__chip-count">5 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Breakfast Runs, 50 places"><span class="filters__chip-inner"><span class="filters__chip-name">Breakfast Runs</span><span class="filters__chip-count">50 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Secret Cascades, 29 places"><span class="filters__chip-inner"><span class="filters__chip-name">Secret Cascades</span><span class="filters__chip-count">29 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Coastal Drives, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coastal Drives</span><span class="filters__chip-count">12 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Misty Hikes, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Misty Hikes</span><span class="filters__chip-count">12 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Tarmac Therapy, 16 places"><span class="filters__chip-inner"><span class="filters__chip-name">Tarmac Therapy</span><span class="filters__chip-count">16 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Corner Craving, 11 places"><span class="filters__chip-inner"><span class="filters__chip-name">Corner Craving</span><span class="filters__chip-count">11 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Coffee Country, 4 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coffee Country</span><span class="filters__chip-count">4 places</span></span></li>
-          <li class="filters__chip" tabindex="0" aria-label="Hidden Forest Camps, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Hidden Forest Camps</span><span class="filters__chip-count">5 places</span></span></li>
+        <ul class="filters__list" id="filters-list">
+          <li class="filters__chip" tabindex="0" data-cat="Wild Lakeside" aria-label="Wild Lakeside, 67 places"><span class="filters__chip-inner"><span class="filters__chip-name">Wild Lakeside</span><span class="filters__chip-count">67 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Summit Treks" aria-label="Summit Treks, 43 places"><span class="filters__chip-inner"><span class="filters__chip-name">Summit Treks</span><span class="filters__chip-count">43 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Night Drives" aria-label="Night Drives, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Night Drives</span><span class="filters__chip-count">5 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Breakfast Runs" aria-label="Breakfast Runs, 50 places"><span class="filters__chip-inner"><span class="filters__chip-name">Breakfast Runs</span><span class="filters__chip-count">50 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Secret Cascades" aria-label="Secret Cascades, 29 places"><span class="filters__chip-inner"><span class="filters__chip-name">Secret Cascades</span><span class="filters__chip-count">29 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Coastal Drives" aria-label="Coastal Drives, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coastal Drives</span><span class="filters__chip-count">12 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Misty Hikes" aria-label="Misty Hikes, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Misty Hikes</span><span class="filters__chip-count">12 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Tarmac Therapy" aria-label="Tarmac Therapy, 16 places"><span class="filters__chip-inner"><span class="filters__chip-name">Tarmac Therapy</span><span class="filters__chip-count">16 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Corner Carving" aria-label="Corner Craving, 11 places"><span class="filters__chip-inner"><span class="filters__chip-name">Corner Craving</span><span class="filters__chip-count">11 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Coffee Country" aria-label="Coffee Country, 4 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coffee Country</span><span class="filters__chip-count">4 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Hidden Forest Camps" aria-label="Hidden Forest Camps, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Hidden Forest Camps</span><span class="filters__chip-count">5 places</span></span></li>
           <li class="filters__chip filters__chip--more" tabindex="0"><span class="filters__chip-inner"><span class="filters__chip-name">Many more</span></span></li>
         </ul>
+        </div>
       </section>
 
       <section class="pitch pitch--clock" id="clock">

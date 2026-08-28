@@ -221,7 +221,7 @@
       // width — shrink just those rather than reserve min-height for the
       // whole rotation off one outlier, which would leave a dead gap under
       // every short quote.
-      textEl.classList.toggle("is-long", q.text.length > 90);
+      textEl.classList.toggle("is-long", q.text.length > 65);
       if (translationEl) translationEl.textContent = q.translation || "";
       authorEl.textContent = "— " + q.author;
     }
@@ -796,7 +796,10 @@
     var w = innerWidth;
     var h = (hero && hero.clientHeight) || innerHeight;
     if (w < 720) {
-      return { top: 72, bottom: Math.round(h * 0.52), left: 28, right: 28 };
+      // Asymmetric on purpose: MapLibre centers the visible pin cluster away
+      // from the padded side, and the headline sits left-aligned over the top
+      // ~60% of this width — a symmetric pad put pins right on top of it.
+      return { top: 72, bottom: Math.round(h * 0.52), left: Math.round(w * 0.42), right: 20 };
     }
     return { top: 88, bottom: Math.round(h * 0.3), left: Math.round(w * 0.36), right: 80 };
   }
@@ -847,6 +850,8 @@
     var wrap = document.getElementById("hero-map");
     var gl = document.getElementById("hero-gl");
     var hero = document.getElementById("hero");
+    var swipeWord = document.getElementById("swipeWord");
+    var awayWord = document.getElementById("awayWord");
     if (!wrap || !gl) return;
     if (!window.maplibregl) {
       console.warn("Lighthouse: MapLibre did not load — hero map skipped");
@@ -888,6 +893,21 @@
       window.setTimeout(function () { wrap.classList.remove("is-pulse"); }, 440);
     }
 
+    // The headline's "swipe" nudges right and springs back in step with every
+    // hop the map makes, so the one interactive word in the hero reads as a
+    // live echo of the motion happening beside it, not a static label.
+    function pulseSwipeWord() {
+      if (reduced || !swipeWord) return;
+      swipeWord.classList.remove("is-swiping");
+      void swipeWord.offsetWidth;
+      swipeWord.classList.add("is-swiping");
+      if (awayWord) {
+        awayWord.classList.remove("is-swiping");
+        void awayWord.offsetWidth;
+        awayWord.classList.add("is-swiping");
+      }
+    }
+
     function setWeather(kind, immediate) {
       var wx = document.getElementById("hero-wx");
       if (!wx) return;
@@ -909,6 +929,7 @@
       setOn(i);
       setWeather(spot.weather);
       pulse();
+      pulseSwipeWord();
       map.flyTo({
         center: [spot.lon, spot.lat],
         zoom: hopZoom(prev, spot),
