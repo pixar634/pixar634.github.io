@@ -2619,6 +2619,11 @@ body.has-custom-cursor .btn { cursor: none; }
   background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.14), rgba(255,255,255,0.04));
   background-size: 200% 100%;
   animation: search-shimmer 1.6s ease-in-out infinite;
+  /* paintClockCounts() rebuilds this element from scratch every shimmer cycle
+     (innerHTML replace), so a fresh node starts an infinite animation on a
+     rounded, clipped ancestor with no compositor layer yet — the classic
+     mobile-Safari flash-on-insert. will-change promotes it up front. */
+  will-change: background-position;
 }
 @keyframes search-shimmer {
   to { background-position: 200% 0; }

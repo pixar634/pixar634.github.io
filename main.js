@@ -1817,6 +1817,16 @@
     }
   }
 
+  // One cached {yes, maybe, no} per row, parallel to VOTE. tickVote calls this
+  // on every requestAnimationFrame tick — uncapped by the 30fps the frame math
+  // assumes — so writing `style.width` (layout) and rebuilding innerHTML
+  // unconditionally meant three reflows plus a DOM rebuild, per row, up to 60+
+  // times a second, for the whole ~2s voting phase. Fine on desktop's spare
+  // headroom; a mid-range Android drops frames under that load, which reads as
+  // flicker. Skipping the write when the rounded value hasn't moved cuts it to
+  // only the frames where something actually changed on screen.
+  var voteCardsCache = [];
+
   function paintVoteCards(localFrame, mode, winnerOn) {
     if (!voteList) return;
     VOTE.forEach(function (c, i) {
@@ -1835,19 +1845,25 @@
       row.classList.toggle("is-staged", mode === "staged" && i === 0 && !winnerOn);
       var bar = row.querySelector(".vote-tally");
       if (bar) bar.hidden = mode === "preview";
-      var yesEl = row.querySelector(".vote-tally__bar .is-yes");
-      if (yesEl) {
-        yesEl.style.width = ((yes / total) * 100) + "%";
-        row.querySelector(".vote-tally__bar .is-maybe").style.width = ((maybe / total) * 100) + "%";
-        row.querySelector(".vote-tally__bar .is-no").style.width = ((no / total) * 100) + "%";
+
+      var cached = voteCardsCache[i];
+      if (!cached || cached.yes !== yes || cached.maybe !== maybe || cached.no !== no) {
+        voteCardsCache[i] = { yes: yes, maybe: maybe, no: no };
+        var yesEl = row.querySelector(".vote-tally__bar .is-yes");
+        if (yesEl) {
+          yesEl.style.width = ((yes / total) * 100) + "%";
+          row.querySelector(".vote-tally__bar .is-maybe").style.width = ((maybe / total) * 100) + "%";
+          row.querySelector(".vote-tally__bar .is-no").style.width = ((no / total) * 100) + "%";
+        }
+        var nums = row.querySelector(".vote-tally__n");
+        if (nums) {
+          nums.innerHTML =
+            '<span><span class="dot-yes">●</span> ' + yes + ' yes</span>' +
+            '<span><span class="dot-maybe">●</span> ' + maybe + ' maybe</span>' +
+            '<span><span class="dot-no">●</span> ' + no + ' no</span>';
+        }
       }
-      var nums = row.querySelector(".vote-tally__n");
-      if (nums) {
-        nums.innerHTML =
-          '<span><span class="dot-yes">●</span> ' + yes + ' yes</span>' +
-          '<span><span class="dot-maybe">●</span> ' + maybe + ' maybe</span>' +
-          '<span><span class="dot-no">●</span> ' + no + ' no</span>';
-      }
+
       var pills = row.querySelector(".vote-pills");
       if (pills) pills.hidden = mode === "preview" || mode === "finalized";
       row.querySelectorAll(".vote-pill").forEach(function (pill) {
