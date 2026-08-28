@@ -1,1 +1,12 @@
 *.log
+.wrangler/
+node_modules/
+# Google Fonts TTFs that scripts/render-og.mjs downloads once and reuses. Build
+# input, not source, and re-fetched automatically when missing.
+scripts/.cache/
+# Rendered Remotion output is a build artifact and stays out of git...
+assets/video/remotion/*
+# ...except the six small fragment clips the landing page actually embeds.
+# Cloudflare Pages deploys this directory as-is; there is no render step in
+# the deploy, so an ignored clip is a 404 in production.
+!assets/video/remotion/frag-*.mp4

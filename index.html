@@ -234,6 +234,7 @@
              is hidden and the share panel takes its place, and an anchor pointing
              at a display:none form is a CTA that silently does nothing. -->
         <div class="joinblock" id="join">
+        <p class="utility waitlist__refnote" id="refnote" hidden>YOU GOT PERSONALLY INVITED. DON’T GHOST.</p>
         <form class="waitlist reveal" novalidate>
           <label class="sr-only" for="email">Email</label>
           <div class="waitlist__field">
@@ -265,8 +266,8 @@
 
         <!-- Post-signup: the vote loop, rehearsed before the app exists (MARKETING §6). -->
         <div class="wshare" id="wshare" hidden>
-          <p class="utility wshare__kicker">YOU'RE ON THE LIST <span class="wshare__spark">✦</span></p>
-          <p class="wshare__lede">
+          <p class="utility wshare__kicker" id="wshare-kicker">YOU'RE ON THE LIST <span class="wshare__spark">✦</span></p>
+          <p class="wshare__lede" id="wshare-lede">
             Bangalore opens first, in batches. Bring the people you'd
             <em>actually</em> go with — three of them moves you into the first one.
           </p>

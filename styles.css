@@ -255,6 +255,7 @@ body.has-custom-cursor .btn { cursor: none; }
 .waitlist__note { margin-top: 16px; }
 .waitlist__note--ok { color: var(--mint); }
 .waitlist__note--err { color: var(--amber); }
+.waitlist__refnote { color: var(--mint); margin-bottom: 14px; }
 @media (max-width: 560px) {
   .waitlist__field { flex-direction: column; gap: 14px; border-bottom: 0; padding-bottom: 0; }
   .waitlist__input { border-bottom: 1px solid var(--hairline-strong); padding: 12px 0; }

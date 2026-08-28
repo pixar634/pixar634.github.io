@@ -827,6 +827,8 @@
   };
 
   var shareEl = document.getElementById('wshare');
+  var shareKicker = document.getElementById('wshare-kicker');
+  var shareLede = document.getElementById('wshare-lede');
   var shareLink = document.getElementById('wshare-link');
   var shareCount = document.getElementById('wshare-count');
   var shareCopy = document.getElementById('wshare-copy');
@@ -842,6 +844,20 @@
     var url = inviteUrl(data.code);
     var goal = data.goal || 3;
     var got = Math.min(data.referrals || 0, goal);
+
+    // A returning visitor re-submitting their own email isn't a fresh join —
+    // say so, instead of replaying copy that implies they just signed up.
+    if (shareKicker) {
+      shareKicker.innerHTML = data.returning
+        ? 'ALREADY IN <span class="wshare__spark">✦</span>'
+        : "YOU'RE ON THE LIST <span class=\"wshare__spark\">✦</span>";
+    }
+    if (shareLede) {
+      shareLede.innerHTML = data.returning
+        ? "No need to sign up twice — we've got you. Here's your invite link, same as before."
+        : "Bangalore opens first, in batches. Bring the people you'd "
+          + "<em>actually</em> go with — three of them moves you into the first one.";
+    }
 
     if (shareLink) shareLink.textContent = url.replace(/^https:\/\//, '');
     if (shareCount) {
@@ -888,6 +904,14 @@
     } catch (err) { /* corrupt cache — just show the form */ }
   }
 
+  // A referral code on the URL means someone specific sent this visitor here.
+  // No identity shown — the referrer's email is private, and RLS blocks reading
+  // it back out anyway — just a nudge that this wasn't a random link.
+  var refnote = document.getElementById('refnote');
+  if (refnote && !mine && readStore(REF_KEY)) {
+    refnote.hidden = false;
+  }
+
   if (shareCopy && shareLink) {
     shareCopy.addEventListener('click', function () {
       var text = 'https://' + shareLink.textContent.trim();
@@ -902,6 +926,59 @@
       }
     });
   }
+
+  /* ---------- Where a signup actually goes ----------
+     `functions/api/waitlist.js` is a Cloudflare Pages Function and this site is
+     served by GitHub Pages, which executes no server code — so /api/waitlist
+     404s in production and every signup made on the live site was lost. Nothing
+     on the page said so: the fetch failed, the error note read "couldn't reach
+     the lighthouse", and it looked like a network blip rather than a form with
+     no backend at all.
+
+     Pick ONE below by uncommenting it, then redeploy. All three speak the same
+     contract — POST a JSON body, get back { code, referrals, goal } — because
+     that response is what renders the referral panel, so a fire-and-forget
+     endpoint (a plain Google Form post, say) cannot be substituted here without
+     the share loop losing the code it is built to show.
+
+     Setup for the two static-host options lives next to this file:
+       scripts/waitlist-sheet.gs     — Google Apps Script + a Sheet
+       scripts/waitlist-supabase.sql — Supabase (real Postgres, RLS-locked) */
+
+  var WAITLIST = {
+    // (a) CLOUDFLARE PAGES — correct only if the site moves back to CF Pages.
+    // url: '/api/waitlist',
+    // headers: { 'Content-Type': 'application/json' },
+    // body: function (email, role, ref) {
+    //   return { email: email, role: role, ref: ref };
+    // }
+
+    // (b) GOOGLE APPS SCRIPT → SHEET. Paste the /exec URL from the deployment.
+    //     text/plain is deliberate: it keeps the POST inside the CORS "simple
+    //     request" rules so no preflight is sent. Apps Script cannot answer a
+    //     preflight OPTIONS, so application/json fails before reaching the code.
+    // url: 'https://script.google.com/macros/s/PASTE_DEPLOYMENT_ID/exec',
+    // headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    // body: function (email, role, ref) {
+    //   return { email: email, role: role, ref: ref, ua: navigator.userAgent };
+    // }
+
+    // (c) SUPABASE RPC. The publishable key below is meant to ship in client
+    //     code — the table has RLS on with no policy, so it can only call
+    //     join_waitlist() and can never read the list. Verified, not assumed:
+    //     GET /rest/v1/waitlist with this key returns 401 permission denied.
+    //     Never put the service_role (or legacy `service_key`) here; that one
+    //     bypasses RLS entirely and would hand the whole list to anyone.
+    url: 'https://axsgjzhdlhlkpkydqxbp.supabase.co/rest/v1/rpc/join_waitlist',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: 'sb_publishable_h2budOgii7_5LbHnFQhOmQ_E42LaD2G',
+      Authorization: 'Bearer sb_publishable_h2budOgii7_5LbHnFQhOmQ_E42LaD2G'
+    },
+    body: function (email, role, ref) {
+      return { p_email: email, p_role: role, p_ref: ref, p_ua: navigator.userAgent };
+    }
+  };
 
   document.querySelectorAll('.waitlist').forEach(function (form) {
     var input = form.querySelector('.waitlist__input');
@@ -960,14 +1037,23 @@
         return;
       }
 
-      fetch('/api/waitlist', {
+      fetch(WAITLIST.url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, role: role, ref: readStore(REF_KEY) || '' })
+        headers: WAITLIST.headers,
+        body: JSON.stringify(WAITLIST.body(email, role, readStore(REF_KEY) || ''))
       }).then(function (res) {
         if (!res.ok) throw new Error('bad status ' + res.status);
         return res.json();
-      }).then(succeed).catch(function () {
+      }).then(function (data) {
+        // Cloudflare signalled a rejection with the HTTP status. The two static
+        // backends cannot always do that — an Apps Script web app answers 200
+        // even when it refused — so the body is the authority. Without this a
+        // rejected signup renders the share panel with an empty referral code.
+        if (!data || data.ok === false || !data.code) {
+          throw new Error(data && data.error ? data.error : 'no_code');
+        }
+        succeed(data);
+      }).catch(function () {
         setState('err');
         if (noteErr) noteErr.textContent = 'COULDN’T REACH THE LIGHTHOUSE — TRY AGAIN';
         if (btnLabel) btnLabel.textContent = 'Get early access';
