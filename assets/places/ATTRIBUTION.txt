@@ -1,0 +1,88 @@
+# Place thumbs for landing device replicas
+# Catalog Commons heroes, 500px (the size Wikimedia currently serves).
+
+skandagiri.jpg
+  File: Cloud_over_Skandagiri_hills.jpg
+  Aranyaparva / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Cloud_over_Skandagiri_hills.jpg
+
+makalidurga.jpg
+  File: Makalidurga.jpg
+  Shyamal / Wikimedia Commons / CC BY-SA 3.0
+  https://commons.wikimedia.org/wiki/File:Makalidurga.jpg
+
+savandurga.jpg
+  File: Savandurga_Hill_01.jpg
+  Pravega / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Savandurga_Hill_01.jpg
+
+ombeach.jpg
+  File: Om_Beach_Gokarna_(233946249).jpeg
+  Abhinav Gupta / Wikimedia Commons / CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Om_Beach_Gokarna_(233946249).jpeg
+
+rayakottai.jpg
+  File: Dilapidated_Structure_-1_,_Tip_Sultan_Fort,_Rayakottai,_Tamilnadu,_India.JPG
+  Venkasub / Wikimedia Commons / CC BY-SA 3.0
+  https://commons.wikimedia.org/wiki/File:Dilapidated_Structure_-1_,_Tip_Sultan_Fort,_Rayakottai,_Tamilnadu,_India.JPG
+
+kapu.jpg
+  File: Kapu_Beach_Lighthouse_.jpg
+  KshitizBathwal / Skyscape Photography / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Kapu_Beach_Lighthouse_.jpg
+
+turahalli.jpg
+  File: Cycling_in_Turahalli_Karnataka_India.jpg
+  Shreekanth Ramasamy / Wikimedia Commons / CC0
+  https://commons.wikimedia.org/wiki/File:Cycling_in_Turahalli_Karnataka_India.jpg
+
+manchanabele.jpg
+  File: Manchanabele_dam_backwaters.jpg
+  Subhashish Panigrahi / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Manchanabele_dam_backwaters.jpg
+
+devarayanadurga.jpg
+  File: Devarayanadurga_area,_July_2013.jpg
+  Sunnya343 / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Devarayanadurga_area,_July_2013.jpg
+
+gundamagere.jpg
+  File: Gundamagere_Lake.jpg
+  SWE-Yaatrik / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Gundamagere_Lake.jpg
+
+ganalu.jpg
+  File: Ganalu_Falls.jpg
+  SWE-Yaatrik / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Ganalu_Falls.jpg
+
+jogimatti.jpg
+  File: Enjoying_the_Sunset_@_Jogimatti_Forest_Peak_(25502506278).jpg
+  Hari K Patibanda / Wikimedia Commons / CC BY 2.0
+  https://commons.wikimedia.org/wiki/File:Enjoying_the_Sunset_@_Jogimatti_Forest_Peak_(25502506278).jpg
+
+muthathi.jpg
+  File: Bank_of_River_Kaveri_at_Muthathi,_Karnataka.jpg
+  Nagaraj Sinhasan / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Bank_of_River_Kaveri_at_Muthathi,_Karnataka.jpg
+
+alangayam.jpg
+  File: Javadi_Hills_in_Tamil_Nadu.jpg
+  Shyamal / Wikimedia Commons / CC BY 3.0
+  Javadi Hills on the Polur route — the range Alangayam Ghat climbs (no Commons file names the ghat itself).
+  https://commons.wikimedia.org/wiki/File:Javadi_Hills_in_Tamil_Nadu.jpg
+
+kinnakorai.jpg
+  File: Kinnakorai_from_Manjur.jpg
+  L. Shyamal / Wikimedia Commons / CC BY-SA 3.0
+  https://commons.wikimedia.org/wiki/File:Kinnakorai_from_Manjur.jpg
+
+jatinga.jpg
+  File: Jatinga_Rameshwara_Ashoka_Minor_Rock.jpg
+  Partner / Wikimedia Commons / CC BY-SA 3.0
+  https://commons.wikimedia.org/wiki/File:Jatinga_Rameshwara_Ashoka_Minor_Rock.jpg
+
+kakkadampoyil.jpg
+  File: Kakkadampoyil_Kerala_Western_Ghats_DSC09436.jpg
+  Manojk / Wikimedia Commons / CC BY-SA 4.0
+  https://commons.wikimedia.org/wiki/File:Kakkadampoyil_Kerala_Western_Ghats_DSC09436.jpg

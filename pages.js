@@ -1,6 +1,6 @@
 /* LIGHTHOUSE content pages — About/Contact/Support/Terms.
-   A trimmed cousin of main.js: same brand chrome (nav, particle field,
-   click sonar, magnetic buttons), no Lenis/GSAP/dive — these pages are
+   A trimmed cousin of main.js: same brand chrome (nav, CSS beam,
+   click sonar, magnetic buttons), no Lenis — these pages are
    read, not performed, so they should load fast and scroll natively. */
 (function () {
   'use strict';
@@ -25,63 +25,11 @@
     }, { passive: true });
   }
 
-  /* ---------- Full-page mouse-reactive particle field ---------- */
-  var bgCanvas = document.getElementById('bg-canvas');
-  if (bgCanvas && !reduced) {
-    var bctx = bgCanvas.getContext('2d');
-    var particles = [];
-    var mouse = { x: -1000, y: -1000 };
-    var lowTier = (navigator.deviceMemory && navigator.deviceMemory <= 3) || innerWidth < 400;
-
-    function resizeBg() {
-      bgCanvas.width = innerWidth;
-      bgCanvas.height = innerHeight;
-      seedParticles();
-    }
-    function Particle() {
-      this.x = Math.random() * bgCanvas.width;
-      this.y = Math.random() * bgCanvas.height;
-      this.size = Math.random() * 1.5 + 0.5;
-      this.baseX = this.x; this.baseY = this.y;
-      this.density = Math.random() * 30 + 1;
-      this.opacity = Math.random() * 0.5 + 0.15;
-      this.isAccent = Math.random() > 0.95;
-      this.driftX = (Math.random() - 0.5) * 0.4;
-      this.driftY = (Math.random() - 0.5) * 0.4;
-    }
-    Particle.prototype.draw = function () {
-      bctx.fillStyle = this.isAccent ? 'rgba(93,202,165,' + this.opacity + ')' : 'rgba(255,255,255,' + this.opacity + ')';
-      bctx.beginPath(); bctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bctx.fill();
-    };
-    Particle.prototype.update = function () {
-      this.baseX += this.driftX; this.baseY += this.driftY;
-      if (this.baseX > bgCanvas.width) this.baseX = 0; if (this.baseX < 0) this.baseX = bgCanvas.width;
-      if (this.baseY > bgCanvas.height) this.baseY = 0; if (this.baseY < 0) this.baseY = bgCanvas.height;
-      var dx = mouse.x - this.x, dy = mouse.y - this.y;
-      var dist = Math.sqrt(dx * dx + dy * dy), maxDist = 150;
-      if (dist < maxDist) {
-        var force = (maxDist - dist) / maxDist;
-        var fx = (dx / dist) * force * this.density, fy = (dy / dist) * force * this.density;
-        this.x -= isNaN(fx) ? 0 : fx; this.y -= isNaN(fy) ? 0 : fy;
-      } else {
-        this.x -= (this.x - this.baseX) / 20; this.y -= (this.y - this.baseY) / 20;
-      }
-      this.draw();
-    };
-    function seedParticles() {
-      particles = [];
-      var count = Math.min((bgCanvas.width * bgCanvas.height) / 8000, lowTier ? 60 : 260);
-      for (var i = 0; i < count; i++) particles.push(new Particle());
-    }
-    function animateBg() {
-      bctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      for (var i = 0; i < particles.length; i++) particles[i].update();
-      requestAnimationFrame(animateBg);
-    }
-    document.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-    document.addEventListener('mouseleave', function () { mouse.x = -1000; mouse.y = -1000; });
-    resizeBg(); animateBg();
-    window.addEventListener('resize', resizeBg);
+  /* ---------- CSS beam tracks scroll (no canvas) ---------- */
+  if (!reduced) {
+    window.addEventListener('scroll', function () {
+      document.documentElement.style.setProperty('--beam-rot', (window.scrollY * 0.04).toFixed(2) + 'deg');
+    }, { passive: true });
   }
 
   /* ---------- Click sonar ---------- */

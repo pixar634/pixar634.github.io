@@ -1,28 +1,42 @@
-/* LIGHTHOUSE landing — Lenis + GSAP/ScrollTrigger scroll engine,
-   particle field, parallax tilt, scroll-jacked dive, scout autoplay demo. */
+/* LIGHTHOUSE landing — editorial type, CSS beam, Lenis. No canvas. */
 (function () {
   'use strict';
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia('(pointer: fine)').matches;
   var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  var hasGSAP = typeof window.gsap !== 'undefined' && typeof window.ScrollTrigger !== 'undefined';
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
 
-  if (hasGSAP) gsap.registerPlugin(ScrollTrigger);
-
-  var scrollProgress = 0;
+  var scrollYNow = 0;
   var nav = document.getElementById('nav');
   var lenis = null;
+  var lastY = 0;
+  var vel = 0;
+  var typeBlur = 0;
 
-  /* ---------- 1. Lenis smooth scroll + nav hide/show ---------- */
+  function onScroll(y, limit) {
+    scrollYNow = y;
+    if (nav) {
+      nav.classList.toggle('nav--shrunk', y > 24);
+      if (y > 180) {
+        nav.style.transform = nav._dir === 1 ? 'translateY(-140%)' : 'translateY(0)';
+      } else {
+        nav.style.transform = 'translateY(0)';
+      }
+    }
+    document.documentElement.style.setProperty('--beam-rot', (y * 0.045).toFixed(2) + 'deg');
+  }
+
   function initScroll() {
     if (reduced || typeof window.Lenis === 'undefined') {
-      // native scroll — still track progress for the beacon beam + nav shrink
+      var last = 0;
       window.addEventListener('scroll', function () {
+        var y = window.scrollY;
+        vel = y - last;
+        if (nav) nav._dir = y > last ? 1 : -1;
+        last = y;
         var limit = document.documentElement.scrollHeight - innerHeight;
-        scrollProgress = limit > 0 ? clamp(scrollY / limit, 0, 1) : 0;
-        if (nav) nav.classList.toggle('nav--shrunk', scrollY > 40);
+        onScroll(y, limit);
       }, { passive: true });
       return;
     }
@@ -30,29 +44,17 @@
     lenis = new Lenis({
       duration: 1.2,
       easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
-      smooth: true,
-      touchMultiplier: 1.5
+      smoothWheel: true,
+      touchMultiplier: 1.35
     });
 
-    if (hasGSAP) {
-      gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
-      gsap.ticker.lagSmoothing(0);
-    } else {
-      var raf = function (time) { lenis.raf(time); requestAnimationFrame(raf); };
-      requestAnimationFrame(raf);
-    }
+    var raf = function (time) { lenis.raf(time); requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
 
     lenis.on('scroll', function (e) {
-      if (hasGSAP) ScrollTrigger.update();
-      scrollProgress = e.limit > 0 ? clamp(e.scroll / e.limit, 0, 1) : 0;
-      if (nav) {
-        nav.classList.toggle('nav--shrunk', e.scroll > 40);
-        if (e.scroll > 200) {
-          nav.style.transform = e.direction === 1 ? 'translateY(-140%)' : 'translateY(0)';
-        } else {
-          nav.style.transform = 'translateY(0)';
-        }
-      }
+      vel = e.velocity || 0;
+      if (nav) nav._dir = e.direction;
+      onScroll(e.scroll, e.limit);
     });
   }
   initScroll();
@@ -60,513 +62,720 @@
   document.querySelectorAll('[data-scrollto]').forEach(function (a) {
     a.addEventListener('click', function (e) {
       e.preventDefault();
-      var target = document.querySelector(a.getAttribute('href'));
+      var href = a.getAttribute('href');
+      var target = document.querySelector(href);
       if (!target) return;
-      if (lenis) lenis.scrollTo(target, { offset: -140 });
-      else target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (a.getAttribute('href') === '#join') {
+      if (lenis) lenis.scrollTo(target, { offset: href === '#join' ? -80 : -40 });
+      else target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      if (href === '#join') {
         var input = document.getElementById('email');
-        if (input) setTimeout(function () { input.focus({ preventScroll: true }); }, 900);
+        // offsetParent is null once the form is hidden (already joined) — focusing
+        // an invisible field would steal focus from the share panel sitting there.
+        if (input && input.offsetParent !== null) {
+          setTimeout(function () { input.focus({ preventScroll: true }); }, 700);
+        }
       }
     });
   });
 
-  /* ---------- 2. Hero entrance — a cinematic cascade instead of one flat
-     fade-up: the eyebrow leads, then each headline gets pulled up out of
-     its own mask (the .split-line/.split-line__inner pairing exists for
-     exactly this — overflow:hidden on the outer span, the text sliding up
-     from below on the inner one), then the rest of the copy rises in with
-     enough overlap to read as one continuous motion, not five separate
-     ones. ---------- */
-  if (hasGSAP && !reduced) {
-    var heroTl = gsap.timeline();
-    heroTl
-      .fromTo('.hero__eyebrow', { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' })
-      .set('.hero__title', { opacity: 1 })
-      .fromTo('.split-line__inner', { yPercent: 112 }, { yPercent: 0, duration: 1.15, stagger: 0.14, ease: 'power4.out' }, '<0.15')
-      .fromTo('.hero__sub, .hero__usps, .waitlist, .hero__visual',
-        { y: 26, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.9, stagger: 0.12, ease: 'power3.out' },
-        '-=0.75');
-  } else {
-    document.querySelectorAll('.reveal-up').forEach(function (el) { el.style.opacity = 1; });
+  /* ---------- Velocity blur on display type ---------- */
+  var blurTargets = document.querySelectorAll('.display');
+  function tickBlur() {
+    if (reduced) return;
+    var target = clamp(Math.abs(vel) * 0.045, 0, 10);
+    typeBlur += (target - typeBlur) * 0.18;
+    var px = typeBlur < 0.08 ? 0 : typeBlur;
+    var val = px.toFixed(2) + 'px';
+    for (var i = 0; i < blurTargets.length; i++) {
+      blurTargets[i].style.setProperty('--type-blur', val);
+    }
+    vel *= 0.92;
+    requestAnimationFrame(tickBlur);
+  }
+  if (!reduced) requestAnimationFrame(tickBlur);
+
+  /* ---------- Sticky three-gesture scene ---------- */
+  var answers = document.querySelector('.answers');
+  var lines = document.querySelectorAll('.answers__line');
+  var ticks = document.querySelectorAll('.answers__ticks i');
+  var activeAnswer = 0;
+
+  var vizSets = document.querySelectorAll('.answers__viz .vizset');
+  var vizLayers = document.querySelectorAll('.answers__viz .viz');
+
+  function setAnswer(i) {
+    if (i === activeAnswer) return;
+    var prev = activeAnswer;
+    activeAnswer = i;
+    lines.forEach(function (el, n) {
+      el.classList.toggle('is-on', n === i);
+      el.classList.toggle('is-leaving', n === prev && n !== i);
+      el.setAttribute('aria-hidden', n === i ? 'false' : 'true');
+    });
+    ticks.forEach(function (el, n) { el.classList.toggle('is-on', n === i); });
+
+    // Only the visible pair is allowed to decode. Three looping clips running at
+    // once is real battery on a mid-range Android, which is the benchmark device
+    // for this audience.
+    vizSets.forEach(function (set, n) {
+      var on = n === i;
+      set.classList.toggle('is-on', on);
+      set.querySelectorAll('video').forEach(function (v) {
+        if (on) {
+          if (v.preload === 'none') v.preload = 'auto';
+          var play = v.play();
+          if (play && play.catch) play.catch(function () { /* autoplay blocked */ });
+        } else {
+          v.pause();
+        }
+      });
+    });
   }
 
-  // shared with the beacon (section 4) so background dust can react to the
-  // sweeping beam even though the two live on separate canvases
-  var beacon = { x: 0, y: 0, angle: -Math.PI / 3, spread: 0.16, len: 0, active: false };
+  function updateAnswers() {
+    if (!answers || reduced) return;
+    var rect = answers.getBoundingClientRect();
+    var span = rect.height - innerHeight;
+    if (span <= 0) return;
+    var p = clamp(-rect.top / span, 0, 0.999);
+    setAnswer(Math.min(2, Math.floor(p * 3)));
 
-  /* ---------- 3. Full-page mouse-reactive particle field ---------- */
-  var bgCanvas = document.getElementById('bg-canvas');
-  if (bgCanvas && !reduced) {
-    var bctx = bgCanvas.getContext('2d');
-    var particles = [];
-    var mouse = { x: -1000, y: -1000 };
-    var lowTier = (navigator.deviceMemory && navigator.deviceMemory <= 3) || innerWidth < 400;
+    // Parallax: each layer drifts by its own depth across the pinned scroll, so
+    // the pair separates as you move rather than travelling as one block.
+    var local = (p * 3) % 1;                 // 0..1 within the current panel
+    vizLayers.forEach(function (v) {
+      var depth = parseFloat(v.dataset.depth || '0.2');
+      var shift = (local - 0.5) * depth * 190;
+      v.style.transform = 'translate3d(0,' + shift.toFixed(2) + 'px,0)';
+    });
+  }
 
-    function resizeBg() {
-      bgCanvas.width = innerWidth;
-      bgCanvas.height = innerHeight;
-      seedParticles();
-    }
+  // setAnswer() only fires on a *change*, so panel 0's pair would never be told
+  // to play. Start it the first time the section is actually on screen — not at
+  // page load, so three clips don't decode behind the hero.
+  if (vizSets.length && !reduced && 'IntersectionObserver' in window) {
+    var vizIo = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        vizSets[activeAnswer].querySelectorAll('video').forEach(function (v) {
+          v.preload = 'auto';
+          var play = v.play();
+          if (play && play.catch) play.catch(function () {});
+        });
+        obs.disconnect();
+      });
+    }, { rootMargin: '200px' });
+    if (answers) vizIo.observe(answers);
+  }
 
-    function Particle() {
-      this.x = Math.random() * bgCanvas.width;
-      this.y = Math.random() * bgCanvas.height;
-      this.size = Math.random() * 1.5 + 0.5;
-      this.baseX = this.x;
-      this.baseY = this.y;
-      this.density = Math.random() * 30 + 1;
-      this.opacity = Math.random() * 0.5 + 0.15;
-      this.isAccent = Math.random() > 0.95;
-      // "location" motes — dormant dust that lights up green-neon the instant
-      // the rotating beacon beam sweeps across them, like a radar pass
-      // revealing a hidden viewpoint, then fades as an afterglow
-      this.isLocation = !lowTier && Math.random() > 0.88;
-      this.glow = 0;
-      this.driftX = (Math.random() - 0.5) * 0.4;
-      this.driftY = (Math.random() - 0.5) * 0.4;
-    }
-    Particle.prototype.draw = function (now) {
-      if (this.isLocation) { this.drawLocation(now); return; }
-      bctx.fillStyle = this.isAccent ? 'rgba(93,202,165,' + this.opacity + ')' : 'rgba(255,255,255,' + this.opacity + ')';
-      bctx.beginPath();
-      bctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      bctx.fill();
-    };
-    Particle.prototype.drawLocation = function () {
-      var inBeam = false;
-      if (beacon.active && scrollProgress < 0.12) {
-        var dx = this.x - beacon.x, dy = this.y - beacon.y;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < beacon.len * 0.6) {
-          var ang = Math.atan2(dy, dx);
-          var diff = Math.atan2(Math.sin(ang - beacon.angle), Math.cos(ang - beacon.angle));
-          inBeam = Math.abs(diff) < beacon.spread * 1.3;
-        }
-      }
-      // fast catch-light as the beam sweeps on, slow phosphor-style afterglow
-      // as it sweeps past — traces a comet tail of neon around the rotation
-      this.glow += inBeam ? (1 - this.glow) * 0.45 : -this.glow * 0.07;
+  /* ---------- Type river is CSS-infinite; no scroll hitch ---------- */
 
-      var base = this.opacity * 0.6;
-      if (this.glow < 0.03) {
-        bctx.fillStyle = 'rgba(93,202,165,' + base.toFixed(3) + ')';
-        bctx.beginPath();
-        bctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        bctx.fill();
+  /* ---------- Clip-up on pitch + close ---------- */
+  var clipTargets = document.querySelectorAll('.close, .pitch');
+  if (reduced) {
+    clipTargets.forEach(function (el) { el.classList.add('is-in'); });
+  } else if ('IntersectionObserver' in window) {
+    var clipIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) e.target.classList.add('is-in');
+      });
+    }, { threshold: 0.28 });
+    clipTargets.forEach(function (el) { clipIo.observe(el); });
+  }
+
+  /* ---------- Return Clock: type cycle + Search replica ---------- */
+  /* 2200ms beat = 66 frames @ 30fps. Same numbers as Remotion `ReturnClock`. */
+  var CLOCK_BEAT_MS = 2200;
+  var CLOCK_FPS = 30;
+  var CLOCK_BEAT = 66;
+  var CLOCK_MARK = { tapTrigger: 8, pickerOpen: 12, tapChip: 30, pickerClose: 38, countIn: 50, tapLen: 16 };
+  var CLOCK_PRESETS = [
+    { id: "dark", trigger: "back by 6:45pm", unbounded: false },
+    { id: "midnight", trigger: "back by midnight", unbounded: false },
+    { id: "overnight", trigger: "overnight", unbounded: false },
+    { id: "weekend", trigger: "whole weekend", unbounded: true }
+  ];
+  /* Catalog car.duration_min from Bangalore, capped at MAP_PLACE_LIMIT 40 —
+     the same bound SearchPage's collection cards use. */
+  var CLOCK_CARDS = [
+    { title: "Breakfast Runs", blurb: "Out by six, eating by eight, home before it gets hot.", accent: "#E0A458", img: "/assets/places/turahalli.jpg", n: [15, 32, 40, 40] },
+    { title: "Tarmac Therapy", blurb: "Roads worth driving for their own sake.", accent: "#E0A458", img: "/assets/places/manchanabele.jpg", n: [3, 3, 13, 16] },
+    { title: "Corner Craving", blurb: "Ghat sections with enough bends to justify the fuel.", accent: "#E0A458", img: "/assets/places/devarayanadurga.jpg", n: [1, 2, 11, 11] },
+    { title: "Wild Lakeside", blurb: "Backwaters and lake bunds worth three slow hours.", accent: "#4FB0C6", img: "/assets/places/gundamagere.jpg", n: [13, 18, 40, 40] },
+    { title: "Secret Cascades", blurb: "Falls nobody has packaged yet. Most of them need rain.", accent: "#7FE3D6", img: "/assets/places/ganalu.jpg", n: [1, 2, 25, 29] },
+    { title: "Summit Treks", blurb: "Betta climbs that pay out. Start before the rock bakes.", accent: "#8FA6C4", img: "/assets/places/skandagiri.jpg", n: [5, 9, 40, 40] }
+  ];
+
+  var clockItems = document.querySelectorAll(".clocklist li");
+  var clockApp = document.getElementById("search-app");
+  var clockBasis = document.getElementById("clock-basis");
+  var clockTrigger = document.getElementById("clock-trigger");
+  var clockPicker = document.getElementById("clock-picker");
+  var clockCardsEl = document.getElementById("clock-cards");
+  var clockTap = document.getElementById("clock-tap");
+  var clockChips = clockPicker ? clockPicker.querySelectorAll(".search-app__chip") : [];
+  var clockRaf = 0;
+  var clockStart = 0;
+  var clockCountIdx = -1;
+  var clockBasisIdx = -1;
+  var clockShimmering = false;
+  var clockTapAt = -1;
+
+  function clockCountLabel(n) {
+    if (!n) return "Nothing in range yet";
+    return n + (n === 1 ? " place" : " places");
+  }
+
+  function clockSentence(idx) {
+    var p = CLOCK_PRESETS[idx];
+    var trig = '<button type="button" class="search-app__trigger" id="clock-trigger" tabindex="-1">' + p.trigger + "</button>";
+    if (p.unbounded) return "Counting everything in range — " + trig + ".";
+    return "Counting what you can reach and still be " + trig + ".";
+  }
+
+  function paintClockCounts(idx, mode) {
+    if (!clockCardsEl) return;
+    if (mode !== "shimmer") clockCountIdx = idx;
+    else clockCountIdx = -2;
+    var nodes = clockCardsEl.querySelectorAll(".search-card");
+    nodes.forEach(function (card, i) {
+      var hold = card.querySelector(".search-card__n");
+      if (!hold) return;
+      var label = clockCountLabel(CLOCK_CARDS[i].n[idx]);
+      if (mode === "shimmer") {
+        hold.classList.remove("is-in");
+        hold.innerHTML = '<i class="search-card__shimmer" aria-hidden="true"></i>';
         return;
       }
-      var lit = this.glow;
-      var r = this.size + lit * 1.6;
-      bctx.beginPath();
-      bctx.arc(this.x, this.y, r, 0, Math.PI * 2);
-      bctx.fillStyle = 'rgba(93,202,165,' + Math.min(1, base + lit).toFixed(3) + ')';
-      bctx.shadowColor = 'rgba(93,202,165,0.9)';
-      bctx.shadowBlur = 12 * lit;
-      bctx.fill();
-      bctx.shadowBlur = 0;
-      if (lit > 0.25) {
-        bctx.beginPath();
-        bctx.arc(this.x, this.y, r + lit * 9, 0, Math.PI * 2);
-        bctx.strokeStyle = 'rgba(93,202,165,' + (lit * 0.5).toFixed(3) + ')';
-        bctx.lineWidth = 1;
-        bctx.stroke();
-      }
-    };
-    Particle.prototype.update = function (now) {
-      this.baseX += this.driftX; this.baseY += this.driftY;
-      if (this.baseX > bgCanvas.width) this.baseX = 0;
-      if (this.baseX < 0) this.baseX = bgCanvas.width;
-      if (this.baseY > bgCanvas.height) this.baseY = 0;
-      if (this.baseY < 0) this.baseY = bgCanvas.height;
-
-      var dx = mouse.x - this.x, dy = mouse.y - this.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      var maxDist = 150;
-      if (dist < maxDist) {
-        var force = (maxDist - dist) / maxDist;
-        var fx = (dx / dist) * force * this.density;
-        var fy = (dy / dist) * force * this.density;
-        this.x -= isNaN(fx) ? 0 : fx;
-        this.y -= isNaN(fy) ? 0 : fy;
+      hold.classList.remove("is-in");
+      hold.innerHTML = "<span>" + label + "</span>";
+      hold.style.color = CLOCK_CARDS[i].accent;
+      if (mode === "instant") {
+        hold.classList.add("is-in");
       } else {
-        this.x -= (this.x - this.baseX) / 20;
-        this.y -= (this.y - this.baseY) / 20;
+        requestAnimationFrame(function () { hold.classList.add("is-in"); });
       }
-      this.draw(now);
-    };
-
-    function seedParticles() {
-      particles = [];
-      var count = (bgCanvas.width * bgCanvas.height) / 8000;
-      count = Math.min(count, lowTier ? 60 : 260);
-      for (var i = 0; i < count; i++) particles.push(new Particle());
-    }
-
-    function animateBg(now) {
-      bctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      for (var i = 0; i < particles.length; i++) particles[i].update(now);
-      requestAnimationFrame(animateBg);
-    }
-
-    document.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-    document.addEventListener('mouseleave', function () { mouse.x = -1000; mouse.y = -1000; });
-
-    resizeBg();
-    requestAnimationFrame(animateBg);
-    window.addEventListener('resize', resizeBg);
+    });
   }
 
-  /* ---------- 4. The beacon — beam sweep + ambient sonar (hero only) ---------- */
-  var canvas = document.getElementById('beacon');
-  if (canvas) {
-    var ctx = canvas.getContext('2d');
-    var DPR = Math.min(window.devicePixelRatio || 1, 1.75);
-    var W = 0, H = 0, rings = [], lastRing = 0;
-    var beamAngle = -Math.PI / 3;
-    var running = true;
+  function setClockTap(el) {
+    if (!clockTap || !clockApp || !el) {
+      if (clockTap) clockTap.hidden = true;
+      return;
+    }
+    var host = clockApp.getBoundingClientRect();
+    var box = el.getBoundingClientRect();
+    clockTap.style.left = (box.left - host.left + box.width / 2) + "px";
+    clockTap.style.top = (box.top - host.top + box.height / 2) + "px";
+    clockTap.hidden = false;
+    clockTap.classList.remove("is-fire");
+    void clockTap.offsetWidth;
+    clockTap.classList.add("is-fire");
+  }
 
-    // continuous 360° rotation, but the tower sits near the frame's corner
-    // (bx=0.82W, by=0.94H) so only the up-and-left quarter of the circle
-    // (-180°..-90°) actually travels far enough across the canvas to read as
-    // a sweep — the rest just hugs the corner, unseen. So the rotation isn't
-    // constant-speed: it sweeps that visible quarter slowly and deliberately
-    // (and starts there immediately at load, so the first thing a visitor
-    // sees is the beam crossing the screen), then whips through the hidden
-    // three-quarters quickly to come back around.
-    var SWEEP_FROM = -Math.PI, SWEEP_TO = -Math.PI / 2;
-    var SWEEP_MS = 5000, REST_MS = 4000, CYCLE_MS = SWEEP_MS + REST_MS;
+  function paintClockFrame(frame) {
+    var total = CLOCK_BEAT * CLOCK_PRESETS.length;
+    var t = ((frame % total) + total) % total;
+    var idx = Math.floor(t / CLOCK_BEAT);
+    var local = t % CLOCK_BEAT;
+    var prev = (idx + CLOCK_PRESETS.length - 1) % CLOCK_PRESETS.length;
 
-    // no map grid — just a handful of fixed beacons, dormant until the
-    // rotating beam sweeps across them. Each one flares mint and rings once
-    // caught, then fades on a slow phosphor-style afterglow: one clean sweep,
-    // a few lights waking up as it passes.
-    var MAP_MARKERS = [
-      { x: 0.18, y: 0.34, glow: 0 }, { x: 0.42, y: 0.56, glow: 0 }, { x: 0.63, y: 0.24, glow: 0 },
-      { x: 0.30, y: 0.74, glow: 0 }, { x: 0.53, y: 0.68, glow: 0 }, { x: 0.74, y: 0.42, glow: 0 }
-    ];
-    var drawBeacons = function (t, bx, by, angle, spread, len) {
-      for (var i = 0; i < MAP_MARKERS.length; i++) {
-        var m = MAP_MARKERS[i];
-        var mx = m.x * W, my = m.y * H;
-        var dx = mx - bx, dy = my - by;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        var inBeam = false;
-        if (dist < len * 0.6) {
-          var ang = Math.atan2(dy, dx);
-          var diff = Math.atan2(Math.sin(ang - angle), Math.cos(ang - angle));
-          inBeam = Math.abs(diff) < spread * 1.3;
-        }
-        m.glow += inBeam ? (1 - m.glow) * 0.45 : -m.glow * 0.05;
+    clockItems.forEach(function (el, n) { el.classList.toggle("is-on", n === idx); });
 
-        var idle = 0.3 + 0.15 * Math.sin(t / 1500 + i * 1.7);
-        var lit = Math.max(idle, m.glow);
-        var r = 2 + lit * 2.5;
-        ctx.beginPath();
-        ctx.arc(mx, my, r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(93,202,165,' + Math.min(1, 0.3 + lit * 0.7).toFixed(3) + ')';
-        ctx.shadowColor = 'rgba(93,202,165,0.9)';
-        ctx.shadowBlur = 6 + lit * 14;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        if (m.glow > 0.3) {
-          ctx.beginPath();
-          ctx.arc(mx, my, r + m.glow * 10, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(93,202,165,' + (m.glow * 0.5).toFixed(3) + ')';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
+    if (!clockApp) return;
+
+    var pickerOpen = local >= CLOCK_MARK.pickerOpen && local < CLOCK_MARK.pickerClose;
+    clockApp.classList.toggle("is-picking", pickerOpen);
+    if (clockPicker) clockPicker.classList.toggle("is-open", pickerOpen);
+
+    clockChips.forEach(function (chip, n) {
+      var selected = local < CLOCK_MARK.tapChip ? prev : idx;
+      chip.classList.toggle("is-on", n === selected);
+    });
+
+    var shown = local < CLOCK_MARK.countIn ? prev : idx;
+    if (local >= CLOCK_MARK.tapChip && local < CLOCK_MARK.countIn) {
+      if (!clockShimmering) {
+        clockShimmering = true;
+        paintClockCounts(idx, "shimmer");
       }
-    };
-
-    // the beam has to originate from *something* — on tablet/mobile that's
-    // the pin glowing on the phone's own mini-map (the beacon IS that pin,
-    // its light spilling out into the night); on desktop there's no phone to
-    // anchor to, so it holds the old corner placement as ambient light
-    var originX = 0, originY = 0;
-    var heroVisualEl = document.querySelector('.hero__visual');
-    var heroScreenEl = document.getElementById('heroScreen');
-    var updateOrigin = function () {
-      var visualShown = heroVisualEl && getComputedStyle(heroVisualEl).display !== 'none';
-      if (visualShown && heroScreenEl) {
-        var pr = heroScreenEl.getBoundingClientRect();
-        var cr = canvas.getBoundingClientRect();
-        originX = pr.left - cr.left + pr.width * 0.55;
-        originY = pr.top - cr.top + pr.height * 0.42;
-      } else {
-        originX = W * 0.82;
-        originY = H * 0.94;
-      }
-    };
-
-    var sizeCanvas = function () {
-      W = canvas.clientWidth; H = canvas.clientHeight;
-      canvas.width = W * DPR; canvas.height = H * DPR;
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      updateOrigin();
-    };
-    sizeCanvas();
-    window.addEventListener('resize', sizeCanvas);
-    window.addEventListener('load', updateOrigin); // fonts/images can shift layout after first paint
-
-    var frame = function (t) {
-      if (!running) return;
-      ctx.clearRect(0, 0, W, H);
-      var bx = originX, by = originY;
-
-      var phase = t % CYCLE_MS;
-      if (phase < SWEEP_MS) {
-        var sp = phase / SWEEP_MS;
-        var eased = sp < 0.5 ? 2 * sp * sp : 1 - Math.pow(-2 * sp + 2, 2) / 2;
-        beamAngle = SWEEP_FROM + eased * (SWEEP_TO - SWEEP_FROM);
-      } else {
-        var rp = (phase - SWEEP_MS) / REST_MS;
-        beamAngle = SWEEP_TO + rp * (Math.PI * 2 - (SWEEP_TO - SWEEP_FROM));
-      }
-      var len = Math.max(W, H) * 1.4, spread = 0.16;
-      beacon.x = bx; beacon.y = by; beacon.angle = beamAngle; beacon.spread = spread; beacon.len = len; beacon.active = true;
-
-      drawBeacons(t, bx, by, beamAngle, spread, len);
-
-      if (t - lastRing > 4500) { rings.push({ r: 10, a: 0.5 }); lastRing = t; }
-      rings = rings.filter(function (rg) { return rg.a > 0.01; });
-      rings.forEach(function (rg) {
-        rg.r += 1.8; rg.a *= 0.985;
-        ctx.beginPath();
-        ctx.arc(bx, by, rg.r, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(93,202,165,' + rg.a.toFixed(3) + ')';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      });
-
-      var g = ctx.createRadialGradient(bx, by, 0, bx, by, len);
-      g.addColorStop(0, 'rgba(93,202,165,0.20)');
-      g.addColorStop(0.4, 'rgba(93,202,165,0.07)');
-      g.addColorStop(1, 'rgba(93,202,165,0)');
-      ctx.beginPath();
-      ctx.moveTo(bx, by);
-      ctx.arc(bx, by, len, beamAngle - spread, beamAngle + spread);
-      ctx.closePath();
-      ctx.fillStyle = g;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#5DCAA5';
-      ctx.shadowColor = 'rgba(93,202,165,0.9)'; ctx.shadowBlur = 18;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      requestAnimationFrame(frame);
-    };
-
-    if (reduced) {
-      requestAnimationFrame(function (t) { running = true; frame(t); running = false; });
     } else {
-      requestAnimationFrame(frame);
-      document.addEventListener('visibilitychange', function () {
-        running = !document.hidden;
-        if (running) requestAnimationFrame(frame);
-      });
+      clockShimmering = false;
+      if (clockCountIdx !== shown) paintClockCounts(shown, local < 2 ? "instant" : "reveal");
+    }
+
+    var basisIdx = local < CLOCK_MARK.tapChip ? prev : idx;
+    if (clockBasis && clockBasisIdx !== basisIdx) {
+      clockBasisIdx = basisIdx;
+      clockBasis.innerHTML = clockSentence(basisIdx);
+      clockTrigger = document.getElementById("clock-trigger");
+    }
+
+    var tapKey = -1;
+    var tapEl = null;
+    if (local >= CLOCK_MARK.tapTrigger && local < CLOCK_MARK.tapTrigger + CLOCK_MARK.tapLen) {
+      tapKey = 1;
+      tapEl = clockTrigger;
+    } else if (local >= CLOCK_MARK.tapChip && local < CLOCK_MARK.tapChip + CLOCK_MARK.tapLen) {
+      tapKey = 2;
+      tapEl = clockChips[idx];
+    }
+    if (tapEl && clockTapAt !== tapKey + idx * 10) {
+      clockTapAt = tapKey + idx * 10;
+      setClockTap(tapEl);
+    } else if (!tapEl && clockTap) {
+      clockTap.hidden = true;
+      clockTapAt = -1;
     }
   }
 
-  /* ---------- 4b. Hero screen — the phone-in-hand mockup narrates the USP:
-     a reel becomes a pin, a route, a plan. Same story as the dive section's
-     first scene, just compressed into the small screen behind the hand. ---------- */
-  var heroScreen = document.getElementById('heroScreen');
-  if (heroScreen) {
-    var heroPin = document.getElementById('heroScreenPin');
-    var heroLabel = document.getElementById('heroScreenLabel');
-    var heroRoutePath = document.getElementById('heroRoutePath');
-    var heroBar = document.getElementById('heroScreenBar');
-    var heroBarFill = heroBar ? heroBar.querySelector('i') : null;
-    var HERO_ORIGIN = { x: 14, y: 86 };
-    var HERO_DESTINATIONS = [
-      { name: 'Dudhsagar Falls', x: 55, y: 45 },
-      { name: 'Nandi Hills', x: 30, y: 65 },
-      { name: 'Coorg', x: 68, y: 30 }
-    ];
-    var heroDestIndex = 0;
-    var heroTimers = [];
-    var heroClear = function () { heroTimers.forEach(clearTimeout); heroTimers = []; };
-    var heroAfter = function (ms, fn) { heroTimers.push(setTimeout(fn, ms)); };
+  function renderClockCards() {
+    if (!clockCardsEl) return;
+    clockCardsEl.innerHTML = CLOCK_CARDS.map(function (c) {
+      var thumb = c.img
+        ? '<img alt="" src="' + c.img + '" width="112" height="84" />'
+        : "";
+      return '<article class="search-card">' +
+        '<span class="search-card__thumb" style="background:' + c.accent + '1F">' + thumb + "</span>" +
+        '<span class="search-card__body">' +
+          '<span class="search-card__n"><span></span></span>' +
+          '<span class="search-card__title">' + c.title + "</span>" +
+          '<span class="search-card__blurb">' + c.blurb + "</span>" +
+        "</span></article>";
+    }).join("");
+  }
 
-    var setHeroLabel = function (text) {
-      heroLabel.classList.add('is-fading');
-      heroAfter(220, function () {
-        heroLabel.textContent = text;
-        heroLabel.classList.remove('is-fading');
+  function tickClock(now) {
+    if (!clockStart) clockStart = now;
+    var frame = ((now - clockStart) / 1000) * CLOCK_FPS;
+    paintClockFrame(frame);
+    clockRaf = requestAnimationFrame(tickClock);
+  }
+  function startClockLoop() {
+    if (reduced || clockRaf) return;
+    clockStart = 0;
+    clockRaf = requestAnimationFrame(tickClock);
+  }
+  function stopClockLoop() {
+    if (clockRaf) cancelAnimationFrame(clockRaf);
+    clockRaf = 0;
+  }
+
+  renderClockCards();
+  paintClockCounts(3, "instant");
+  clockChips.forEach(function (chip, n) { chip.classList.toggle("is-on", n === 3); });
+
+  var clockDemo = document.getElementById("clock-demo");
+  if (reduced) {
+    paintClockFrame(CLOCK_MARK.countIn + 4);
+  } else if (clockDemo && "IntersectionObserver" in window) {
+    var clockIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) startClockLoop();
+        else stopClockLoop();
       });
-    };
+    }, { threshold: 0.28 });
+    clockIo.observe(clockDemo);
+  } else if (clockItems.length) {
+    startClockLoop();
+  }
 
-    var showHeroBar = function () {
-      if (!heroBar) return;
-      heroBarFill.style.transition = 'none';
-      heroBarFill.style.width = '0%';
-      heroBar.classList.add('is-visible');
-      heroBar.getBoundingClientRect(); // force reflow so the fill transition below animates
-      heroBarFill.style.transition = 'width 1.4s linear';
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () { heroBarFill.style.width = '100%'; });
+  var ticking = false;
+  function onFrame() {
+    updateAnswers();
+    ticking = false;
+  }
+  function requestFrame() {
+    if (ticking || reduced) return;
+    ticking = true;
+    requestAnimationFrame(onFrame);
+  }
+  window.addEventListener('scroll', requestFrame, { passive: true });
+  if (lenis) lenis.on('scroll', requestFrame);
+  if (reduced) {
+    lines.forEach(function (el) { el.classList.add('is-on'); });
+  } else {
+    updateAnswers();
+  }
+
+  /* ---------- Cursor ---------- */
+  var cursor = document.getElementById('cursor');
+  var cx = innerWidth * 0.72;
+  var cy = innerHeight * 0.38;
+  var tx = cx;
+  var ty = cy;
+
+  if (cursor && finePointer && !reduced) {
+    window.addEventListener('pointermove', function (e) {
+      tx = e.clientX;
+      ty = e.clientY;
+      cursor.classList.add('is-on');
+    });
+    document.addEventListener('pointerleave', function () { cursor.classList.remove('is-on'); });
+    document.querySelectorAll('a, button, input, [data-magnetic]').forEach(function (el) {
+      el.addEventListener('pointerenter', function () { cursor.classList.add('is-hot'); });
+      el.addEventListener('pointerleave', function () { cursor.classList.remove('is-hot'); });
+    });
+    document.body.classList.add('has-custom-cursor');
+    (function loop() {
+      cx += (tx - cx) * 0.22;
+      cy += (ty - cy) * 0.22;
+      cursor.style.transform = 'translate3d(' + cx + 'px,' + cy + 'px,0)';
+      requestAnimationFrame(loop);
+    })();
+  } else if (cursor) {
+    cursor.remove();
+  }
+
+  /* ---------- Fireflies (app BeaconScene: drift + pointer parallax) ---------- */
+  (function initMotes() {
+    var canvas = document.getElementById("motes");
+    var host = document.getElementById("hero-map");
+    if (!canvas || !host || reduced) return;
+    var ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
+
+    var dpr = Math.min(window.devicePixelRatio || 1, finePointer ? 1.75 : 1.25);
+    var w = 0;
+    var h = 0;
+    var nx = 0;
+    var ny = 0;
+    var lx = 0;
+    var ly = 0;
+    var running = true;
+    var count = finePointer ? 96 : 42;
+    var motes = [];
+    var MINT = "93,202,165";
+
+    function resize() {
+      var r = host.getBoundingClientRect();
+      w = Math.max(1, r.width);
+      h = Math.max(1, r.height);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function seedMotes() {
+      motes = [];
+      var i;
+      for (i = 0; i < count; i++) {
+        motes.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          seed: Math.random(),
+          size: 1.2 + Math.random() * 2.4,
+          depth: 0.28 + Math.random() * 0.9
+        });
+      }
+    }
+
+    if (finePointer) {
+      window.addEventListener("pointermove", function (e) {
+        nx = (e.clientX / innerWidth) * 2 - 1;
+        ny = -((e.clientY / innerHeight) * 2 - 1);
+      }, { passive: true });
+    }
+    window.addEventListener("resize", resize);
+    resize();
+    seedMotes();
+
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        running = entries.some(function (e) { return e.isIntersecting; });
+      }, { threshold: 0.08 });
+      io.observe(host);
+    }
+
+    function tick(now) {
+      requestAnimationFrame(tick);
+      if (!running || document.hidden) return;
+      var t = now * 0.001;
+      lx += (nx - lx) * 0.045;
+      ly += (ny - ly) * 0.045;
+      ctx.clearRect(0, 0, w, h);
+
+      var i;
+      var m;
+      var tt;
+      var px;
+      var py;
+      var pulse;
+      var rad;
+      var g;
+      for (i = 0; i < motes.length; i++) {
+        m = motes[i];
+        tt = t * (0.10 + m.seed * 0.12);
+        m.x += Math.sin(tt + m.seed * 40) * 0.22;
+        m.y += Math.sin(tt * 1.4 + m.seed * 17) * 0.16;
+        m.x += Math.cos(tt * 0.8 + m.seed * 23) * 0.12;
+        if (m.x < -24) m.x = w + 24;
+        if (m.x > w + 24) m.x = -24;
+        if (m.y < -24) m.y = h + 24;
+        if (m.y > h + 24) m.y = -24;
+        px = m.x + lx * 26 * m.depth;
+        py = m.y + ly * 14 * m.depth;
+        pulse = 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(t * (0.5 + m.seed) + m.seed * 31));
+        rad = m.size * (2.2 + pulse);
+        g = ctx.createRadialGradient(px, py, 0, px, py, rad);
+        g.addColorStop(0, "rgba(" + MINT + "," + (0.5 * pulse).toFixed(3) + ")");
+        g.addColorStop(0.35, "rgba(" + MINT + "," + (0.16 * pulse).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(" + MINT + ",0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(px, py, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  /* ---------- Hero map tour (OpenFreeMap + MapLibre, same stack as the app) ---------- */
+  var HERO_SPOTS = [
+    { name: "Skandagiri", meta: "1h 30m · 68 km", lat: 13.417256, lon: 77.682669, img: "/assets/places/skandagiri.jpg", color: "#5DCAA5" },
+    { name: "Makalidurga", meta: "1h 31m · 68 km", lat: 13.432865, lon: 77.501498, img: "/assets/places/makalidurga.jpg", color: "#E0A458" },
+    { name: "Savandurga", meta: "57m · 43 km", lat: 12.915961, lon: 77.297772, img: "/assets/places/savandurga.jpg", color: "#5DCAA5" },
+    { name: "Rayakottai Fort", meta: "2h · 90 km", lat: 12.521642, lon: 78.037022, img: "/assets/places/rayakottai.jpg", color: "#E0A458" },
+    { name: "Kapu Lighthouse", meta: "8h · 400 km", lat: 13.2241, lon: 74.7380, img: "/assets/places/kapu.jpg", color: "#5DCAA5" }
+  ];
+  (function pickHeroRain() {
+    var a = Math.floor(Math.random() * HERO_SPOTS.length);
+    var b = Math.floor(Math.random() * (HERO_SPOTS.length - 1));
+    if (b >= a) b += 1;
+    HERO_SPOTS[a].rain = true;
+    HERO_SPOTS[b].rain = true;
+  })();
+  var HERO_YOU = { lat: 12.9716, lon: 77.5946 };
+  var HERO_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+  var HERO_RASTER = {
+    version: 8,
+    sources: {
+      osm: {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        attribution: "© OpenStreetMap"
+      }
+    },
+    layers: [
+      { id: "bg", type: "background", paint: { "background-color": "#0F0F12" } },
+      { id: "osm", type: "raster", source: "osm" }
+    ]
+  };
+  var HIDDEN_LAYERS = {
+    building: 1, poi: 1, housenumber: 1, aerodrome_label: 1,
+    water_name: 1, transportation_name: 1, place: 1, landuse: 1, boundary: 1
+  };
+
+  function heroPad() {
+    var hero = document.getElementById("hero");
+    var w = innerWidth;
+    var h = (hero && hero.clientHeight) || innerHeight;
+    if (w < 720) {
+      return { top: 72, bottom: Math.round(h * 0.52), left: 28, right: 28 };
+    }
+    return { top: 88, bottom: Math.round(h * 0.3), left: Math.round(w * 0.36), right: 80 };
+  }
+
+  function hopMs(from, to) {
+    var d = Math.hypot(from.lat - to.lat, from.lon - to.lon);
+    return Math.round(Math.min(2200, Math.max(720, 640 + d * 380)));
+  }
+
+  function hopZoom(from, to) {
+    var d = Math.hypot(from.lat - to.lat, from.lon - to.lon);
+    return d > 1.4 ? 9.6 : 11.05;
+  }
+
+  function paintHeroMap(map) {
+    try { map.setPaintProperty("background", "background-color", "#0F0F12"); } catch (e) { /* style id drift */ }
+    try { map.setPaintProperty("water", "fill-color", "#15151a"); } catch (e) { /* style id drift */ }
+    var layers = (map.getStyle() && map.getStyle().layers) || [];
+    layers.forEach(function (layer) {
+      var src = layer["source-layer"];
+      if (layer.type === "symbol") {
+        try { map.setLayoutProperty(layer.id, "visibility", "none"); } catch (e) { /* ok */ }
+        return;
+      }
+      if (src && HIDDEN_LAYERS[src]) {
+        try { map.setLayoutProperty(layer.id, "visibility", "none"); } catch (e) { /* ok */ }
+        return;
+      }
+      if (src === "transportation" && layer.type === "line") {
+        try { map.setPaintProperty(layer.id, "line-color", "#3A4456"); } catch (e) { /* ok */ }
+        try { map.setPaintProperty(layer.id, "line-opacity", 0.6); } catch (e) { /* ok */ }
+      }
+    });
+  }
+
+  function makeHeroPin(spot, i) {
+    var el = document.createElement("div");
+    el.className = "hero-pin" + (i === 0 ? " is-on" : "");
+    el.innerHTML =
+      '<div class="hero-pin__bubble" style="border-color:' + spot.color + '">' +
+        '<img class="hero-pin__dot" alt="" src="' + spot.img + '" width="36" height="36" />' +
+        '<span class="hero-pin__meta"><b>' + spot.name + "</b><small>" + spot.meta + "</small></span>" +
+      "</div>";
+    return el;
+  }
+
+  function initHeroTour() {
+    var wrap = document.getElementById("hero-map");
+    var gl = document.getElementById("hero-gl");
+    var hero = document.getElementById("hero");
+    if (!wrap || !gl) return;
+    if (!window.maplibregl) {
+      console.warn("Lighthouse: MapLibre did not load — hero map skipped");
+      return;
+    }
+
+    var map = new window.maplibregl.Map({
+      container: gl,
+      style: HERO_STYLE,
+      center: [HERO_SPOTS[0].lon, HERO_SPOTS[0].lat],
+      zoom: 11.05,
+      interactive: false,
+      attributionControl: false,
+      fadeDuration: 0,
+      failIfMajorPerformanceCaveat: false
+    });
+    requestAnimationFrame(function () { map.resize(); });
+    window.setTimeout(function () {
+      if (ready) return;
+      wrap.classList.add("is-raster");
+      try { map.setStyle(HERO_RASTER); } catch (err) { /* keep waiting */ }
+    }, 4000);
+
+    var pinEls = [];
+    var idx = 0;
+    var timer = 0;
+    var inView = true;
+    var ready = false;
+    var settled = false;
+
+    function setOn(i) {
+      pinEls.forEach(function (el, n) { el.classList.toggle("is-on", n === i); });
+    }
+
+    function pulse() {
+      if (reduced) return;
+      wrap.classList.add("is-pulse");
+      window.setTimeout(function () { wrap.classList.remove("is-pulse"); }, 440);
+    }
+
+    function setRain(on) {
+      var wx = document.getElementById("hero-wx");
+      if (wx) wx.classList.toggle("is-rain", !reduced && !!on);
+    }
+
+    function flyTo(i, duration) {
+      var spot = HERO_SPOTS[i];
+      var prev = HERO_SPOTS[idx];
+      idx = i;
+      setOn(i);
+      setRain(spot.rain);
+      pulse();
+      map.flyTo({
+        center: [spot.lon, spot.lat],
+        zoom: hopZoom(prev, spot),
+        duration: reduced ? 0 : duration,
+        padding: heroPad(),
+        essential: true
       });
-    };
-    var hideHeroBar = function () {
-      if (heroBar) heroBar.classList.remove('is-visible');
-    };
+    }
 
-    var drawHeroRoute = function (dest) {
-      var mx = (HERO_ORIGIN.x + dest.x) / 2 + 8, my = (HERO_ORIGIN.y + dest.y) / 2;
-      heroRoutePath.setAttribute('d', 'M' + HERO_ORIGIN.x + ',' + HERO_ORIGIN.y + ' Q' + mx + ',' + my + ' ' + dest.x + ',' + dest.y);
-      var len = heroRoutePath.getTotalLength();
-      heroRoutePath.style.transition = 'none';
-      heroRoutePath.style.strokeDasharray = len;
-      heroRoutePath.style.strokeDashoffset = len;
-      heroRoutePath.getBoundingClientRect(); // force reflow so the transition below actually animates
-      heroRoutePath.style.transition = 'stroke-dashoffset 1.3s var(--transition-fluid)';
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () { heroRoutePath.style.strokeDashoffset = 0; });
+    function stopTour() {
+      if (timer) { window.clearTimeout(timer); timer = 0; }
+    }
+
+    function schedule() {
+      stopTour();
+      if (!ready || !settled || reduced || !inView || document.hidden) return;
+      var next = (idx + 1) % HERO_SPOTS.length;
+      var ms = hopMs(HERO_SPOTS[idx], HERO_SPOTS[next]);
+      timer = window.setTimeout(function () {
+        flyTo(next, ms);
+        timer = window.setTimeout(schedule, ms + 2400);
+      }, 2400);
+    }
+
+    map.once("style.load", function onStyle() {
+      paintHeroMap(map);
+      wrap.classList.add("is-live");
+      ready = true;
+      map.resize();
+      map.jumpTo({
+        center: [HERO_SPOTS[0].lon, HERO_SPOTS[0].lat],
+        zoom: 11.05,
+        padding: heroPad()
       });
-    };
 
-    var resetHeroRoute = function () {
-      heroRoutePath.style.transition = 'none';
-      heroRoutePath.removeAttribute('d');
-      heroRoutePath.style.strokeDasharray = '';
-      heroRoutePath.style.strokeDashoffset = '';
-    };
+      HERO_SPOTS.forEach(function (spot, i) {
+        var el = makeHeroPin(spot, i);
+        pinEls.push(el);
+        new window.maplibregl.Marker({ element: el, anchor: "bottom" })
+          .setLngLat([spot.lon, spot.lat])
+          .addTo(map);
+      });
 
-    var playHeroSequence = function () {
-      heroClear();
-      var dest = HERO_DESTINATIONS[heroDestIndex];
-      heroPin.classList.add('is-hidden');
-      hideHeroBar();
-      resetHeroRoute(); // blank the previous loop's line before starting fresh
+      var you = document.createElement("div");
+      you.className = "hero-you";
+      you.innerHTML = '<span class="hero-you__halo"></span><span class="hero-you__core"></span>';
+      new window.maplibregl.Marker({ element: you, anchor: "center" })
+        .setLngLat([HERO_YOU.lon, HERO_YOU.lat])
+        .addTo(map);
 
-      setHeroLabel('Reel saved ✦');
-      heroAfter(1600, function () {
-        setHeroLabel('Finding the spot…');
-        showHeroBar();
-        heroAfter(1700, function () {
-          hideHeroBar();
-          heroPin.style.left = dest.x + '%';
-          heroPin.style.top = dest.y + '%';
-          heroPin.classList.remove('is-hidden');
-          setHeroLabel(dest.name + ' found');
-          heroAfter(1600, function () {
-            setHeroLabel('Mapping your route…');
-            drawHeroRoute(dest);
-            heroAfter(1900, function () {
-              setHeroLabel('Trip planned ✦');
-              heroAfter(2600, function () {
-                heroDestIndex = (heroDestIndex + 1) % HERO_DESTINATIONS.length;
-                playHeroSequence();
-              });
-            });
-          });
+      setRain(HERO_SPOTS[0].rain);
+      if (reduced) {
+        settled = true;
+        return;
+      }
+
+      var origin = [HERO_SPOTS[0].lon, HERO_SPOTS[0].lat];
+      map.easeTo({
+        center: origin,
+        zoom: 11.55,
+        duration: 520,
+        padding: heroPad(),
+        essential: true
+      });
+      map.once("moveend", function () {
+        map.easeTo({
+          center: origin,
+          zoom: 11.05,
+          duration: 480,
+          padding: heroPad(),
+          essential: true
+        });
+        map.once("moveend", function () {
+          settled = true;
+          schedule();
         });
       });
-    };
-
-    if (reduced) {
-      // still frame: skip straight to the payoff state, no cycling
-      var stillDest = HERO_DESTINATIONS[0];
-      heroPin.style.left = stillDest.x + '%';
-      heroPin.style.top = stillDest.y + '%';
-      heroPin.classList.remove('is-hidden');
-      heroLabel.textContent = 'Trip planned ✦';
-      var mx2 = (HERO_ORIGIN.x + stillDest.x) / 2 + 8, my2 = (HERO_ORIGIN.y + stillDest.y) / 2;
-      heroRoutePath.setAttribute('d', 'M' + HERO_ORIGIN.x + ',' + HERO_ORIGIN.y + ' Q' + mx2 + ',' + my2 + ' ' + stillDest.x + ',' + stillDest.y);
-    } else {
-      playHeroSequence();
-    }
-  }
-
-  /* ---------- 4c. Explore demo — tap a category, the map fills with those
-     pins. Mirrors the real app's FilterPill/MapContainer: per-category
-     accent colors (not the single brand mint, since this is a portrait of
-     actual in-app UI), dark-cored pins with a colored ring + glow, and the
-     same reveal timing as the real filter-pill dropdown (0.22s, 0.03s
-     stagger, power2.out). ---------- */
-  var explorePillsEl = document.getElementById('explorePills');
-  var exploreMapEl = document.getElementById('exploreMap');
-  var exploreCountEl = document.getElementById('exploreCount');
-  if (explorePillsEl && exploreMapEl && exploreCountEl) {
-    // same category words as the marquee ticker above, so the payoff is
-    // legible — each one traces back to something the visitor just read
-    var EXPLORE_CATS = [
-      { name: 'Waterfalls', accent: '#7FE3D6', count: 14 },
-      { name: 'Sunrise Drives', accent: '#E0A458', count: 31 },
-      { name: 'Monsoon Treks', accent: '#8FA6C4', count: 22 },
-      { name: 'Fort Loops', accent: '#D8B15E', count: 12 },
-      { name: 'Lakeside Coffee', accent: '#4FB0C6', count: 9 },
-      { name: 'Hidden Viewpoints', accent: '#5DCAA5', count: 18 }
-    ];
-    var EXPLORE_PINS = [
-      { cat: 0, x: 22, y: 28 }, { cat: 0, x: 60, y: 62 },
-      { cat: 1, x: 48, y: 46 }, { cat: 1, x: 80, y: 68 },
-      { cat: 2, x: 38, y: 18 }, { cat: 2, x: 70, y: 44 },
-      { cat: 3, x: 34, y: 42 }, { cat: 3, x: 58, y: 78 },
-      { cat: 4, x: 62, y: 26 }, { cat: 4, x: 18, y: 56 },
-      { cat: 5, x: 28, y: 72 }, { cat: 5, x: 78, y: 20 }
-    ];
-    var hexToRgba = function (hex, a) {
-      var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-      return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-    };
-
-    // careful: this whole file is one shared function scope (no modules), so
-    // these names are prefixed to avoid colliding with other sections' vars
-    // (a plain `pinEls` here once silently aliased the Collections carousel's
-    // own `pinEls` a few hundred lines down, since `var` doesn't block-scope)
-    var explorePillEls = EXPLORE_CATS.map(function (cat) {
-      var el = document.createElement('em');
-      el.className = 'xpill';
-      el.textContent = cat.name;
-      el.style.setProperty('--accent', cat.accent);
-      el.style.setProperty('--accent-glow', hexToRgba(cat.accent, 0.35));
-      explorePillsEl.appendChild(el);
-      return el;
-    });
-    var explorePinEls = EXPLORE_PINS.map(function (p) {
-      var cat = EXPLORE_CATS[p.cat];
-      var el = document.createElement('span');
-      el.className = 'xpin';
-      el.style.setProperty('--x', p.x + '%');
-      el.style.setProperty('--y', p.y + '%');
-      el.style.setProperty('--accent', cat.accent);
-      el.innerHTML = '<i class="xpin__glow"></i><i class="xpin__core"></i>';
-      exploreMapEl.appendChild(el);
-      return { el: el, cat: p.cat };
     });
 
-    var showExploreCategory = function (idx) {
-      explorePillEls.forEach(function (el, i) { el.classList.toggle('is-active', i === idx); });
-      exploreCountEl.textContent = EXPLORE_CATS[idx].count + ' PLACES IN RANGE';
-      var shown = [], hidden = [];
-      explorePinEls.forEach(function (p) { (p.cat === idx ? shown : hidden).push(p.el); });
-      if (hasGSAP) {
-        if (hidden.length) gsap.to(hidden, { opacity: 0, scale: 0.6, duration: 0.2, ease: 'power1.in' });
-        gsap.fromTo(shown, { opacity: 0, y: 10, scale: 0.92 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.22, stagger: 0.03, ease: 'power2.out', delay: 0.15 });
-      } else {
-        hidden.forEach(function (p) { p.style.opacity = 0; });
-        shown.forEach(function (p) { p.style.opacity = 1; });
-      }
-    };
-
-    showExploreCategory(0);
-    if (!reduced) {
-      var exploreIndex = 0;
-      setInterval(function () {
-        exploreIndex = (exploreIndex + 1) % EXPLORE_CATS.length;
-        showExploreCategory(exploreIndex);
-      }, 2600);
+    if ("IntersectionObserver" in window && hero) {
+      var io = new IntersectionObserver(function (entries) {
+        inView = entries.some(function (e) { return e.isIntersecting; });
+        if (inView) schedule();
+        else stopTour();
+      }, { threshold: 0.2 });
+      io.observe(hero);
     }
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) stopTour();
+      else schedule();
+    });
+    window.addEventListener("resize", function () {
+      map.resize();
+    });
   }
 
-  /* ---------- 5. Click sonar ---------- */
+  if (document.getElementById("hero-gl")) initHeroTour();
+
+  /* ---------- Click sonar ---------- */
   if (!reduced) {
     document.addEventListener('pointerdown', function (e) {
       var ring = document.createElement('span');
@@ -578,817 +787,156 @@
     });
   }
 
-  /* ---------- 6. Magnetic buttons ---------- */
+  /* ---------- Magnetic buttons ---------- */
   if (finePointer && !reduced) {
     document.querySelectorAll('[data-magnetic]').forEach(function (btn) {
-      var strength = 0.35;
+      var strength = 0.32;
       btn.addEventListener('pointermove', function (e) {
         var r = btn.getBoundingClientRect();
         var dx = e.clientX - (r.left + r.width / 2);
         var dy = e.clientY - (r.top + r.height / 2);
-        btn.style.transform = 'translate(' + dx * strength + 'px,' + dy * strength + 'px)';
+        btn.style.transform = 'translate(' + (dx * strength) + 'px,' + (dy * strength) + 'px)';
       });
-      btn.addEventListener('pointerleave', function () { btn.style.transform = 'translate(0,0)'; });
+      btn.addEventListener('pointerleave', function () {
+        btn.style.transform = 'translate(0,0)';
+      });
     });
   }
 
-  /* ---------- 7. Page-wide parallax tilt — mouse + touch + gyroscope ---------- */
-  if (!reduced) {
-    var mockups = document.querySelectorAll('.parallax-mockup');
-    var isGyroActive = false, baseBeta = null;
+  /* ---------- Waitlist — signup, then the invite loop ----------
+     The share panel is the point, not a courtesy. Stage 0 of the marketing plan
+     rehearses the vote loop before the app exists, which is the only chance to
+     read invite propensity *before* the launch budget is spent. So the highest-
+     intent moment on the page — the second after someone joins — hands them a
+     link and a group to send it to, rather than "we'll email you." */
 
-    var updateParallax = function (x, y) {
-      mockups.forEach(function (m) {
-        if (hasGSAP) {
-          gsap.to(m, { rotateY: x, rotateX: y, duration: isGyroActive ? 0.3 : 0.8, ease: 'power2.out', transformPerspective: 1000 });
-        } else {
-          m.style.transform = 'perspective(1000px) rotateY(' + x + 'deg) rotateX(' + y + 'deg)';
-        }
-      });
-    };
+  var REF_KEY = 'lh_ref';
+  var ME_KEY = 'lh_wl';
 
-    if (mockups.length) {
-      document.addEventListener('mousemove', function (e) {
-        if (isGyroActive || !finePointer) return;
-        var x = (e.clientX / innerWidth - 0.5) * 20;
-        var y = (e.clientY / innerHeight - 0.5) * -20;
-        updateParallax(x, y);
-      });
-      document.addEventListener('touchmove', function (e) {
-        if (isGyroActive || !e.touches[0]) return;
-        var t = e.touches[0];
-        var x = (t.clientX / innerWidth - 0.5) * 25;
-        var y = (t.clientY / innerHeight - 0.5) * -25;
-        updateParallax(x, y);
-      }, { passive: true });
-
-      if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', function (e) {
-          if (e.beta == null || e.gamma == null) return;
-          isGyroActive = true;
-          if (baseBeta === null) baseBeta = e.beta;
-          var betaDiff = e.beta - baseBeta;
-          var tiltX = Math.max(-25, Math.min(25, betaDiff));
-          var tiltY = Math.max(-25, Math.min(25, e.gamma));
-          updateParallax(tiltY, -tiltX);
-        });
-      }
+  // Referral code off the URL (?r=CODE), remembered so it survives the visitor
+  // reading the whole page, closing the tab, and coming back to sign up later.
+  try {
+    var urlRef = new URLSearchParams(location.search).get('r');
+    if (urlRef && /^[A-Za-z0-9]{4,12}$/.test(urlRef)) {
+      localStorage.setItem(REF_KEY, urlRef.toUpperCase());
     }
+  } catch (err) { /* private mode — the loop still works, attribution just doesn't */ }
+
+  var readStore = function (key) {
+    try { return localStorage.getItem(key); } catch (err) { return null; }
+  };
+
+  var shareEl = document.getElementById('wshare');
+  var shareLink = document.getElementById('wshare-link');
+  var shareCount = document.getElementById('wshare-count');
+  var shareCopy = document.getElementById('wshare-copy');
+  var shareWa = document.getElementById('wshare-wa');
+  var shareProgress = document.getElementById('wshare-progress');
+
+  var inviteUrl = function (code) {
+    return 'https://letsgolighthouse.co.in/?r=' + code;
+  };
+
+  var renderShare = function (data) {
+    if (!shareEl || !data || !data.code) return;
+    var url = inviteUrl(data.code);
+    var goal = data.goal || 3;
+    var got = Math.min(data.referrals || 0, goal);
+
+    if (shareLink) shareLink.textContent = url.replace(/^https:\/\//, '');
+    if (shareCount) {
+      shareCount.textContent = got >= goal
+        ? "YOU'RE IN THE FIRST BATCH"
+        : got + ' OF ' + goal + ' JOINED';
+    }
+    if (shareProgress) {
+      shareProgress.querySelectorAll('.wshare__dot').forEach(function (dot, i) {
+        dot.classList.toggle('is-on', i < got);
+      });
+      shareProgress.classList.toggle('is-complete', got >= goal);
+    }
+    if (shareWa) {
+      var msg = 'Found the thing for weekend plans — Bangalore getaways with drive '
+        + 'times and a group vote so nobody has to say "up to you". '
+        + 'Joining the early list: ' + url;
+      shareWa.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    }
+
+    // The nav and closing CTAs are a redundant ask once you've joined — point them
+    // at the loop instead. The pricing CTAs are deliberately excluded: "Claim 30
+    // days free" is a different offer, not a second copy of the join button, and
+    // rewriting it to "Invite your group" silently destroyed the Pro card's ask.
+    document
+      .querySelectorAll('[data-scrollto][href="#join"]:not(.plan__cta)')
+      .forEach(function (cta) {
+        cta.textContent = got >= goal ? 'Invite more people' : 'Invite your group';
+      });
+
+    shareEl.hidden = false;
+  };
+
+  // Someone who already joined shouldn't be asked to join again — show them their
+  // link and their current count straight away.
+  var mine = readStore(ME_KEY);
+  if (mine) {
+    try {
+      var saved = JSON.parse(mine);
+      if (saved && saved.code) {
+        renderShare(saved);
+        document.querySelectorAll('.waitlist').forEach(function (f) { f.hidden = true; });
+      }
+    } catch (err) { /* corrupt cache — just show the form */ }
   }
 
-  /* ---------- 7b. Scene 1's inner walkthrough — reel → share → result ----------
-     Autoplays only while dive scene 0 is the one in front of the camera. */
-  var revSteps = Array.prototype.slice.call(document.querySelectorAll('#scene1Screen .revstep'));
-  var reelShareBtn = document.getElementById('reelShareBtn');
-  var importStatus = document.getElementById('importStatus');
-  var importBar = document.getElementById('importBar');
-  var revTimers = [];
-  var revClear = function () { revTimers.forEach(clearTimeout); revTimers = []; };
-  var revAfter = function (ms, fn) { revTimers.push(setTimeout(fn, ms)); };
-
-  var setRevStep = function (i) {
-    revSteps.forEach(function (s, idx) { s.classList.toggle('is-active', idx === i); });
-  };
-
-  var playRevSequence = function () {
-    if (!revSteps.length) return;
-    revClear();
-    setRevStep(0);
-    if (reelShareBtn) reelShareBtn.classList.remove('is-tapped');
-    if (importBar) importBar.style.width = '0%';
-    if (importStatus) importStatus.textContent = 'DETECTING LINK…';
-
-    revAfter(1800, function () {
-      if (reelShareBtn) reelShareBtn.classList.add('is-tapped');
-      revAfter(320, function () {
-        setRevStep(1);
-        revAfter(200, function () {
-          if (importBar) importBar.style.width = '45%';
-          if (importStatus) importStatus.textContent = 'READING CAPTION…';
-        });
-        revAfter(1000, function () {
-          if (importBar) importBar.style.width = '100%';
-          if (importStatus) importStatus.textContent = 'MATCHED: DUDHSAGAR FALLS ✦';
-        });
-        revAfter(1700, function () {
-          setRevStep(2);
-          if (hasGSAP) {
-            gsap.fromTo(revSteps[2].querySelectorAll('.m-anim-elem'),
-              { y: 20, opacity: 0, scale: 0.95 },
-              { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: 'back.out(1.2)' });
-            // the route draws itself onto the map — from Bengaluru, through
-            // Sakleshpur, to the falls — instead of just fading in whole
-            var routePath = document.getElementById('revRoutePath');
-            if (routePath) {
-              var routeLen = routePath.getTotalLength();
-              gsap.set(routePath, { strokeDasharray: routeLen, strokeDashoffset: routeLen });
-              gsap.to(routePath, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut', delay: 0.35 });
-            }
-          }
-          revAfter(4200, playRevSequence);
-        });
-      });
-    });
-  };
-
-  var stopRevSequence = function () { revClear(); };
-
-  /* ---------- 7c. Scene 2's inner walkthrough — shortlist → group → invite → poll ---------- */
-  var voteSteps = Array.prototype.slice.call(document.querySelectorAll('#scene2Screen .revstep'));
-  var shortCards = Array.prototype.slice.call(document.querySelectorAll('#shortGrid .shortcard'));
-  var groupTitleTyped = document.getElementById('groupTitleTyped');
-  var groupAvatars = Array.prototype.slice.call(document.querySelectorAll('#groupAvatars b'));
-  var inviteStatus = document.getElementById('inviteStatus');
-  var inviteAvatars = Array.prototype.slice.call(document.querySelectorAll('#inviteAvatars b'));
-  var voteTimers = [];
-  var voteClear = function () { voteTimers.forEach(clearTimeout); voteTimers = []; };
-  var voteAfter = function (ms, fn) { voteTimers.push(setTimeout(fn, ms)); };
-
-  var setVoteStep = function (i) {
-    voteSteps.forEach(function (s, idx) { s.classList.toggle('is-active', idx === i); });
-  };
-
-  var playVoteSequence = function () {
-    if (!voteSteps.length) return;
-    voteClear();
-
-    // step 0 — shortlist
-    setVoteStep(0);
-    shortCards.forEach(function (c) { c.classList.remove('is-picked'); });
-    [500, 950, 1200, 1450].forEach(function (delay, idx) {
-      voteAfter(delay, function () { if (shortCards[idx]) shortCards[idx].classList.add('is-picked'); });
-    });
-
-    voteAfter(2600, function () {
-      // step 1 — create group
-      setVoteStep(1);
-      groupTitleTyped.textContent = '';
-      groupAvatars.forEach(function (b) { b.classList.remove('is-added'); });
-      var title = 'Weekend in Coorg?';
-      var ci = 0;
-      var typeTitle = function () {
-        if (ci > title.length) return;
-        groupTitleTyped.textContent = title.slice(0, ci);
-        ci++;
-        voteAfter(42, typeTitle);
+  if (shareCopy && shareLink) {
+    shareCopy.addEventListener('click', function () {
+      var text = 'https://' + shareLink.textContent.trim();
+      var done = function () {
+        shareCopy.textContent = 'Copied';
+        setTimeout(function () { shareCopy.textContent = 'Copy'; }, 1800);
       };
-      typeTitle();
-      groupAvatars.forEach(function (b, idx) {
-        voteAfter(850 + idx * 150, function () { b.classList.add('is-added'); });
-      });
-
-      voteAfter(2400, function () {
-        // step 2 — send invite
-        setVoteStep(2);
-        inviteStatus.textContent = 'SENDING TO 5 FRIENDS…';
-        inviteAvatars.forEach(function (b) { b.classList.remove('is-sent'); });
-        inviteAvatars.forEach(function (b, idx) {
-          voteAfter(300 + idx * 200, function () {
-            b.classList.add('is-sent');
-            if (idx === inviteAvatars.length - 1) inviteStatus.textContent = 'ALL INVITED ✦ WAITING FOR VOTES…';
-          });
-        });
-
-        voteAfter(2500, function () {
-          // step 3 — the live poll
-          setVoteStep(3);
-          var resultStep = voteSteps[3];
-          gsap.fromTo(resultStep.querySelectorAll('.m-anim-elem'),
-            { y: 20, opacity: 0, scale: 0.95 },
-            { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.09, ease: 'back.out(1.2)' });
-          var resultTallies = resultStep.querySelectorAll('.tally i');
-          if (resultTallies.length) {
-            gsap.fromTo(resultTallies, { scaleX: 0 }, { scaleX: 1, duration: 0.9, stagger: 0.15, ease: 'power3.out', delay: 0.4 });
-          }
-
-          voteAfter(4200, playVoteSequence);
-        });
-      });
-    });
-  };
-
-  var stopVoteSequence = function () { voteClear(); };
-
-  /* ---------- 8. THE DIVE — GSAP ScrollTrigger scene stepper ---------- */
-  var diveDot = document.getElementById('diveDot');
-  if (hasGSAP && !reduced) {
-    var scenes = Array.prototype.slice.call(document.querySelectorAll('.dive__scene'));
-    var numScenes = scenes.length;
-    var lastIndex = -1;
-
-    if (numScenes) {
-      ScrollTrigger.create({
-        trigger: '#diveRunway',
-        start: 'top top',
-        end: 'bottom bottom',
-        onUpdate: function (self) {
-          var progress = self.progress;
-          if (diveDot) diveDot.style.top = (progress * 100).toFixed(2) + '%';
-
-          var activeIndex = Math.floor(progress * numScenes);
-          if (activeIndex === numScenes) activeIndex = numScenes - 1;
-          if (activeIndex === lastIndex) return;
-
-          scenes.forEach(function (scene, i) {
-            var tallies = scene.querySelectorAll('.tally i');
-            if (i === activeIndex) {
-              scene.classList.add('is-active');
-              gsap.to(scene, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
-              gsap.fromTo(scene.querySelectorAll('.m-anim-elem'),
-                { y: 25, opacity: 0, scale: 0.95 },
-                { y: 0, opacity: 1, scale: 1, duration: 0.7, stagger: 0.1, ease: 'back.out(1.2)' });
-              if (tallies.length) {
-                gsap.fromTo(tallies, { scaleX: 0 }, { scaleX: 1, duration: 1, stagger: 0.2, ease: 'power3.out', delay: 0.5 });
-              }
-              if (i === 0) playRevSequence();
-              if (i === 1) playVoteSequence();
-            } else if (scene.classList.contains('is-active')) {
-              scene.classList.remove('is-active');
-              var yOffset = i < activeIndex ? -40 : 40;
-              gsap.to(scene, { opacity: 0, y: yOffset, duration: 0.6, ease: 'power3.out' });
-              gsap.to(scene.querySelectorAll('.m-anim-elem'), { opacity: 0, scale: 0.95, duration: 0.3 });
-              if (tallies.length) gsap.to(tallies, { scaleX: 0, duration: 0.3 });
-              if (i === 0) stopRevSequence();
-              if (i === 1) stopVoteSequence();
-            }
-          });
-          lastIndex = activeIndex;
-        }
-      });
-
-      scenes.forEach(function (s, i) { gsap.set(s, i === 0 ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }); });
-      scenes[0].classList.add('is-active');
-      playRevSequence();
-      gsap.fromTo(scenes[0].querySelectorAll('.m-anim-elem'),
-        { y: 25, opacity: 0, scale: 0.95 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.7, stagger: 0.1, ease: 'back.out(1.2)' });
-    }
-  } else {
-    // reduced motion: every scene + its contents are just visible, per the CSS fallback
-  }
-
-  /* ---------- 8b. How to Reach reveal ---------- */
-  if (hasGSAP && !reduced) {
-    gsap.fromTo('#reachHead > *', { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out',
-        scrollTrigger: { trigger: '.reach', start: 'top 72%', toggleActions: 'play none none reverse' } });
-    gsap.fromTo('.reachdemo .m-anim-elem', { y: 24, opacity: 0, scale: 0.95 },
-      { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.09, ease: 'back.out(1.2)',
-        scrollTrigger: { trigger: '.reachdemo', start: 'top 78%', toggleActions: 'play none none reverse' } });
-  } else {
-    var rh = document.getElementById('reachHead'); if (rh) rh.style.opacity = 1;
-    document.querySelectorAll('.reachdemo .m-anim-elem').forEach(function (el) { el.style.opacity = 1; });
-  }
-
-  /* ---------- 9. Playground reveal ---------- */
-  if (hasGSAP && !reduced) {
-    gsap.fromTo('#playgroundHead > *', { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out',
-        scrollTrigger: { trigger: '.playground', start: 'top 72%', toggleActions: 'play none none reverse' } });
-    gsap.fromTo('.scoutdemo', { y: 40, opacity: 0, scale: 0.96 },
-      { y: 0, opacity: 1, scale: 1, duration: 0.9, ease: 'power3.out',
-        scrollTrigger: { trigger: '.scoutdemo', start: 'top 78%', toggleActions: 'play none none reverse' } });
-  } else {
-    document.getElementById('playgroundHead').style.opacity = 1;
-    var sd = document.querySelector('.scoutdemo'); if (sd) sd.style.opacity = 1;
-  }
-
-  /* ---------- 10. Vicinity Mode reveal ---------- */
-  if (hasGSAP && !reduced) {
-    var vicinityTl = gsap.timeline({
-      scrollTrigger: { trigger: '#vicinitySection', start: 'top 60%', toggleActions: 'play none none reverse' }
-    });
-    vicinityTl
-      .fromTo('.vicinity-reveal', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: 'power3.out' })
-      .fromTo('.vmockup', { y: 80, opacity: 0, rotationX: 10 }, { y: 0, opacity: 1, rotationX: 0, duration: 1, ease: 'power3.out' }, '-=0.6')
-      .fromTo('.vradar__ring', { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 1, stagger: 0.2, ease: 'back.out(1.2)' }, '-=0.2')
-      .fromTo('.v-blip', { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'back.out(2)' }, '-=0.4')
-      .fromTo('.vnotif', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'elastic.out(1, 0.6)' }, '-=0.2');
-    gsap.to('.vnotif', { y: '-=8', duration: 2, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-  } else {
-    document.querySelectorAll('.vicinity-reveal, .vmockup, .vradar__ring, .v-blip, .vnotif').forEach(function (el) { el.style.opacity = 1; });
-  }
-
-  /* ---------- 11. Closing manifesto reveal ---------- */
-  if (hasGSAP && !reduced) {
-    gsap.timeline({ scrollTrigger: { trigger: '.closing-section', start: 'top 75%', toggleActions: 'play none none reverse' } })
-      .fromTo('.closing-reveal', { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: 'power4.out' });
-  } else {
-    document.querySelectorAll('.closing-reveal').forEach(function (el) { el.style.opacity = 1; });
-  }
-
-  /* ---------- 12. THE SCOUT DEMO — autoplaying typewriter → zoom → card ----------
-     No input, no API, ever — a looping illustrative demo of the in-app assistant. */
-  var SCENARIOS = [
-    {
-      query: 'i feel like a bike trip to a waterfall',
-      name: 'Dudhsagar Falls',
-      meta: '🏍️ 8H RIDE · 500KM · GHAT ROADS',
-      note: 'LEAVE BY 5:30AM · MONSOON ✦',
-      x: 12, y: 32
-    },
-    {
-      query: 'somewhere misty to trek this weekend',
-      name: 'Chikmagalur',
-      meta: '🥾 5H DRIVE · MULLAYANAGIRI TREK',
-      note: 'LEAVE BY 5:00AM · MISTY RIDGES',
-      x: 34, y: 52
-    },
-    {
-      query: 'a quiet sunrise drive nearby',
-      name: 'Nandi Hills',
-      meta: '🚗 1.5H DRIVE · VIEWPOINT',
-      note: 'LEAVE BY 4:15AM · SUNRISE 6:04',
-      x: 68, y: 56
-    }
-  ];
-  var OTHER_PINS = [
-    { x: 30, y: 74 }, { x: 46, y: 16 }, { x: 60, y: 30 }, { x: 40, y: 88 }, { x: 78, y: 78 }
-  ];
-
-  var scoutZoom = document.getElementById('scoutZoom');
-  if (scoutZoom) {
-    var scoutTyped = document.getElementById('scoutTyped');
-    var scoutCaret = document.getElementById('scoutCaret');
-    var scoutCard = document.getElementById('scoutCard');
-    var scoutCardName = document.getElementById('scoutCardName');
-    var scoutCardMeta = document.getElementById('scoutCardMeta');
-    var scoutCardNote = document.getElementById('scoutCardNote');
-    var scoutBtn = document.getElementById('scoutBtn');
-
-    var allPoints = SCENARIOS.map(function (s) { return { x: s.x, y: s.y }; }).concat(OTHER_PINS);
-    var pinEls = allPoints.map(function (p) {
-      var el = document.createElement('div');
-      el.className = 'spin';
-      el.style.setProperty('--x', p.x + '%');
-      el.style.setProperty('--y', p.y + '%');
-      el.innerHTML = '<i></i><b class="spin__ping"></b>';
-      scoutZoom.appendChild(el);
-      return el;
-    });
-
-    var timers = [];
-    var clearTimers = function () { timers.forEach(clearTimeout); timers = []; };
-    var after = function (ms, fn) { timers.push(setTimeout(fn, ms)); };
-
-    function playScenario(i, animated) {
-      var s = SCENARIOS[i];
-      scoutTyped.textContent = '';
-      scoutCard.classList.remove('is-show');
-      scoutZoom.classList.remove('is-zoomed');
-      pinEls.forEach(function (el) { el.classList.remove('spin--on', 'spin--dim'); });
-
-      if (!animated) {
-        scoutTyped.textContent = s.query;
-        scoutZoom.style.transformOrigin = s.x + '% ' + s.y + '%';
-        scoutZoom.classList.add('is-zoomed');
-        pinEls[i].classList.add('spin--on');
-        scoutCardName.textContent = s.name;
-        scoutCardMeta.textContent = s.meta;
-        scoutCardNote.textContent = s.note;
-        scoutCard.classList.add('is-show');
-        return;
-      }
-
-      var ci = 0;
-      var typeNext = function () {
-        if (ci > s.query.length) {
-          after(650, function () {
-            scoutZoom.style.transformOrigin = s.x + '% ' + s.y + '%';
-            scoutZoom.classList.add('is-zoomed');
-            pinEls.forEach(function (el, j) { el.classList.toggle('spin--dim', j !== i); });
-            pinEls[i].classList.add('spin--on');
-
-            after(750, function () {
-              scoutCardName.textContent = s.name;
-              scoutCardMeta.textContent = s.meta;
-              scoutCardNote.textContent = s.note;
-              scoutCard.classList.add('is-show');
-
-              after(500, function () {
-                scoutBtn.classList.add('is-pressed');
-                after(220, function () { scoutBtn.classList.remove('is-pressed'); });
-              });
-
-              after(2800, function () {
-                scoutCard.classList.remove('is-show');
-                scoutZoom.classList.remove('is-zoomed');
-                pinEls.forEach(function (el) { el.classList.remove('spin--on', 'spin--dim'); });
-                after(700, function () { playScenario((i + 1) % SCENARIOS.length, true); });
-              });
-            });
-          });
-          return;
-        }
-        scoutTyped.textContent = s.query.slice(0, ci);
-        ci++;
-        after(38, typeNext);
-      };
-      typeNext();
-    }
-
-    if (reduced) {
-      scoutCaret.style.display = 'none';
-      playScenario(0, false);
-    } else {
-      var started = false;
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting && !started) {
-            started = true;
-            playScenario(0, true);
-            io.disconnect();
-          }
-        });
-      }, { threshold: 0.35 });
-      io.observe(scoutZoom.closest('.scoutdemo'));
-    }
-  }
-
-  /* ---------- 13. WEATHER PREP — autoplaying sky loop ----------
-     No API, ever — illustrative cycle through 3 saved places'
-     conditions, matching the app's real Open-Meteo-backed feature. */
-  var WEATHER = [
-    { mode: 'rain', loc: 'DUDHSAGAR FALLS', icon: '🌧️', temp: 24, cond: 'HEAVY RAIN UNTIL 9AM', best: 'LEAVE AFTER 10AM — VISIBILITY IMPROVES', bars: [70, 55, 30, 15, 8, 5] },
-    { mode: 'sun', loc: 'NANDI HILLS', icon: '☀️', temp: 18, cond: 'CLEAR SKIES · PERFECT FOR SUNRISE', best: 'LEAVE BY 4:15AM FOR THE 6:04 SUNRISE', bars: [10, 20, 55, 80, 90, 85] },
-    { mode: 'mist', loc: 'CHIKMAGALUR', icon: '🌫️', temp: 21, cond: 'MISTY RIDGES · LIGHT DRIZZLE', best: 'FOG CLEARS BY 8AM — SUMMIT AFTER', bars: [20, 35, 50, 60, 45, 30] }
-  ];
-
-  var weatherScreen = document.getElementById('weatherScreen');
-  if (weatherScreen) {
-    var weatherFx = document.getElementById('weatherFx');
-    var weatherLoc = document.getElementById('weatherLoc');
-    var weatherIcon = document.getElementById('weatherIcon');
-    var weatherTemp = document.getElementById('weatherTemp');
-    var weatherCond = document.getElementById('weatherCond');
-    var weatherBestText = document.getElementById('weatherBestText');
-    var whrBars = Array.prototype.slice.call(document.querySelectorAll('#weatherHourly .whr i'));
-
-    // rain streaks, generated once, visibility controlled by the .is-rain class
-    for (var ri = 0; ri < 9; ri++) {
-      var drop = document.createElement('span');
-      drop.className = 'wfx__rain';
-      drop.style.left = (6 + Math.random() * 88) + '%';
-      drop.style.animationDelay = (-Math.random() * 1) + 's';
-      drop.style.animationDuration = (0.8 + Math.random() * 0.5) + 's';
-      weatherFx.appendChild(drop);
-    }
-
-    var tweenTemp = function (from, to) {
-      if (hasGSAP && !reduced) {
-        var proxy = { v: from };
-        gsap.to(proxy, { v: to, duration: 1, ease: 'power2.out', onUpdate: function () { weatherTemp.textContent = Math.round(proxy.v); } });
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(done).catch(done);
       } else {
-        weatherTemp.textContent = to;
+        done();
       }
-    };
-
-    var weatherIndex = 0;
-    var applyWeather = function (i, animateTemp) {
-      var w = WEATHER[i];
-      weatherScreen.classList.remove('is-rain', 'is-sun', 'is-mist');
-      weatherScreen.classList.add('is-' + w.mode);
-      weatherLoc.textContent = w.loc;
-      weatherIcon.textContent = w.icon;
-      weatherCond.textContent = w.cond;
-      weatherBestText.textContent = w.best;
-      whrBars.forEach(function (bar, idx) { bar.style.setProperty('--h', w.bars[idx] + '%'); });
-      if (animateTemp) tweenTemp(parseInt(weatherTemp.textContent, 10) || w.temp, w.temp);
-      else weatherTemp.textContent = w.temp;
-    };
-
-    if (reduced) {
-      applyWeather(0, false);
-    } else {
-      var startedWeather = false;
-      var wio = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting && !startedWeather) {
-            startedWeather = true;
-            applyWeather(0, true);
-            setInterval(function () {
-              weatherIndex = (weatherIndex + 1) % WEATHER.length;
-              applyWeather(weatherIndex, true);
-            }, 5200);
-            wio.disconnect();
-          }
-        });
-      }, { threshold: 0.35 });
-      wio.observe(weatherScreen.closest('.weatherdemo'));
-    }
+    });
   }
 
-  if (hasGSAP && !reduced) {
-    gsap.fromTo('#weatherHead > *', { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out',
-        scrollTrigger: { trigger: '.weather', start: 'top 72%', toggleActions: 'play none none reverse' } });
-    gsap.fromTo('.weatherdemo', { y: 40, opacity: 0, scale: 0.96 },
-      { y: 0, opacity: 1, scale: 1, duration: 0.9, ease: 'power3.out',
-        scrollTrigger: { trigger: '.weatherdemo', start: 'top 78%', toggleActions: 'play none none reverse' } });
-  } else {
-    var wh = document.getElementById('weatherHead'); if (wh) wh.style.opacity = 1;
-    var wd = document.querySelector('.weatherdemo'); if (wd) wd.style.opacity = 1;
-  }
-
-  /* ---------- 14. COLLECTIONS (Pro) — collection → taste → randomized suggestion ----------
-     No input, no API — a scripted illustration of the taste-profile feature.
-     Three steps, the last one "clicked" twice back to back to sell the
-     randomize-on-tap behavior, then the whole loop restarts. */
-  var COLLECTION_PICKS = [
-    { name: 'Kudremukh Trek', match: 96, tags: 'MISTY · TREK · OFFBEAT' },
-    { name: 'Agumbe Rainforest', match: 91, tags: 'MONSOON · WILDLIFE · QUIET' },
-    { name: 'Sakleshpur Estate', match: 94, tags: 'COFFEE · MISTY · WEEKEND' },
-    { name: 'Yana Caves', match: 89, tags: 'OFFBEAT · TREK · HERITAGE' }
-  ];
-
-  var collectionScreen = document.getElementById('collectionScreen');
-  if (collectionScreen) {
-    var colSteps = Array.prototype.slice.call(document.querySelectorAll('#collectionScreen .revstep'));
-    var colCountEl = document.getElementById('colCount');
-    var tasteBars = Array.prototype.slice.call(document.querySelectorAll('.tastebar'));
-    var colShuffleBtn = document.getElementById('colShuffleBtn');
-    var colShuffleIcon = document.getElementById('colShuffleIcon');
-    var colSuggest = document.getElementById('colSuggest');
-    var colName = document.getElementById('colName');
-    var colMatch = document.getElementById('colMatch');
-    var colTags = document.getElementById('colTags');
-    var colFlowPulse = document.getElementById('colFlowPulse');
-    var colShuffleFill = document.getElementById('colShuffleFill');
-    var colTimers = [];
-    var colClear = function () { colTimers.forEach(clearTimeout); colTimers = []; };
-    var colAfter = function (ms, fn) { colTimers.push(setTimeout(fn, ms)); };
-    var colPickIndex = 0;
-
-    var popIn = function (container) {
-      if (!hasGSAP) return;
-      gsap.fromTo(container.querySelectorAll('.m-anim-elem'),
-        { y: 16, opacity: 0, scale: 0.94 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: 'back.out(1.2)' });
-    };
-    var setColStep = function (i) {
-      colSteps.forEach(function (s, idx) { s.classList.toggle('is-active', idx === i); });
-    };
-    var tweenCount = function (el, from, to, suffix) {
-      if (hasGSAP) {
-        var proxy = { v: from };
-        gsap.to(proxy, { v: to, duration: 0.9, ease: 'power2.out', onUpdate: function () { el.textContent = Math.round(proxy.v) + (suffix || ''); } });
-      } else {
-        el.textContent = to + (suffix || '');
-      }
-    };
-
-    var runShuffle = function (onDone) {
-      colShuffleBtn.classList.add('is-pressed');
-      colShuffleIcon.classList.add('is-spinning');
-      colSuggest.classList.add('is-shuffling');
-      colAfter(200, function () { colShuffleBtn.classList.remove('is-pressed'); });
-
-      // the button's own loading sweep — fills end to end, then empties back
-      colShuffleFill.classList.remove('is-loading');
-      void colShuffleFill.offsetWidth; // restart the transition even if it's mid-cycle
-      colShuffleFill.classList.add('is-loading');
-
-      // a pulse travels from the button (source) up to the card (target)
-      colFlowPulse.classList.remove('is-flowing');
-      colAfter(60, function () { colFlowPulse.classList.add('is-flowing'); });
-
-      colAfter(850, function () {
-        colShuffleIcon.classList.remove('is-spinning');
-        colSuggest.classList.remove('is-shuffling');
-        colShuffleFill.classList.remove('is-loading');
-        colFlowPulse.classList.remove('is-flowing');
-
-        colPickIndex = (colPickIndex + 1) % COLLECTION_PICKS.length;
-        var final = COLLECTION_PICKS[colPickIndex];
-        colName.textContent = final.name;
-        colMatch.textContent = final.match + '% MATCH';
-        colTags.textContent = final.tags;
-        if (hasGSAP) gsap.fromTo(colSuggest, { scale: 0.97 }, { scale: 1, duration: 0.4, ease: 'back.out(2)' });
-
-        if (onDone) onDone();
-      });
-    };
-
-    var playCollectionSequence = function () {
-      if (!colSteps.length) return;
-      colClear();
-
-      // step 0 — your collection
-      setColStep(0);
-      colCountEl.textContent = '0';
-      popIn(colSteps[0]);
-      tweenCount(colCountEl, 0, 24);
-
-      colAfter(2600, function () {
-        // step 1 — learning your taste
-        setColStep(1);
-        popIn(colSteps[1]);
-        tasteBars.forEach(function (bar) {
-          var bar_i = bar.querySelector('.tastebar__track i');
-          var pct = bar.querySelector('.tastebar__pct');
-          var target = parseInt(bar_i.dataset.w, 10);
-          bar_i.style.width = '0%';
-          pct.textContent = '0%';
-          colAfter(150, function () {
-            bar_i.style.width = target + '%';
-            tweenCount(pct, 0, target, '%');
-          });
-        });
-
-        colAfter(3000, function () {
-          // step 2 — tap for a suggestion, twice (sells the "randomize on tap" behavior)
-          setColStep(2);
-          popIn(colSteps[2]);
-          colAfter(500, function () {
-            runShuffle(function () {
-              colAfter(1700, function () {
-                runShuffle(function () {
-                  colAfter(2400, playCollectionSequence);
-                });
-              });
-            });
-          });
-        });
-      });
-    };
-
-    var startedCollection = false;
-    var cio = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting && !startedCollection) {
-          startedCollection = true;
-          if (reduced) {
-            setColStep(2);
-            colCountEl.textContent = '24';
-            tasteBars.forEach(function (bar) {
-              var bar_i = bar.querySelector('.tastebar__track i');
-              bar_i.style.width = bar_i.dataset.w + '%';
-              bar.querySelector('.tastebar__pct').textContent = bar_i.dataset.w + '%';
-            });
-            var first = COLLECTION_PICKS[0];
-            colName.textContent = first.name; colMatch.textContent = first.match + '% MATCH'; colTags.textContent = first.tags;
-          } else {
-            playCollectionSequence();
-          }
-          cio.disconnect();
-        }
-      });
-    }, { threshold: 0.35 });
-    cio.observe(collectionScreen.closest('.collectiondemo'));
-  }
-
-  if (hasGSAP && !reduced) {
-    gsap.fromTo('#collectionHead > *', { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out',
-        scrollTrigger: { trigger: '.collection', start: 'top 72%', toggleActions: 'play none none reverse' } });
-    gsap.fromTo('.collectiondemo', { y: 40, opacity: 0, scale: 0.96 },
-      { y: 0, opacity: 1, scale: 1, duration: 0.9, ease: 'power3.out',
-        scrollTrigger: { trigger: '.collectiondemo', start: 'top 78%', toggleActions: 'play none none reverse' } });
-  } else {
-    var ch = document.getElementById('collectionHead'); if (ch) ch.style.opacity = 1;
-    var cd = document.querySelector('.collectiondemo'); if (cd) cd.style.opacity = 1;
-  }
-
-  /* ---------- 17. PRICING — plan toggle + the discount reveal ----------
-     Numbers sourced from LIGHTHOUSE_PRICING_ECONOMICS.md. The strike-through
-     draw-on + price pop-in fires once on scroll-into-view, and again (as
-     honest feedback on a real click, not a fake-urgency loop) whenever the
-     user actually flips the Monthly/Annual toggle. */
-  /* Only one percentage is on screen at a time. Two true-but-different
-     numbers were being shown together on the annual view and read as a
-     contradiction: the card's "SAVE 50%" measures ₹1,999→₹999 off list,
-     while the toggle's "SAVE 44%" measures annual against twelve monthly
-     payments (₹149×12 = ₹1,788 vs ₹999). The toggle keeps its comparison
-     because that's the choice the user is actually making there; the annual
-     card drops its percentage rather than argue with it. */
-  var PRICING_PLANS = {
-    monthly: { strike: '₹199', amount: '₹149', period: '/ MONTH', discount: 'LAUNCH OFFER · SAVE 25%' },
-    annual: { strike: '₹1,999', amount: '₹999', period: '/ YEAR', discount: 'LAUNCH OFFER' }
-  };
-  var pricingSection = document.getElementById('pricingSection');
-  if (pricingSection) {
-    var toggleMonthly = document.getElementById('toggleMonthly');
-    var toggleAnnual = document.getElementById('toggleAnnual');
-    var pricetoggleThumb = document.getElementById('pricetoggleThumb');
-    var proStrike = document.getElementById('proStrike');
-    var proAmount = document.getElementById('proAmount');
-    var proPeriod = document.getElementById('proPeriod');
-    var proDiscountTag = document.getElementById('proDiscountTag');
-
-    var formatINR = function (n) { return '₹' + Math.round(n).toLocaleString('en-IN'); };
-    var parseINR = function (s) { return parseInt(String(s).replace(/[^\d]/g, ''), 10) || 0; };
-
-    var moveThumb = function () {
-      if (!pricetoggleThumb) return;
-      var activeBtn = toggleAnnual.classList.contains('is-active') ? toggleAnnual : toggleMonthly;
-      var trackRect = pricetoggleThumb.parentElement.getBoundingClientRect();
-      var btnRect = activeBtn.getBoundingClientRect();
-      pricetoggleThumb.style.width = btnRect.width + 'px';
-      pricetoggleThumb.style.transform = 'translateX(' + (btnRect.left - trackRect.left) + 'px)';
-    };
-
-    var lastAmount = 0;
-    var playPriceReveal = function (plan) {
-      proStrike.classList.remove('is-struck', 'is-in');
-      proAmount.classList.remove('is-shown');
-      proDiscountTag.classList.remove('is-shown');
-      proStrike.textContent = plan.strike;
-      proPeriod.textContent = plan.period;
-      proDiscountTag.textContent = plan.discount;
-
-      var targetAmount = parseINR(plan.amount);
-      var fromAmount = lastAmount;
-      lastAmount = targetAmount;
-      proAmount.textContent = formatINR(fromAmount);
-
-      var t0 = setTimeout(function () { proStrike.classList.add('is-in'); }, 80);
-      var t1 = setTimeout(function () { proStrike.classList.add('is-struck'); }, 320);
-      var t2 = setTimeout(function () {
-        proAmount.classList.add('is-shown');
-        if (hasGSAP) {
-          var proxy = { v: fromAmount };
-          gsap.to(proxy, {
-            v: targetAmount, duration: 0.85, ease: 'power2.out',
-            onUpdate: function () { proAmount.textContent = formatINR(proxy.v); }
-          });
-        } else {
-          proAmount.textContent = formatINR(targetAmount);
-        }
-      }, 420);
-      var t3 = setTimeout(function () { proDiscountTag.classList.add('is-shown'); }, 680);
-
-      if (reduced) {
-        clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
-        proStrike.classList.add('is-struck', 'is-in');
-        proAmount.classList.add('is-shown');
-        proAmount.textContent = formatINR(targetAmount);
-        proDiscountTag.classList.add('is-shown');
-      }
-    };
-
-    var setPlan = function (planKey) {
-      toggleMonthly.classList.toggle('is-active', planKey === 'monthly');
-      toggleAnnual.classList.toggle('is-active', planKey === 'annual');
-      moveThumb();
-      playPriceReveal(PRICING_PLANS[planKey]);
-    };
-
-    toggleMonthly.addEventListener('click', function () { setPlan('monthly'); });
-    toggleAnnual.addEventListener('click', function () { setPlan('annual'); });
-    window.addEventListener('resize', moveThumb);
-    moveThumb();
-
-    var startedPricing = false;
-    var pio = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting && !startedPricing) {
-          startedPricing = true;
-          playPriceReveal(PRICING_PLANS.monthly);
-          pio.disconnect();
-        }
-      });
-    }, { threshold: 0.3 });
-    pio.observe(pricingSection);
-  }
-
-  if (hasGSAP && !reduced) {
-    gsap.fromTo('#pricingHead > *', { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out',
-        scrollTrigger: { trigger: '.pricing', start: 'top 72%', toggleActions: 'play none none reverse' } });
-    gsap.fromTo('.pricecard', { y: 40, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.7, stagger: 0.15, ease: 'power3.out',
-        scrollTrigger: { trigger: '.pricegrid', start: 'top 78%', toggleActions: 'play none none reverse' } });
-  } else {
-    var prh = document.getElementById('pricingHead'); if (prh) prh.style.opacity = 1;
-    document.querySelectorAll('.pricecard').forEach(function (el) { el.style.opacity = 1; });
-  }
-
-  /* ---------- 18. AVAILABLE ON — platform availability reveal ---------- */
-  if (hasGSAP && !reduced) {
-    gsap.fromTo('#platformsHead > *', { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out',
-        scrollTrigger: { trigger: '.platforms', start: 'top 75%', toggleActions: 'play none none reverse' } });
-    gsap.fromTo('.platformcard', { y: 30, opacity: 0, scale: 0.95 },
-      { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.12, ease: 'back.out(1.3)',
-        scrollTrigger: { trigger: '.platformrow', start: 'top 82%', toggleActions: 'play none none reverse' } });
-  } else {
-    var plh = document.getElementById('platformsHead'); if (plh) plh.style.opacity = 1;
-    document.querySelectorAll('.platformcard').forEach(function (el) { el.style.opacity = 1; });
-  }
-
-  /* ---------- 19. Waitlist form ---------- */
-  var form = document.querySelector('.waitlist');
-  if (form) {
+  document.querySelectorAll('.waitlist').forEach(function (form) {
     var input = form.querySelector('.waitlist__input');
     var noteIdle = form.querySelector('[data-state-idle]');
-    var noteOk = form.querySelector('[data-state-ok]');
     var noteErr = form.querySelector('[data-state-err]');
     var btnLabel = form.querySelector('.waitlist__btn-label');
+    var role = null;
+
+    // Role is optional on purpose: one organizer is worth 3-8 installs and is the
+    // only credible Pro buyer, so knowing which is which turns the list into a
+    // launch *sequence* — but making it required would cost signups to buy that.
+    form.querySelectorAll('.rolepill').forEach(function (pill) {
+      pill.addEventListener('click', function () {
+        var next = pill.dataset.role;
+        role = role === next ? null : next;
+        form.querySelectorAll('.rolepill').forEach(function (p) {
+          var on = role !== null && p.dataset.role === role;
+          p.classList.toggle('is-on', on);
+          p.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      });
+    });
 
     var setState = function (state) {
-      noteIdle.hidden = state !== 'idle';
-      noteOk.hidden = state !== 'ok';
-      noteErr.hidden = state !== 'err';
+      if (noteIdle) noteIdle.hidden = state !== 'idle';
+      if (noteErr) noteErr.hidden = state !== 'err';
+    };
+
+    var succeed = function (data) {
+      form.hidden = true;
+      try { localStorage.setItem(ME_KEY, JSON.stringify(data)); } catch (err) { /* ignore */ }
+      renderShare(data);
+      if (shareEl && typeof shareEl.scrollIntoView === 'function') {
+        shareEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     };
 
     form.addEventListener('submit', function (e) {
@@ -1397,37 +945,957 @@
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
         input.focus();
         setState('err');
-        noteErr.textContent = 'THAT EMAIL DOESN’T LOOK RIGHT';
+        if (noteErr) noteErr.textContent = 'THAT EMAIL DOESN’T LOOK RIGHT';
         return;
       }
-      btnLabel.textContent = 'Lighting up…';
+      if (btnLabel) btnLabel.textContent = 'Lighting up…';
 
       if (isLocal) {
+        // Dev preview: exercise the real share panel with an obviously fake code,
+        // so the loop can be looked at locally without writing to KV.
         setTimeout(function () {
-          setState('ok');
-          noteOk.textContent = 'DEV PREVIEW — NOT SAVED. WORKS ON THE LIVE SITE.';
-          btnLabel.textContent = 'On the list ✦';
-        }, 600);
+          succeed({ code: 'DEVCODE', referrals: 1, goal: 3, dev: true });
+          if (shareLink) shareLink.textContent = 'DEV PREVIEW — NOT SAVED';
+        }, 500);
         return;
       }
 
       fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ email: email, role: role, ref: readStore(REF_KEY) || '' })
       }).then(function (res) {
         if (!res.ok) throw new Error('bad status ' + res.status);
         return res.json();
-      }).then(function () {
-        setState('ok');
-        btnLabel.textContent = 'On the list ✦';
-        input.value = '';
-        input.blur();
-      }).catch(function () {
+      }).then(succeed).catch(function () {
         setState('err');
-        noteErr.textContent = 'COULDN’T REACH THE LIGHTHOUSE — TRY AGAIN';
-        btnLabel.textContent = 'Get early access';
+        if (noteErr) noteErr.textContent = 'COULDN’T REACH THE LIGHTHOUSE — TRY AGAIN';
+        if (btnLabel) btnLabel.textContent = 'Get early access';
+      });
+    });
+  });
+
+  /* ---------- Next long weekend ----------
+     "Calendar ownership" is a real moat line in the business plan — long weekend
+     = Lighthouse — but nothing on this page ever said the product is for a thing
+     that comes back. Every other promise here is one trip. This is the closer's
+     own argument: there is a next one, it has a date, and it is close.
+
+     Only FIXED-DATE national holidays are listed. Diwali, Dussehra and Holi move
+     with the lunar calendar and would need a real table to state correctly, so
+     they are left out rather than approximated — the counter may miss a long
+     weekend, but it will never print a wrong date. */
+  (function () {
+    var host = document.getElementById('closeWeekend');
+    if (!host) return;
+
+    var FIXED = [
+      { m: 1,  d: 1,  name: 'New Year' },
+      { m: 1,  d: 26, name: 'Republic Day' },
+      { m: 8,  d: 15, name: 'Independence Day' },
+      { m: 10, d: 2,  name: 'Gandhi Jayanti' },
+      { m: 12, d: 25, name: 'Christmas' }
+    ];
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var best = null;
+    for (var y = today.getFullYear(); y <= today.getFullYear() + 1 && !best; y++) {
+      FIXED.map(function (h) {
+        return { when: new Date(y, h.m - 1, h.d), name: h.name };
+      }).filter(function (h) {
+        // A long weekend needs the holiday to touch a weekend: Fri or Mon makes
+        // three days, Tue or Thu makes four with one bridge day taken.
+        var wd = h.when.getDay();
+        return h.when >= today && (wd === 1 || wd === 2 || wd === 4 || wd === 5);
+      }).sort(function (a, b) {
+        return a.when - b.when;
+      }).some(function (h) {
+        best = h;
+        return true;
+      });
+    }
+    if (!best) return;
+
+    var days = Math.round((best.when - today) / 86400000);
+    var wd = best.when.getDay();
+    var span = wd === 1 || wd === 5 ? 'three days' : 'four days';
+
+    var nameEl = document.getElementById('closeWeekendName');
+    var daysEl = document.getElementById('closeWeekendDays');
+    if (nameEl) {
+      nameEl.textContent = best.name + ' — ' + span + ', ' +
+        best.when.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' });
+    }
+    if (daysEl) {
+      daysEl.textContent = days === 0 ? 'today' : days === 1 ? 'tomorrow' : days + ' days away';
+    }
+    host.hidden = false;
+  })();
+
+  /* ---------- Explore peek + pin (one index) ---------- */
+  var PLACES = [
+    {
+      name: "Skandagiri",
+      meta: "1h 30m · 68 km",
+      city: "Chikballapur",
+      cat: "TREK",
+      x: 36, y: 26,
+      lat: 13.417256, lon: 77.682669,
+      img: "/assets/places/skandagiri.jpg",
+      notes: [
+        "Camping on the summit is no longer allowed — there-and-back by breakfast",
+        "Start the climb at 2 or 3 AM with a headlamp",
+        "Loose granite switchbacks; the trail skirts sheer drops",
+        "The descent in daylight shows how exposed the ridge actually is",
+        "Kalavara Durga fort ruins sit on the ridge — crumbling walls, watch your footing",
+        "The trail is unlit until sunrise; a headlamp is not optional"
+      ]
+    },
+    {
+      name: "Makalidurga",
+      meta: "1h 31m · 68 km",
+      city: "Gunjuru",
+      cat: "TREK",
+      x: 26, y: 22,
+      lat: 13.432865, lon: 77.501498,
+      img: "/assets/places/makalidurga.jpg",
+      notes: [
+        "Parking is a dirt clearing near the village temple, free, room for a dozen cars",
+        "No shade on the climb — start before sunrise in the dry months",
+        "No shops past the trailhead village; carry water and breakfast",
+        "Granite is slick with dew in the first hour after sunrise, grippy once dry",
+        "No railing anywhere near the summit edge — it rewards care more than speed",
+        "Nothing sold past the village; carry water the whole way"
+      ]
+    },
+    {
+      name: "Savandurga",
+      meta: "57m · 43 km",
+      city: "Magadi",
+      cat: "TREK",
+      x: 22, y: 54,
+      lat: 12.915961, lon: 77.297772,
+      img: "/assets/places/savandurga.jpg",
+      notes: [
+        "Bare granite is slick with dew for the first hour or two after sunrise — go slow or wait it out",
+        "No marked trail or railings; a local guide is worth it for a first climb",
+        "Forest checkpost may ask for a small entry fee",
+        "No shops on the hill — carry water and breakfast, eat it at the top",
+        "Forest department permission is worth having for the fort-side approach",
+        "The rock holds overnight dew well after sunrise — a slick slope with no railing"
+      ]
+    },
+    {
+      name: "Om Beach",
+      meta: "9h · 480 km",
+      city: "Gokarna",
+      cat: "COAST",
+      x: 82, y: 46,
+      lat: 14.5222, lon: 74.3175,
+      img: "/assets/places/ombeach.jpg",
+      rain: true,
+      notes: [
+        "Paid parking at the cliff-tops near Om Beach and Kudle — packed by noon on long weekends",
+        "This is an overnight coastal run, not a same-day",
+        "Humidity on the coast hits after the cool forest air — hydrate the last 100 km",
+        "Hike down to the crescent; the cliff cafes face the sunset"
+      ]
+    },
+    {
+      name: "Rayakottai Fort",
+      meta: "2h · 90 km",
+      city: "Rayakottai",
+      cat: "FORT",
+      x: 58, y: 62,
+      lat: 12.521642, lon: 78.037022,
+      img: "/assets/places/rayakottai.jpg",
+      notes: [
+        "Bikes and cars park near the base of the hill in town",
+        "The path is exposed to the sun — start early",
+        "No entry fee or formal permit",
+        "Basic food and water in Rayakottai town, nothing on the hill"
+      ]
+    },
+    {
+      name: "Kapu Lighthouse",
+      meta: "8h · 400 km",
+      city: "Udupi",
+      cat: "COAST",
+      x: 74, y: 58,
+      lat: 13.2241, lon: 74.7380,
+      img: "/assets/places/kapu.jpg",
+      notes: [
+        "Park metres from the sand — then climb the spiral before golden hour",
+        "Gale on the balcony; ocean on one side, palms inland",
+        "NH66 from Mangalore is the last blast of coast highway",
+        "Udupi station is a 20-minute ride if you take the overnight train"
+      ]
+    }
+  ];
+
+  /* Corner Craving — catalog `Corner Carving`. Seven nearest, all with
+     local Commons thumbs (see assets/places/ATTRIBUTION.txt). */
+  var CRAVE_PLACES = [
+    {
+      name: "Devarayanadurga",
+      meta: "1h 40m · 75 km",
+      city: "Tumkur",
+      cat: "CORNER CRAVING",
+      lat: 13.3719, lon: 77.2096,
+      img: "/assets/places/devarayanadurga.jpg",
+      notes: [
+        "Highway is fast; the last ascent is narrow, steep, first-and-second gear",
+        "Tight parking at Yoga Narasimha temple — jammed after 10 AM on Sundays",
+        "Forest hairpins stay damp and slippery under the canopy in the morning",
+        "Monkeys on the bends — visor down if you stop"
+      ]
+    },
+    {
+      name: "Jogimatti",
+      meta: "2h 17m · 103 km",
+      city: "Chitradurga",
+      cat: "CORNER CRAVING",
+      lat: 14.176981, lon: 76.388974,
+      img: "/assets/places/jogimatti.jpg",
+      notes: [
+        "Register at the forest gate at the base",
+        "Entry can close Feb–May for fire risk",
+        "Leopard and bear country — don't linger after dark",
+        "Nothing at the top; no cafes"
+      ]
+    },
+    {
+      name: "Muthathi River Bank",
+      meta: "2h 30m · 105 km",
+      city: "Malavalli",
+      cat: "CORNER CRAVING",
+      lat: 12.305418, lon: 77.311772,
+      img: "/assets/places/muthathi.jpg",
+      notes: [
+        "Kanakapura Road, then left at Sathanur into the sanctuary",
+        "Narrow twisting single-lane — keep it in a low gear",
+        "Unpaved parking along the riverbanks",
+        "A legendary ribbon of tarmac through the forest"
+      ]
+    },
+    {
+      name: "Alangayam Ghat",
+      meta: "3h 48m · 171 km",
+      city: "Alangayam",
+      cat: "CORNER CRAVING",
+      lat: 12.622667, lon: 78.752504,
+      img: "/assets/places/alangayam.jpg",
+      notes: [
+        "Excellent tarmac; forest debris in the corners after rain",
+        "Almost nothing to eat — carry water",
+        "Signal holds for most of the climb",
+        "Observatory access is restricted"
+      ]
+    },
+    {
+      name: "Kinnakorai",
+      meta: "6h 20m · 285 km",
+      city: "Manjoor",
+      cat: "CORNER CRAVING",
+      lat: 11.222806, lon: 76.664879,
+      img: "/assets/places/kinnakorai.jpg",
+      notes: [
+        "Last village before the Kerala border — tarmac ends at the drop",
+        "Hours from help if something breaks",
+        "The village shop may or may not be open",
+        "Misjudge daylight and it's a long, slow ride back"
+      ]
+    },
+    {
+      name: "Jatinga Rameshwara",
+      meta: "6h 32m · 294 km",
+      city: "Ramapura",
+      cat: "CORNER CRAVING",
+      lat: 14.850082, lon: 76.790518,
+      img: "/assets/places/jatinga.jpg",
+      notes: [
+        "Narrow hill road, honk the hairpins",
+        "Monkeys at the summit — food out of sight",
+        "Bike parking at the temple",
+        "Carry snacks; almost nothing sold up there"
+      ]
+    },
+    {
+      name: "Kakkadampoyil Ghat",
+      meta: "7h 1m · 316 km",
+      city: "Kakkadampoyil",
+      cat: "CORNER CRAVING",
+      lat: 11.335265, lon: 76.110903,
+      img: "/assets/places/kakkadampoyil.jpg",
+      rain: true,
+      notes: [
+        "Tight hairpins, steep sections — brakes and cooling first",
+        "Afternoon fog can drop visibility to metres",
+        "Phone signal is intermittent on the climb",
+        "Shoulder pull-offs if you need to wait it out"
+      ]
+    }
+  ];
+
+  var peekIdx = 0;
+  var peekUser = false;
+  var peekTimer = 0;
+  var gtkTimer = 0;
+  var gtkPool = [];
+  var gtkOffset = 0;
+  var GTK_SHOW = 4;
+  var wxCache = {};
+  var wxHours = [];
+  var wxGeom = null;
+  var exploreMap = null;
+  var explorePins = [];
+  var track = document.getElementById("lh-track");
+  var mapEl = document.getElementById("lh-map");
+  var wxEl = document.getElementById("lh-wx");
+  var CARD_W = 100 / CRAVE_PLACES.length;
+
+  function explorePad() {
+    return { top: 88, bottom: 168, left: 20, right: 20 };
+  }
+
+  function pinHtml(p, i) {
+    var dot = p.img
+      ? '<img class="lh__dot" alt="" src="' + p.img + '" />'
+      : '<span class="lh__dot"></span>';
+    return '<div class="lh__pin' + (i === 0 ? " is-on" : "") + '" data-pin="' + i + '">' +
+      '<div class="lh__bubble">' + dot + "<span><b>" + p.name + "</b><small>" + p.meta + "</small></span></div></div>";
+  }
+
+  function renderExplore() {
+    if (!track) return;
+    track.style.width = (CRAVE_PLACES.length * 100) + "%";
+    track.innerHTML = CRAVE_PLACES.map(function (p) {
+      var thumb = p.img
+        ? '<img class="lh__thumb" alt="" src="' + p.img + '" width="80" height="80" />'
+        : '<span class="lh__thumb lh__thumb--empty" aria-hidden="true"></span>';
+      return '<div class="lh__card" style="width:' + CARD_W + '%"><div class="lh__card-inner">' +
+        thumb +
+        '<div class="lh__copy"><h3>' + p.name + "</h3><p>" + p.meta + " · " + p.city + '</p><span class="lh__tag">' + p.cat + "</span></div>" +
+        '<span class="lh__go">Let\'s go</span></div></div>';
+    }).join("");
+  }
+
+  function flyExplore(i, duration) {
+    if (!exploreMap) return;
+    var p = CRAVE_PLACES[i];
+    exploreMap.easeTo({
+      center: [p.lon, p.lat],
+      zoom: 11.05,
+      duration: reduced ? 0 : duration,
+      padding: explorePad(),
+      essential: true
+    });
+  }
+
+  function setPeek(i, fromUser) {
+    peekIdx = (i + CRAVE_PLACES.length) % CRAVE_PLACES.length;
+    if (fromUser) peekUser = true;
+    var p = CRAVE_PLACES[peekIdx];
+    if (track) track.style.transform = "translateX(" + (-peekIdx * CARD_W) + "%)";
+    explorePins.forEach(function (el, n) {
+      el.classList.toggle("is-on", n === peekIdx);
+    });
+    flyExplore(peekIdx, 440);
+    if (mapEl && !reduced) {
+      mapEl.classList.add("is-pulse");
+      setTimeout(function () { mapEl.classList.remove("is-pulse"); }, 440);
+    }
+    if (wxEl) wxEl.classList.toggle("is-rain", !reduced && !!p.rain);
+    startGtk(p.notes);
+    loadWeather(p);
+  }
+
+  function initExploreMap() {
+    var gl = document.getElementById("lh-gl");
+    if (!gl || !window.maplibregl) return;
+    var first = CRAVE_PLACES[0];
+    exploreMap = new window.maplibregl.Map({
+      container: gl,
+      style: HERO_STYLE,
+      center: [first.lon, first.lat],
+      zoom: 11.05,
+      interactive: false,
+      attributionControl: false,
+      fadeDuration: 0,
+      failIfMajorPerformanceCaveat: false
+    });
+    window.setTimeout(function () {
+      if (gl.querySelector("canvas")) return;
+      try { exploreMap.setStyle(HERO_RASTER); } catch (err) { /* keep waiting */ }
+    }, 4000);
+    exploreMap.once("style.load", function () {
+      paintHeroMap(exploreMap);
+      exploreMap.resize();
+      exploreMap.jumpTo({
+        center: [first.lon, first.lat],
+        zoom: 11.05,
+        padding: explorePad()
+      });
+      CRAVE_PLACES.forEach(function (p, i) {
+        var wrap = document.createElement("div");
+        wrap.innerHTML = pinHtml(p, i);
+        var el = wrap.firstChild;
+        explorePins.push(el);
+        new window.maplibregl.Marker({ element: el, anchor: "bottom" })
+          .setLngLat([p.lon, p.lat])
+          .addTo(exploreMap);
+      });
+    });
+    window.addEventListener("resize", function () {
+      if (exploreMap) exploreMap.resize();
+    });
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    var i, j, t;
+    for (i = a.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function gtkSlice(offset) {
+    var n = Math.min(GTK_SHOW, gtkPool.length);
+    var out = [];
+    var i;
+    for (i = 0; i < n; i++) out.push(gtkPool[(offset + i) % gtkPool.length]);
+    return out;
+  }
+
+  function paintGtk(notes, fade) {
+    var el = document.getElementById("gtk-list");
+    if (!el) return;
+    var html = notes.map(function (n) {
+      return "<li><span class=\"gtk__mark\" aria-hidden=\"true\">▸</span><span>" + n + "</span></li>";
+    }).join("");
+    if (!fade || reduced) {
+      el.innerHTML = html;
+      return;
+    }
+    el.classList.add("is-swap");
+    window.setTimeout(function () {
+      el.innerHTML = html;
+      el.classList.remove("is-swap");
+    }, 180);
+  }
+
+  function stopGtk() {
+    if (gtkTimer) { clearInterval(gtkTimer); gtkTimer = 0; }
+  }
+
+  function startGtk(notes) {
+    stopGtk();
+    gtkPool = shuffle(notes);
+    gtkOffset = 0;
+    paintGtk(gtkSlice(0), false);
+    if (reduced || gtkPool.length <= GTK_SHOW) return;
+    gtkTimer = setInterval(function () {
+      gtkOffset = (gtkOffset + 1) % gtkPool.length;
+      paintGtk(gtkSlice(gtkOffset), true);
+    }, 3800);
+  }
+
+  function startPeekLoop() {
+    if (reduced || peekUser) return;
+    stopPeekLoop();
+    peekTimer = setInterval(function () {
+      if (peekUser) { stopPeekLoop(); return; }
+      setPeek(peekIdx + 1);
+    }, 2600);
+  }
+  function stopPeekLoop() {
+    if (peekTimer) { clearInterval(peekTimer); peekTimer = 0; }
+  }
+
+  renderExplore();
+  initExploreMap();
+  setPeek(0);
+
+
+  var prevBtn = document.getElementById("lh-prev");
+  var nextBtn = document.getElementById("lh-next");
+  if (prevBtn) prevBtn.addEventListener("click", function () { setPeek(peekIdx - 1, true); stopPeekLoop(); });
+  if (nextBtn) nextBtn.addEventListener("click", function () { setPeek(peekIdx + 1, true); stopPeekLoop(); });
+
+  var peekEl = document.getElementById("lh-peek");
+  if (peekEl) {
+    var startX = 0;
+    peekEl.addEventListener("pointerdown", function (e) { startX = e.clientX; });
+    peekEl.addEventListener("pointerup", function (e) {
+      var dx = e.clientX - startX;
+      if (Math.abs(dx) < 36) return;
+      setPeek(peekIdx + (dx < 0 ? 1 : -1), true);
+      stopPeekLoop();
+    });
+  }
+
+  var demo = document.getElementById("explore-demo");
+  if (demo && "IntersectionObserver" in window) {
+    var demoIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          if (exploreMap) exploreMap.resize();
+          startPeekLoop();
+        } else stopPeekLoop();
+      });
+    }, { threshold: 0.35 });
+    demoIo.observe(demo);
+  }
+
+  /* ---------- Trip flow (GroupVote, 510f @ 30fps) ---------- */
+  var FLOW_TOTAL = 510;
+  var TITLE_TRIP = "Weekend north?";
+  var CHAT_JOINS = ["Rohan", "Samira", "Kabir", "Diya", "Mira"];
+  var MEMBERS = ["A", "R", "S", "K", "D", "M"];
+  var VOTE = [
+    { name: "Skandagiri", vote: "yes", yes: 5, maybe: 1, no: 0, img: PLACES[0].img },
+    { name: "Makalidurga", vote: "maybe", yes: 2, maybe: 3, no: 1, img: PLACES[1].img },
+    { name: "Savandurga", vote: "no", yes: 1, maybe: 1, no: 3, img: PLACES[2].img }
+  ];
+  var voteRaf = 0;
+  var voteStart = 0;
+  var voteApp = document.getElementById("vote-app");
+  var voteList = document.getElementById("vote-list");
+  var voteBanner = document.getElementById("vote-banner");
+  var voteJoined = document.getElementById("vote-joined");
+  var voteCheck =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>';
+  var voteTrophy =
+    '<svg class="vote-card__trophy" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 01-10 0V4z"/><path d="M7 6H4a3 3 0 003 6M17 6h3a3 3 0 01-3 6"/></svg>';
+
+  function easeStandard(t) {
+    var c = clamp(t, 0, 1);
+    return 1 - Math.pow(1 - c, 3);
+  }
+
+  function flowScene(frame) {
+    if (frame < 36) return "saved";
+    if (frame < 150) return "create";
+    if (frame < 200) return "trip";
+    if (frame < 258) return "invite";
+    if (frame < 338) return "chat";
+    return "trip";
+  }
+
+  function selectedCount(frame) {
+    if (frame < 70) return 0;
+    if (frame < 95) return 1;
+    if (frame < 118) return 2;
+    return 3;
+  }
+
+  function unfurlHtml() {
+    return '<img alt="" src="' + PLACES[0].img + '" />' +
+      '<div class="unfurl__scrim"><span>LIGHTHOUSE · 3 VOTING</span><b>' + TITLE_TRIP + "</b></div>";
+  }
+
+  function avatarsHtml(n) {
+    return MEMBERS.slice(0, Math.max(1, n)).map(function (m, i) {
+      return '<span class="vote-app__ava' + (i % 2 ? " is-mint" : "") + '">' + m + "</span>";
+    }).join("");
+  }
+
+  function showTap(x, y, on) {
+    var tap = document.getElementById("trip-tap");
+    if (!tap) return;
+    tap.hidden = !on;
+    if (on) {
+      tap.style.left = x;
+      tap.style.top = y;
+    }
+  }
+
+  function paintVoteCards(localFrame, mode, winnerOn) {
+    if (!voteList) return;
+    VOTE.forEach(function (c, i) {
+      var row = voteList.children[i];
+      if (!row) return;
+      var t = 0;
+      var yes = 0, maybe = 0, no = 0;
+      if (mode !== "preview") {
+        t = easeStandard((localFrame - i * 8 - 12) / 58);
+        yes = Math.round(c.yes * t);
+        maybe = Math.round(c.maybe * t);
+        no = Math.round(c.no * t);
+      }
+      var total = Math.max(1, yes + maybe + no);
+      row.classList.toggle("is-win", winnerOn && i === 0);
+      row.classList.toggle("is-staged", mode === "staged" && i === 0 && !winnerOn);
+      var bar = row.querySelector(".vote-tally");
+      if (bar) bar.hidden = mode === "preview";
+      var yesEl = row.querySelector(".vote-tally__bar .is-yes");
+      if (yesEl) {
+        yesEl.style.width = ((yes / total) * 100) + "%";
+        row.querySelector(".vote-tally__bar .is-maybe").style.width = ((maybe / total) * 100) + "%";
+        row.querySelector(".vote-tally__bar .is-no").style.width = ((no / total) * 100) + "%";
+      }
+      var nums = row.querySelector(".vote-tally__n");
+      if (nums) {
+        nums.innerHTML =
+          '<span><span class="dot-yes">●</span> ' + yes + ' yes</span>' +
+          '<span><span class="dot-maybe">●</span> ' + maybe + ' maybe</span>' +
+          '<span><span class="dot-no">●</span> ' + no + ' no</span>';
+      }
+      var pills = row.querySelector(".vote-pills");
+      if (pills) pills.hidden = mode === "preview" || mode === "finalized";
+      row.querySelectorAll(".vote-pill").forEach(function (pill) {
+        var kind = pill.getAttribute("data-vote");
+        pill.classList.toggle("is-on", mode === "voting" && localFrame > 18 && kind === c.vote);
       });
     });
   }
+
+  function paintFlow(frame) {
+    if (!voteApp) return;
+    var scene = flowScene(frame);
+    voteApp.querySelectorAll(".trip-scene").forEach(function (el) {
+      el.classList.toggle("is-on", el.getAttribute("data-scene") === scene);
+    });
+
+    showTap("82%", "62%", scene === "saved" && frame >= 18 && frame < 32);
+    var cta = document.getElementById("saved-cta");
+    if (cta) cta.classList.toggle("is-hot", scene === "saved" && frame >= 18 && frame < 32);
+
+    if (scene === "create") {
+      var n = selectedCount(frame);
+      var typedN = Math.round(clamp((frame - 44) / (88 - 44), 0, 1) * TITLE_TRIP.length);
+      var title = TITLE_TRIP.slice(0, typedN);
+      var titleEl = document.getElementById("create-title");
+      if (titleEl) {
+        titleEl.classList.toggle("is-on", title.length > 0);
+        titleEl.innerHTML = title
+          ? title + (frame < 88 ? '<span class="create-caret"></span>' : "")
+          : '<span class="create-ph">e.g. Weekend near Coorg?</span>';
+      }
+      var countEl = document.getElementById("create-count");
+      if (countEl) countEl.textContent = n + "/5";
+      document.querySelectorAll("#create-pool .create-row").forEach(function (row, i) {
+        row.classList.toggle("is-on", i < n);
+      });
+      var submit = document.getElementById("create-submit");
+      if (submit) {
+        submit.disabled = !(title.trim().length > 0 && n >= 2);
+        submit.classList.toggle("is-hot", frame >= 136 && frame < 148);
+      }
+      showTap("50%", "92%", frame >= 136 && frame < 148);
+    }
+
+    if (scene === "invite") {
+      var wa = document.getElementById("invite-wa");
+      var local = frame - 200;
+      if (wa) wa.classList.toggle("is-hot", local >= 36 && local < 50);
+      showTap("50%", "92%", local >= 36 && local < 50);
+    }
+
+    if (scene === "chat") {
+      var localC = frame - 258;
+      var joined = Math.min(CHAT_JOINS.length, Math.max(0, Math.floor((localC - 18) / 12)));
+      var joins = document.getElementById("chat-joins");
+      if (joins) {
+        joins.innerHTML = CHAT_JOINS.slice(0, joined).map(function (name) {
+          return "<p>" + name + " opened the invite</p>";
+        }).join("");
+      }
+      showTap("0", "0", false);
+    }
+
+    if (scene === "trip") {
+      var share = document.getElementById("share-btn");
+      var avas = document.getElementById("trip-avas");
+      var fin = document.getElementById("finalize-bar");
+      var finGo = document.getElementById("finalize-go");
+      var members = 1;
+      var mode = "preview";
+      var winnerOn = false;
+      var localT = 0;
+      var shareHot = false;
+      var staged = false;
+      var confirming = false;
+
+      if (frame < 200) {
+        localT = frame - 150;
+        shareHot = frame >= 178 && frame < 192;
+        members = 1;
+        mode = "preview";
+        showTap("90%", "44px", shareHot);
+      } else if (frame < 430) {
+        localT = frame - 338;
+        members = 6;
+        mode = "voting";
+        showTap("0", "0", false);
+      } else {
+        localT = 80;
+        members = 6;
+        winnerOn = frame - 430 > 36;
+        mode = winnerOn ? "voting" : "voting";
+        staged = !winnerOn;
+        confirming = frame - 430 >= 22 && frame - 430 < 36;
+        showTap("86%", "88%", confirming);
+      }
+
+      if (share) share.classList.toggle("is-hot", shareHot);
+      if (avas) avas.innerHTML = avatarsHtml(members);
+      if (voteJoined) voteJoined.textContent = members + " joined" + (winnerOn ? " · finalized" : "");
+      if (voteBanner) voteBanner.hidden = !winnerOn;
+      if (voteApp) voteApp.classList.toggle("is-won", winnerOn);
+      if (fin) fin.hidden = !staged;
+      if (finGo) finGo.classList.toggle("is-hot", confirming);
+      paintVoteCards(localT, winnerOn ? "finalized" : (staged ? "staged" : mode), winnerOn);
+    }
+  }
+
+  function renderVote() {
+    var saved = document.getElementById("saved-list");
+    if (saved) {
+      saved.innerHTML = VOTE.map(function (c) {
+        return '<div class="saved-row"><img alt="" src="' + c.img + '" width="44" height="44" /><span>' +
+          c.name + '</span><i class="saved-mark">●</i></div>';
+      }).join("");
+    }
+    var pool = document.getElementById("create-pool");
+    if (pool) {
+      pool.innerHTML = VOTE.map(function (c) {
+        return '<div class="create-row"><img alt="" src="' + c.img + '" width="48" height="48" /><b>' +
+          c.name + '</b><span class="create-tick">' + voteCheck + "</span></div>";
+      }).join("");
+    }
+    var unfurl = document.getElementById("unfurl");
+    var unfurlChat = document.getElementById("unfurl-chat");
+    if (unfurl) unfurl.innerHTML = unfurlHtml();
+    if (unfurlChat) unfurlChat.innerHTML = unfurlHtml();
+    if (voteList) {
+      voteList.innerHTML = VOTE.map(function (c) {
+        return '<div class="vote-row">' +
+          '<div class="vote-card">' +
+            '<img class="vote-card__thumb" alt="" src="' + c.img + '" width="64" height="64" />' +
+            '<div class="vote-card__body">' +
+              '<div class="vote-card__name">' + voteTrophy + c.name + "</div>" +
+              '<span class="vote-card__cat">trek</span>' +
+              '<div class="vote-tally">' +
+                '<div class="vote-tally__bar"><i class="is-yes"></i><i class="is-maybe"></i><i class="is-no"></i></div>' +
+                '<div class="vote-tally__n"></div>' +
+              "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="vote-pills">' +
+            '<span class="vote-pill is-yes" data-vote="yes">' + voteCheck + "Yes</span>" +
+            '<span class="vote-pill is-maybe" data-vote="maybe">' + voteCheck + "Maybe</span>" +
+            '<span class="vote-pill is-no" data-vote="no">' + voteCheck + "No</span>" +
+          "</div>" +
+        "</div>";
+      }).join("");
+    }
+    paintFlow(reduced ? FLOW_TOTAL - 1 : 0);
+  }
+
+  function tickVote(now) {
+    if (!voteStart) voteStart = now;
+    var frame = ((now - voteStart) / 1000) * 30;
+    if (frame > FLOW_TOTAL) {
+      voteStart = now;
+      frame = 0;
+    }
+    paintFlow(frame);
+    voteRaf = requestAnimationFrame(tickVote);
+  }
+
+  function startVoteLoop() {
+    if (reduced || voteRaf) return;
+    voteStart = 0;
+    voteRaf = requestAnimationFrame(tickVote);
+  }
+  function stopVoteLoop() {
+    if (voteRaf) cancelAnimationFrame(voteRaf);
+    voteRaf = 0;
+  }
+
+  renderVote();
+  var voteDemo = document.getElementById("vote-demo");
+  if (voteDemo && "IntersectionObserver" in window) {
+    var voteIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) startVoteLoop();
+        else stopVoteLoop();
+      });
+    }, { threshold: 0.35 });
+    voteIo.observe(voteDemo);
+  }
+
+  /* ---------- Live 24h weather (Open-Meteo, same as the app) ---------- */
+  var RAIN = { 51: 1, 53: 1, 55: 1, 61: 1, 63: 1, 65: 1, 80: 1, 81: 1, 82: 1, 95: 1 };
+  var FOG = { 45: 1, 48: 1 };
+
+  function wxLabel(code, isDay) {
+    if (RAIN[code]) return { t: "Raining", e: "🌧" };
+    if (FOG[code]) return { t: "Misty", e: "🌫" };
+    return { t: isDay ? "Clear" : "Clear night", e: isDay ? "☀️" : "🌙" };
+  }
+
+  function hourShort(d) {
+    var h = d.getHours();
+    var h12 = h % 12 === 0 ? 12 : h % 12;
+    return h12 + (h >= 12 ? "p" : "a");
+  }
+  function hourLong(d) {
+    var h = d.getHours();
+    var h12 = h % 12 === 0 ? 12 : h % 12;
+    return h12 + (h >= 12 ? "pm" : "am");
+  }
+
+  function bestLeave(hours) {
+    var i, j;
+    for (i = 0; i + 3 <= hours.length; i++) {
+      var win = hours.slice(i, i + 3);
+      if (!win.every(function (h) { return h.day; })) continue;
+      if (win.some(function (h) { return h.rain >= 55; })) continue;
+      var mean = win.reduce(function (s, h) { return s + h.temp; }, 0) / 3;
+      if (mean < 6 || mean > 40) continue;
+      var reason = "The steadiest stretch in the forecast.";
+      var before = hours.slice(0, i);
+      if (before.some(function (h) { return h.rain >= 55; }) && win.every(function (h) { return h.rain < 30; })) {
+        reason = "Rain eases off by then.";
+      } else if (before.length === 0) {
+        reason = "Conditions are already good — no reason to wait.";
+      }
+      return { at: win[0].time, reason: reason };
+    }
+    return null;
+  }
+
+  function drawWx(hours, nowLabel) {
+    var band = hours.slice(0, 24);
+    wxHours = band;
+    var nowEl = document.getElementById("wx-now");
+    var chart = document.getElementById("wx-chart");
+    var leaveEl = document.getElementById("wx-leave");
+    if (!band.length) {
+      if (nowEl) nowEl.textContent = "No forecast right now.";
+      return;
+    }
+    if (nowEl) nowEl.innerHTML = Math.round(band[0].temp) + "°C<span>" + nowLabel + "</span>";
+    var temps = band.map(function (h) { return h.temp; });
+    var yMin = Math.floor(Math.min.apply(null, temps)) - 1;
+    var yMax = Math.ceil(Math.max.apply(null, temps)) + 1;
+    var span = Math.max(1, yMax - yMin);
+    var W = 360, TH = 86, RH = 44;
+    var x = function (i) { return band.length === 1 ? W / 2 : (i / (band.length - 1)) * W; };
+    var y = function (t) { return TH - ((t - yMin) / span) * TH; };
+    wxGeom = { x: x, y: y, W: W, TH: TH };
+    var line = band.map(function (h, i) {
+      return (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(h.temp).toFixed(1);
+    }).join(" ");
+    var area = line + " L" + W + "," + TH + " L0," + TH + " Z";
+    var barW = Math.max(2, W / band.length - 2);
+    var rainRects = band.map(function (h, i) {
+      var bh = Math.max(h.rain > 0 ? 1.5 : 0, (h.rain / 100) * RH);
+      return '<rect class="wx-rainbar" data-i="' + i + '" x="' + (x(i) - barW / 2).toFixed(1) + '" y="' + (RH - bh).toFixed(1) +
+        '" width="' + barW.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="1.5" fill="#5DCAA5" opacity="0.55"/>';
+    }).join("");
+    var ticks = band.filter(function (_, i) { return i % 6 === 0; }).map(function (h) {
+      return "<span>" + hourShort(h.time) + "</span>";
+    }).join("");
+    var hair = '<line class="wx-hair" x1="0" y1="0" x2="0" y2="100%" stroke="rgba(255,255,255,0.35)" stroke-width="1" vector-effect="non-scaling-stroke" visibility="hidden"/>';
+    if (chart) {
+      chart.innerHTML =
+        '<p class="utility" style="margin:0 0 6px">TEMPERATURE</p>' +
+        '<div class="wx__temp">' +
+        '<svg class="wx__plot" id="wx-temp" viewBox="0 0 ' + W + " " + TH + '" preserveAspectRatio="none" style="height:' + TH + 'px" role="img" aria-label="Temperature next 24 hours">' +
+        '<defs><linearGradient id="lh-tf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DCAA5" stop-opacity="0.38"/><stop offset="100%" stop-color="#5DCAA5" stop-opacity="0.02"/></linearGradient></defs>' +
+        '<path d="' + area + '" fill="url(#lh-tf)"/><path d="' + line + '" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round"/>' +
+        hair.replace('y2="100%"', 'y2="' + TH + '"') + "</svg>" +
+        '<span class="wx__dot" id="wx-dot" hidden></span>' +
+        "</div>" +
+        '<p class="utility" style="margin:10px 0 6px">CHANCE OF RAIN</p>' +
+        '<div class="wx__rain">' +
+        '<svg class="wx__plot" id="wx-rain" viewBox="0 0 ' + W + " " + RH + '" preserveAspectRatio="none" style="height:' + RH + 'px" role="img" aria-label="Chance of rain next 24 hours">' +
+        rainRects + hair.replace('y2="100%"', 'y2="' + RH + '"') + "</svg></div>" +
+        '<div class="wx__axis">' + ticks + "</div>";
+
+      function clearWxHover() {
+        chart.querySelectorAll(".wx-hair").forEach(function (ln) { ln.setAttribute("visibility", "hidden"); });
+        var dot = document.getElementById("wx-dot");
+        if (dot) dot.hidden = true;
+        chart.querySelectorAll(".wx-rainbar").forEach(function (bar) { bar.setAttribute("opacity", "0.55"); });
+        var read = document.getElementById("wx-read");
+        if (read) read.textContent = "Hover or tap any hour";
+      }
+
+      function hoverWx(clientX) {
+        var tempEl = document.getElementById("wx-temp");
+        if (!tempEl || !wxGeom || !band.length) return;
+        var r = tempEl.getBoundingClientRect();
+        var ratio = (clientX - r.left) / r.width;
+        var hi = Math.max(0, Math.min(band.length - 1, Math.round(ratio * (band.length - 1))));
+        var h = band[hi];
+        var px = wxGeom.x(hi);
+        chart.querySelectorAll(".wx-hair").forEach(function (ln) {
+          ln.setAttribute("x1", px.toFixed(1));
+          ln.setAttribute("x2", px.toFixed(1));
+          ln.setAttribute("visibility", "visible");
+        });
+        var dot = document.getElementById("wx-dot");
+        if (dot) {
+          dot.hidden = false;
+          dot.style.left = ((px / wxGeom.W) * 100) + "%";
+          dot.style.top = ((wxGeom.y(h.temp) / wxGeom.TH) * 100) + "%";
+        }
+        chart.querySelectorAll(".wx-rainbar").forEach(function (bar) {
+          bar.setAttribute("opacity", bar.getAttribute("data-i") === String(hi) ? "1" : "0.28");
+        });
+        var read = document.getElementById("wx-read");
+        if (read) read.textContent = hourLong(h.time) + " · " + Math.round(h.temp) + "° · " + h.rain + "% rain";
+      }
+
+      chart.addEventListener("pointermove", function (e) { hoverWx(e.clientX); });
+      chart.addEventListener("pointerleave", clearWxHover);
+    }
+    var rec = bestLeave(band);
+    if (leaveEl) {
+      leaveEl.textContent = rec
+        ? "Leave around " + hourLong(rec.at) + " — " + rec.reason
+        : "No clear daylight window in the next day. Check again closer to go-time.";
+    }
+  }
+
+  function loadWeather(place) {
+    var placeEl = document.getElementById("wx-place");
+    if (placeEl) placeEl.textContent = "Timing · " + place.name;
+    if (wxCache[place.name]) {
+      drawWx(wxCache[place.name].hours, wxCache[place.name].label);
+      return;
+    }
+    var url = "https://api.open-meteo.com/v1/forecast?latitude=" + place.lat + "&longitude=" + place.lon +
+      "&current=temperature_2m,weather_code,is_day" +
+      "&hourly=temperature_2m,precipitation_probability,weather_code,is_day" +
+      "&timezone=auto&forecast_days=2";
+    fetch(url).then(function (res) { return res.json(); }).then(function (data) {
+      var cutoff = Date.now() - 60 * 60 * 1000;
+      var hours = (data.hourly && data.hourly.time || []).map(function (iso, i) {
+        return {
+          time: new Date(iso),
+          temp: data.hourly.temperature_2m[i],
+          rain: data.hourly.precipitation_probability[i] || 0,
+          code: data.hourly.weather_code[i] || 0,
+          day: data.hourly.is_day[i] === 1
+        };
+      }).filter(function (h) { return h.temp != null && h.time.getTime() >= cutoff; });
+      var cur = data.current || {};
+      var lab = wxLabel(cur.weather_code || 0, cur.is_day === 1);
+      wxCache[place.name] = { hours: hours, label: lab.e + "  " + lab.t };
+      drawWx(hours, wxCache[place.name].label);
+    }).catch(function () {
+      var nowEl = document.getElementById("wx-now");
+      if (nowEl) nowEl.textContent = "Forecast unreachable — try again.";
+    });
+  }
 })();
+

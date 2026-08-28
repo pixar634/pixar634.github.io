@@ -1,0 +1,8 @@
+# Cloudflare Pages redirects & rewrites
+#
+# The /og.png path is referenced by every page and by the /go interstitial fallback.
+# There is no static og.png file; the branded card is generated at request time by
+# functions/api/og-image.js. This 200 rewrite keeps the short URL stable while
+# serving the dynamic renderer, so crawlers and existing links keep working.
+
+/og.png /api/og-image?title=Pick%20a%20place.&subtitle=Leave%20the%20city.%20Weekend%20travel%20from%20Bangalore.&badge=Bangalore%20first 200
