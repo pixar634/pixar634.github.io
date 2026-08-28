@@ -181,6 +181,78 @@
   document.addEventListener(HERO_LOADER_DONE_EVENT, releaseHeroCopy);
   initHeroLoader();
 
+  /* A rotating line of travel quotes fills the old lede's slot, on the same
+     paused "Act three" reveal timing (`.quote-cycle.reveal` in styles.css),
+     then cycles on its own clock once released. Fixed list, no lookup. */
+  var QUOTES = [
+    { text: "I love road trips, I love driving, I love finding little towns. I just think it's the best way to travel.", author: "Scarlett Johansson" },
+    { text: "I didn't say no because between safety and adventure I choose adventure.", author: "Craig Ferguson" },
+    { text: "We shall not cease from exploration and the end of all our exploring will be to arrive where we started and know the place for the first time.", author: "T.S. Eliot" },
+    { text: "Roads were made for journeys, not destinations.", author: "Confucius" },
+    { text: "Growth is painful. Change is painful. But, nothing is as painful as staying stuck where you do not belong.", author: "N.R. Narayana Murthy · Co-founder, Infosys" },
+    { text: "O nanna chetana, Agu nee aniketana.", translation: "O my spirit, transcend all boundaries and become a free traveler.", author: "Kuvempu · Kannada poet, Rashtrakavi" },
+    { text: "Seize the day, my friend. Pehle is din ko poori tarah jiyo, phir chalis ke bare mein sochna.", translation: "First live this day to the fullest, then think about turning forty.", author: "Zindagi Na Milegi Dobara" },
+    { text: "Not all those who wander are lost.", author: "J.R.R. Tolkien" },
+    { text: "To travel is to live.", author: "Hans Christian Andersen" },
+    { text: "I am not the same, having seen the moon shine on the other side of the world.", author: "Mary Anne Radmacher" },
+    { text: "Adventure is worthwhile in itself.", author: "Amelia Earhart" },
+    { text: "It is not down on any map; true places never are.", author: "Herman Melville, Moby-Dick" }
+  ];
+
+  (function initQuoteCycle() {
+    var el = document.getElementById("quoteCycle");
+    var textEl = document.getElementById("quoteText");
+    var translationEl = document.getElementById("quoteTranslation");
+    var authorEl = document.getElementById("quoteAuthor");
+    if (!el || !textEl || !authorEl) return;
+
+    // Shuffled once per load so the opening line isn't always Scarlett Johansson.
+    var order = QUOTES.map(function (_, i) { return i; });
+    for (var i = order.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+    }
+    var pos = 0;
+    var timer = 0;
+
+    function paint(q) {
+      textEl.textContent = "“" + q.text + "”";
+      // A couple of these run long enough to add a wrapped line at any normal
+      // width — shrink just those rather than reserve min-height for the
+      // whole rotation off one outlier, which would leave a dead gap under
+      // every short quote.
+      textEl.classList.toggle("is-long", q.text.length > 90);
+      if (translationEl) translationEl.textContent = q.translation || "";
+      authorEl.textContent = "— " + q.author;
+    }
+    paint(QUOTES[order[0]]);
+
+    function advance() {
+      pos = (pos + 1) % order.length;
+      textEl.classList.add("is-changing");
+      window.setTimeout(function () {
+        paint(QUOTES[order[pos]]);
+        textEl.classList.remove("is-changing");
+      }, 340);
+    }
+
+    function schedule() {
+      window.clearTimeout(timer);
+      if (reduced) return; // static quote, no motion, for reduced-motion visitors
+      timer = window.setTimeout(function () {
+        advance();
+        schedule();
+      }, 7000);
+    }
+    schedule();
+
+    // Pause on hover/focus so a long quote doesn't change mid-read.
+    el.addEventListener("mouseenter", function () { window.clearTimeout(timer); });
+    el.addEventListener("mouseleave", schedule);
+    el.addEventListener("focusin", function () { window.clearTimeout(timer); });
+    el.addEventListener("focusout", schedule);
+  })();
+
   document.querySelectorAll('[data-scrollto]').forEach(function (a) {
     a.addEventListener('click', function (e) {
       e.preventDefault();
@@ -662,7 +734,7 @@
     { name: "Makalidurga", meta: "56m · 57 km", lat: 13.432865, lon: 77.501498, img: "/assets/places/makalidurga.jpg", color: "#E0A458" },
     { name: "Savandurga", meta: "1h 4m · 56 km", lat: 12.915961, lon: 77.297772, img: "/assets/places/savandurga.jpg", color: "#5DCAA5" },
     { name: "Rayakottai Fort", meta: "1h 12m · 76 km", lat: 12.521642, lon: 78.037022, img: "/assets/places/rayakottai.jpg", color: "#E0A458" },
-    { name: "Kapu Lighthouse", meta: "5h 21m · 404 km", lat: 13.2241, lon: 74.7380, img: "/assets/places/kapu.jpg", color: "#5DCAA5" },
+    { name: "Gundamagere Lake", meta: "1h · 60 km", lat: 13.437969, lon: 77.479104, img: "/assets/places/gundamagere.jpg", color: "#5DCAA5" },
     { name: "Devarayanadurga", meta: "1h 7m · 69 km", lat: 13.3719, lon: 77.2096, img: "/assets/places/devarayanadurga.jpg", color: "#E0A458" },
     { name: "Kinnakorai", meta: "4h 58m · 347 km", lat: 11.222806, lon: 76.664879, img: "/assets/places/kinnakorai.jpg", color: "#5DCAA5" },
     { name: "Kakkadampoyil Ghat", meta: "4h 27m · 318 km", lat: 11.335265, lon: 76.110903, img: "/assets/places/kakkadampoyil.jpg", color: "#E0A458" }
