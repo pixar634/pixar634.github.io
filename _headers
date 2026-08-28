@@ -7,6 +7,12 @@
 /og.png
   Cache-Control: public, max-age=86400
 
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
 /styles.css
   Cache-Control: public, max-age=3600
 

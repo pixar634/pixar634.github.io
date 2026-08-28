@@ -72,6 +72,12 @@ function renderInterstitial({ title, description, image, redirectTo }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${safeTitle}</title>
+<!-- One of these exists per shared invite code: thin, near-duplicate, and
+     potentially thousands of them. `noindex` keeps them out of the index without
+     touching the unfurl — the crawlers that build a WhatsApp/Twitter preview read
+     the og: tags below and do not consult meta robots, so the share card is
+     unaffected. `follow` so the link through to the app still passes. -->
+<meta name="robots" content="noindex, follow">
 <meta property="og:title" content="${safeTitle}">
 <meta property="og:description" content="${safeDescription}">
 <meta property="og:image" content="${safeImage}">

@@ -1,44 +1,70 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Lighthouse — Pick a place. Leave the city.</title>
+
+    <!-- The title tag is a search result, not a billboard: it leads with what
+         people actually type ("weekend getaways near Bangalore"), and the brand
+         line the hero opens with lives on in og:title below, where it is what a
+         human in a WhatsApp thread reads. Two audiences, two strings — not a
+         compromise between them. (No angle-bracketed tag names in these comments:
+         some unfurl crawlers scrape with a regex rather than a parser and will
+         happily read one out of a comment.) -->
+    <title>Weekend Getaways Near Bangalore — Lighthouse</title>
     <meta
       name="description"
-      content="Weekend travel from Bangalore. Hundreds of places outside the city — same-day, midnight, or a full weekend."
+      content="Hundreds of weekend getaways and day trips near Bangalore — waterfalls, forts, treks and sunrise drives, with the real drive time on every card."
+    />
+    <link rel="canonical" href="https://letsgolighthouse.co.in/" />
+    <!-- max-image-preview:large is what lets Google use the full-width image in
+         Discover and image-rich results. For a travel brand that is the difference
+         between a thumbnail and a poster. -->
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
     <meta name="theme-color" content="#0F0F12" />
-    <link rel="canonical" href="https://letsgolighthouse.co.in/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
+    <!-- Social. og:image is an absolute URL to a *static* file on purpose: the
+         `/api/og-image` renderer it used to point at is a Cloudflare Pages Function,
+         and this site is served from GitHub Pages, where functions never run — so
+         every unfurl of the homepage 404'd on its own thumbnail and came back as
+         bare text. `?v=` forces the crawlers that cached that failure to look again.
+         Regenerate og.png with `node scripts/render-og.mjs`. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Lighthouse" />
+    <meta property="og:locale" content="en_IN" />
     <meta property="og:title" content="Lighthouse — Pick a place. Leave the city." />
     <meta
       property="og:description"
-      content="Weekend travel from Bangalore. Hundreds of places outside the city — same-day, midnight, or a full weekend."
+      content="Hundreds of getaways from Bangalore — waterfalls, forts, sunrise drives, monsoon treks. Drive time already on the card. Same day, midnight, or a whole weekend."
     />
     <meta property="og:url" content="https://letsgolighthouse.co.in/" />
-    <meta
-      property="og:image"
-      content="https://letsgolighthouse.co.in/api/og-image?title=Pick%20a%20place.&subtitle=Leave%20the%20city.%20Weekend%20travel%20from%20Bangalore.&badge=Bangalore%20first"
-    />
+    <meta property="og:image" content="https://letsgolighthouse.co.in/og.png?v=2" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Pick a place. Leave the city."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Lighthouse — Pick a place. Leave the city." />
     <meta
       name="twitter:description"
-      content="Weekend travel from Bangalore. Hundreds of places outside the city — same-day, midnight, or a full weekend."
+      content="Hundreds of getaways from Bangalore — waterfalls, forts, sunrise drives, monsoon treks. Drive time already on the card."
     />
+    <meta name="twitter:image" content="https://letsgolighthouse.co.in/og.png?v=2" />
     <meta
-      name="twitter:image"
-      content="https://letsgolighthouse.co.in/api/og-image?title=Pick%20a%20place.&subtitle=Leave%20the%20city.%20Weekend%20travel%20from%20Bangalore.&badge=Bangalore%20first"
+      name="twitter:image:alt"
+      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Pick a place. Leave the city."
     />
 
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <link
       href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=syne@700,800&display=swap"
       rel="stylesheet"
@@ -48,9 +74,107 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="https://unpkg.com/lenis@1.1.9/dist/lenis.css" />
-    <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js"></script>
+    <!-- deferred, not blocking: main.js is itself deferred and already guards on
+         `typeof window.Lenis === 'undefined'`, and deferred scripts run in document
+         order — so Lenis is still defined before main.js reads it, minus a
+         render-blocking round trip to a third-party CDN on first paint. -->
+    <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js" defer></script>
     <link rel="stylesheet" href="/styles.css?v=card-fit" />
     <link rel="stylesheet" href="/vendor/maplibre-gl/maplibre-gl.css" />
+
+    <!-- Structured data. One @graph so Organization can be referenced rather than
+         repeated on every page — that shared @id is what lets Google resolve all
+         six pages to a single entity instead of six unrelated documents.
+         Deliberately NOT here: SoftwareApplication `offers` and `downloadUrl`. The
+         ₹0/₹149/₹999 tiers are real and published below, but the app itself is a
+         waitlist today, and marking up an install for something nobody can install
+         is the structured-data version of the fake countdown ARCHITECTURE §1.2
+         rules out. Add both in the same commit that ships the Play listing. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://letsgolighthouse.co.in/#organization",
+            "name": "Lighthouse",
+            "alternateName": "Lets Go Lighthouse",
+            "url": "https://letsgolighthouse.co.in/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://letsgolighthouse.co.in/favicon.svg"
+            },
+            "image": "https://letsgolighthouse.co.in/og.png",
+            "description": "Lighthouse is a weekend-discovery app for India — hundreds of real places within a weekend's reach of Bangalore, with computed drive times and a group vote that settles where everyone is actually going.",
+            "email": "hello@letsgolighthouse.co.in",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Bengaluru",
+              "addressRegion": "Karnataka",
+              "addressCountry": "IN"
+            },
+            "areaServed": {
+              "@type": "Country",
+              "name": "India"
+            },
+            "sameAs": ["https://www.instagram.com/letsgolighthouse.co.in"],
+            "contactPoint": [
+              {
+                "@type": "ContactPoint",
+                "contactType": "customer support",
+                "email": "hello@letsgolighthouse.co.in",
+                "availableLanguage": ["en", "hi", "kn"]
+              },
+              {
+                "@type": "ContactPoint",
+                "contactType": "sales",
+                "email": "partners@letsgolighthouse.co.in",
+                "availableLanguage": ["en"]
+              }
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://letsgolighthouse.co.in/#website",
+            "url": "https://letsgolighthouse.co.in/",
+            "name": "Lighthouse",
+            "description": "Weekend getaways near Bangalore, with real drive times and a group vote.",
+            "publisher": { "@id": "https://letsgolighthouse.co.in/#organization" },
+            "inLanguage": "en-IN"
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://letsgolighthouse.co.in/#webpage",
+            "url": "https://letsgolighthouse.co.in/",
+            "name": "Weekend Getaways Near Bangalore — Lighthouse",
+            "description": "Hundreds of weekend getaways and day trips near Bangalore — waterfalls, forts, treks and sunrise drives, with the real drive time on every card.",
+            "isPartOf": { "@id": "https://letsgolighthouse.co.in/#website" },
+            "about": { "@id": "https://letsgolighthouse.co.in/#organization" },
+            "primaryImageOfPage": "https://letsgolighthouse.co.in/og.png",
+            "inLanguage": "en-IN"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://letsgolighthouse.co.in/#app",
+            "name": "Lighthouse",
+            "applicationCategory": "TravelApplication",
+            "applicationSubCategory": "Weekend trip discovery and planning",
+            "operatingSystem": "Android, Web",
+            "url": "https://letsgolighthouse.co.in/",
+            "description": "Pick a place within a weekend's reach of Bangalore, see the real drive time and what the weather will do, shortlist four, and let the group vote on which one wins.",
+            "featureList": [
+              "Hundreds of real places within a weekend's reach of Bangalore",
+              "Computed drive times and leave-by times, never estimated by a model",
+              "Group trip plans settled by a vote, free to join and vote on",
+              "Import a travel reel and turn it into a pin on the map",
+              "Train, bus, car and bike options for reaching every place"
+            ],
+            "publisher": { "@id": "https://letsgolighthouse.co.in/#organization" },
+            "inLanguage": "en-IN"
+          }
+        ]
+      }
+    </script>
   </head>
   <body class="is-splashing">
     <a class="skip" href="#join">Skip to waitlist</a>

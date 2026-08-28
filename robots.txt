@@ -1,0 +1,36 @@
+# https://letsgolighthouse.co.in/robots.txt
+
+User-agent: *
+Allow: /
+
+# AI answer engines are allowed on purpose, not by omission.
+# "Weekend getaways near Bangalore" is increasingly answered inside a chat
+# window rather than a results page, and being absent from that answer is the
+# same as being on page four of it. Named explicitly so a future blanket
+# Disallow has to argue with this comment before it lands.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# /go/<code> is the trip-plan invite interstitial: one thin, near-duplicate page
+# per shared link, and there could be thousands. It is NOT disallowed here —
+# facebookexternalhit and the other unfurl crawlers honour robots.txt, and
+# blocking the path would kill the WhatsApp preview that is the whole point of
+# sharing an invite. Those pages carry `noindex, follow` in their own markup
+# instead, which keeps them out of the index while leaving the unfurl intact.
+
+Sitemap: https://letsgolighthouse.co.in/sitemap.xml

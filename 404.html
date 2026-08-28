@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Page not found — Lighthouse</title>
+  <meta name="description" content="That page isn't here. The map, though, still is." />
+  <!-- GitHub Pages serves /404.html for any unmatched path, so without this file
+       a mistyped URL on letsgolighthouse.co.in renders GitHub's own branded 404 —
+       a competitor's page on our domain, and a soft-404 signal to crawlers.
+       noindex because an error page has nothing to rank for. -->
+  <meta name="robots" content="noindex, follow" />
+  <meta name="theme-color" content="#0F0F12" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="beam" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <a class="nav__brand" href="/">LIGHTHOUSE<span class="nav__dot">.</span></a>
+    <div class="nav__right">
+      <span class="utility nav__label">404</span>
+      <a class="btn btn--ghost" href="/#join">Join waitlist</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="docpage__hero">
+      <p class="utility docpage__eyebrow">OFF THE MAP</p>
+      <h1 class="docpage__title">Nothing here.<br /><em>Plenty out there.</em></h1>
+      <p class="docpage__sub">That page doesn't exist — mistyped, renamed, or long gone. The weekend is
+        still sitting on the map, though.</p>
+    </section>
+
+    <div class="docpage__hero" style="text-align: center; padding-top: 8px;">
+      <a class="btn btn--solid" href="/" data-magnetic>Back to the map</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <h2 class="footer__big">Let's go<span class="footer__dot">.</span></h2>
+    <a class="btn btn--solid footer__cta" href="/#join" data-magnetic>Join the waitlist</a>
+    <nav class="footer__nav">
+      <a class="footer__link utility" href="/about.html">ABOUT US</a>
+      <a class="footer__link utility" href="/support.html">SUPPORT</a>
+      <a class="footer__link utility" href="/contact.html">CONTACT</a>
+      <a class="footer__link utility" href="/terms.html">TERMS &amp; CONDITIONS</a>
+      <a class="footer__link utility" href="/privacy.html">PRIVACY POLICY</a>
+    </nav>
+    <div class="footer__meta">
+      <a href="https://www.instagram.com/letsgolighthouse.co.in" target="_blank" rel="noopener" class="footer__link utility">INSTAGRAM ↗</a>
+      <span class="utility">MADE IN BANGALORE</span>
+      <span class="utility">© 2026 LIGHTHOUSE. ALL RIGHTS RESERVED.</span>
+    </div>
+  </footer>
+
+  <script src="/pages.js" defer></script>
+</body>
+</html>

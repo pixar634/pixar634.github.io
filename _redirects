@@ -1,8 +1,15 @@
 # Cloudflare Pages redirects & rewrites
 #
-# The /og.png path is referenced by every page and by the /go interstitial fallback.
-# There is no static og.png file; the branded card is generated at request time by
-# functions/api/og-image.js. This 200 rewrite keeps the short URL stable while
-# serving the dynamic renderer, so crawlers and existing links keep working.
-
-/og.png /api/og-image?title=Pick%20a%20place.&subtitle=Leave%20the%20city.%20Weekend%20travel%20from%20Bangalore.&badge=Bangalore%20first 200
+# NOTE: this file does nothing on GitHub Pages, which is where the site is
+# currently served from. It is kept for the Cloudflare deploy, and the rule below
+# is deliberately commented out rather than deleted — see why.
+#
+# It used to rewrite /og.png to the dynamic renderer, on the premise that there
+# was no static og.png file. There is one now: `scripts/render-og.mjs` bakes the
+# same card to `og.png`, because a Pages Function cannot run on GitHub Pages and
+# every homepage unfurl was 404ing on its own thumbnail as a result. Re-enabling
+# this rewrite would shadow that real file with a request-time render that only
+# works on one of the two hosts — so if it ever comes back, it comes back with a
+# decision about which host is canonical, not by accident.
+#
+# /og.png /api/og-image?title=Pick%20a%20place.&subtitle=Leave%20the%20city.%20Weekend%20travel%20from%20Bangalore.&badge=Bangalore%20first 200
