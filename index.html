@@ -79,7 +79,7 @@
          order — so Lenis is still defined before main.js reads it, minus a
          render-blocking round trip to a third-party CDN on first paint. -->
     <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js" defer></script>
-    <link rel="stylesheet" href="/styles.css?v=hero-sequence-24" />
+    <link rel="stylesheet" href="/styles.css?v=hero-sequence-30" />
     <link rel="stylesheet" href="/vendor/maplibre-gl/maplibre-gl.css" />
 
     <!-- Structured data. One @graph so Organization can be referenced rather than
@@ -307,6 +307,44 @@
         </div><!-- /#join -->
       </section>
 
+      <section class="filters" id="mood">
+        <div class="filters__map" id="filters-map" aria-hidden="true">
+          <div class="filters__gl" id="filters-gl"></div>
+        </div>
+        <div class="filters__content">
+        <p class="utility filters__kicker">IN CASE YOU GET MOODY</p>
+        <h2 class="filters__title">Match your vibe.<br /><em>Choose your filter.</em></h2>
+        <p class="filters__lede">
+          You saw it on a reel. Then Maps, then the weather, then reviews —
+          and by then you’d lost interest. So you keep scrolling, still
+          hunting for something that fits your mood. Skip the relay: every
+          card already knows how far it is, how it looks, what the sky’s
+          doing and what to watch for. Just swipe by mood.
+        </p>
+        <ul class="filters__list" id="filters-list">
+          <li class="filters__chip" tabindex="0" data-cat="Wild Lakeside" aria-label="Wild Lakeside, 67 places"><span class="filters__chip-inner"><span class="filters__chip-name">Wild Lakeside</span><span class="filters__chip-count">67 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Summit Treks" aria-label="Summit Treks, 43 places"><span class="filters__chip-inner"><span class="filters__chip-name">Summit Treks</span><span class="filters__chip-count">43 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Night Drives" aria-label="Night Drives, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Night Drives</span><span class="filters__chip-count">5 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Breakfast Runs" aria-label="Breakfast Runs, 50 places"><span class="filters__chip-inner"><span class="filters__chip-name">Breakfast Runs</span><span class="filters__chip-count">50 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Secret Cascades" aria-label="Secret Cascades, 29 places"><span class="filters__chip-inner"><span class="filters__chip-name">Secret Cascades</span><span class="filters__chip-count">29 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Coastal Drives" aria-label="Coastal Drives, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coastal Drives</span><span class="filters__chip-count">12 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Misty Hikes" aria-label="Misty Hikes, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Misty Hikes</span><span class="filters__chip-count">12 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Tarmac Therapy" aria-label="Tarmac Therapy, 16 places"><span class="filters__chip-inner"><span class="filters__chip-name">Tarmac Therapy</span><span class="filters__chip-count">16 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Corner Carving" aria-label="Corner Craving, 11 places"><span class="filters__chip-inner"><span class="filters__chip-name">Corner Craving</span><span class="filters__chip-count">11 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Coffee Country" aria-label="Coffee Country, 4 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coffee Country</span><span class="filters__chip-count">4 places</span></span></li>
+          <li class="filters__chip" tabindex="0" data-cat="Hidden Forest Camps" aria-label="Hidden Forest Camps, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Hidden Forest Camps</span><span class="filters__chip-count">5 places</span></span></li>
+          <li class="filters__chip filters__chip--more" tabindex="0"><span class="filters__chip-inner"><span class="filters__chip-name">Many more</span></span></li>
+        </ul>
+        </div>
+      </section>
+
+      <!-- Sticky three-beat (Look around / Pick a hunger / Take people). The
+           page now goes hero → Moody filters; this scene split the scroll before
+           anyone had seen a collection. Restore when the waitlist page can carry
+           a second story. Inner notes: two UI fragments per panel, floated at
+           different scroll depths so they drift against each other — separate
+           clips on purpose, from remotion/src/compositions/Fragments.tsx. -->
+      <!--
       <section class="answers" id="how">
         <div class="answers__pin">
           <p class="utility answers__kicker">FROM THE MAP</p>
@@ -324,10 +362,6 @@
               <span class="answers__sub">One link. They vote. That's the plan — not another “up to you.”</span>
             </h2>
           </div>
-          <!-- Two UI fragments per panel, floated at different scroll depths so
-               they drift against each other. They are separate clips on purpose:
-               one flat rectangle cannot parallax against itself. Rendered from
-               remotion/src/compositions/Fragments.tsx. -->
           <div class="answers__viz" aria-hidden="true">
             <div class="vizset is-on" data-v="0">
               <video class="viz viz--main" data-depth="0.16" src="/assets/video/remotion/frag-lookmap.mp4"
@@ -354,7 +388,11 @@
           </div>
         </div>
       </section>
+      -->
 
+      <!-- Just Go phone replica. Parked while the page runs hero → Moody
+           filters. Restore when the waitlist can carry the swipe demo again. -->
+      <!--
       <section class="stage" id="explore">
         <div class="stage__copy">
           <p class="utility stage__kicker">JUST GO</p>
@@ -407,6 +445,7 @@
           </div>
         </div>
       </section>
+      -->
 
       <section class="brief" id="informed">
         <p class="utility brief__kicker">BEFORE YOU GO</p>
@@ -450,34 +489,6 @@
               WILD LAKESIDE <i></i> SUMMIT TREKS <i></i> NIGHT DRIVES <i></i> BREAKFAST RUNS <i></i> SECRET CASCADES <i></i> COASTAL DRIVES <i></i> CORNER CRAVING <i></i> MISTY HIKES <i></i>
             </p>
           </div>
-        </div>
-      </section>
-
-      <section class="filters">
-        <div class="filters__map" id="filters-map" aria-hidden="true">
-          <div class="filters__gl" id="filters-gl"></div>
-        </div>
-        <div class="filters__content">
-        <p class="utility filters__kicker">LIVE IN THE APP</p>
-        <h2 class="filters__title">Those aren't vibes.<br /><em>They're filters.</em></h2>
-        <p class="filters__lede">
-          Every name on that river is a collection you can open. Finite decks of real places —
-          drive time and leave-by already on the card. You pick a lane. The map fills with that lane only.
-        </p>
-        <ul class="filters__list" id="filters-list">
-          <li class="filters__chip" tabindex="0" data-cat="Wild Lakeside" aria-label="Wild Lakeside, 67 places"><span class="filters__chip-inner"><span class="filters__chip-name">Wild Lakeside</span><span class="filters__chip-count">67 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Summit Treks" aria-label="Summit Treks, 43 places"><span class="filters__chip-inner"><span class="filters__chip-name">Summit Treks</span><span class="filters__chip-count">43 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Night Drives" aria-label="Night Drives, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Night Drives</span><span class="filters__chip-count">5 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Breakfast Runs" aria-label="Breakfast Runs, 50 places"><span class="filters__chip-inner"><span class="filters__chip-name">Breakfast Runs</span><span class="filters__chip-count">50 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Secret Cascades" aria-label="Secret Cascades, 29 places"><span class="filters__chip-inner"><span class="filters__chip-name">Secret Cascades</span><span class="filters__chip-count">29 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Coastal Drives" aria-label="Coastal Drives, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coastal Drives</span><span class="filters__chip-count">12 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Misty Hikes" aria-label="Misty Hikes, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Misty Hikes</span><span class="filters__chip-count">12 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Tarmac Therapy" aria-label="Tarmac Therapy, 16 places"><span class="filters__chip-inner"><span class="filters__chip-name">Tarmac Therapy</span><span class="filters__chip-count">16 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Corner Carving" aria-label="Corner Craving, 11 places"><span class="filters__chip-inner"><span class="filters__chip-name">Corner Craving</span><span class="filters__chip-count">11 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Coffee Country" aria-label="Coffee Country, 4 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coffee Country</span><span class="filters__chip-count">4 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Hidden Forest Camps" aria-label="Hidden Forest Camps, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Hidden Forest Camps</span><span class="filters__chip-count">5 places</span></span></li>
-          <li class="filters__chip filters__chip--more" tabindex="0"><span class="filters__chip-inner"><span class="filters__chip-name">Many more</span></span></li>
-        </ul>
         </div>
       </section>
 
@@ -657,20 +668,22 @@
         </div>
       </section>
 
-      <!-- Pricing. Tiers, names and the ₹149 come from lighthouse-backend/config/
-           features.yaml, which is the single source of truth for every gate.
-           `realtime_booking` is deliberately NOT listed: it is paywalled in that
-           file but has no implementation behind it, and selling in-app checkout we
-           haven't built would be both a lie and a change of legal posture. -->
+      <!-- Pricing. Tiers and the hidden ₹149 come from lighthouse-backend/config/
+           features.yaml (`pro.price_inr_monthly`). The figure is in the DOM as
+           data-price-inr so we can surface it later without guessing — it is not
+           shown. `realtime_booking` is still not listed: paywalled in that file,
+           no implementation, and selling in-app checkout we haven't built would
+           be both a lie and a change of legal posture. -->
       <section class="pricing" id="pricing">
         <div class="pricing__head">
-          <p class="utility pricing__kicker">PRICING</p>
+          <p class="utility pricing__kicker">FIRST 500</p>
           <h2 class="pricing__title">
-            Free to explore.<br /><em>Pro for the organiser.</em>
+            Everything’s open.<br /><em>Free for 30 days.</em>
           </h2>
           <p class="pricing__lede">
-            Joining a plan and voting on it is free forever — the trip doesn't work
-            if half your group is behind a wall. Pro is for the person who organises it.
+            The first 500 people on the waitlist get every feature — the full Pro
+            set — open for 30 days. No card now. Joining a plan and voting on it
+            stay free after that; we’re not putting a number on the rest yet.
           </p>
         </div>
 
@@ -678,8 +691,8 @@
           <article class="plan">
             <header class="plan__head">
               <p class="utility plan__name">EXPLORER</p>
-              <p class="plan__price"><span class="plan__amt">₹0</span><span class="plan__per">forever</span></p>
-              <p class="plan__note">Real places, real drive times, and the group vote &mdash; inside 100&nbsp;km.</p>
+              <p class="plan__price"><span class="plan__amt">Free</span><span class="plan__per">to join &amp; vote, always</span></p>
+              <p class="plan__note">The trip doesn’t work if half the group is behind a wall. This layer stays open.</p>
             </header>
             <ul class="plan__list">
               <li class="plan__row"><i class="plan__tick" aria-hidden="true">&#10003;</i>Places within <strong>100&nbsp;km</strong> &mdash; the day-trip band</li>
@@ -688,26 +701,20 @@
               <li class="plan__row"><i class="plan__tick" aria-hidden="true">&#10003;</i>Organize <strong>1</strong>&nbsp;trip plan a month</li>
               <li class="plan__row"><i class="plan__tick" aria-hidden="true">&#10003;</i><strong>Join and vote on any plan, always free</strong></li>
               <li class="plan__row"><i class="plan__tick" aria-hidden="true">&#10003;</i>The Return Clock, weather and Good&nbsp;to&nbsp;know</li>
-              <li class="plan__row"><i class="plan__tick" aria-hidden="true">&#10003;</i>Import a reel, route lookup, ride &amp; stay handoffs</li>
-              <li class="plan__row is-off"><i class="plan__cross" aria-hidden="true">&#10005;</i>Anything past 100&nbsp;km &mdash; overnights, offsites, the coast</li>
-              <li class="plan__row is-off"><i class="plan__cross" aria-hidden="true">&#10005;</i>All 25 lanes, unlimited saves and collections</li>
-              <li class="plan__row is-off"><i class="plan__cross" aria-hidden="true">&#10005;</i>Share a collection by link</li>
-              <li class="plan__row is-off"><i class="plan__cross" aria-hidden="true">&#10005;</i>Your profile link &mdash; stay connected with people you travel with</li>
-              <li class="plan__row is-off"><i class="plan__cross" aria-hidden="true">&#10005;</i>AI-curated picks, every route alternative, no sponsored cards</li>
+              <li class="plan__row"><i class="plan__tick" aria-hidden="true">&#10003;</i>Route lookup, ride &amp; stay handoffs</li>
             </ul>
             <a class="btn btn--ghost plan__cta" href="#join" data-scrollto>Join the waitlist</a>
           </article>
 
-          <article class="plan plan--pro">
+          <article class="plan plan--pro" data-price-inr="149" data-price-period="month">
             <span class="plan__flag utility">FREE FOR 30 DAYS · FIRST 500 SIGN-UPS</span>
             <header class="plan__head">
               <p class="utility plan__name plan__name--pro">LIGHTHOUSE PRO</p>
               <p class="plan__price">
-                <s class="plan__was" aria-label="Normally 149 rupees a month">₹149</s>
                 <span class="plan__amt plan__amt--pro">Free</span>
-                <span class="plan__per">for 30 days</span>
+                <span class="plan__per">for 30 days · first 500</span>
               </p>
-              <p class="plan__note">Then ₹149/month, or ₹999 a year. Cancel any time.</p>
+              <p class="plan__note">Every gate open. The same features Pro ships with — no distance cap, all the lanes, the lot.</p>
             </header>
             <ul class="plan__list">
               <li class="plan__row"><i class="plan__tick plan__tick--pro" aria-hidden="true">&#10003;</i>Everything in Explorer</li>
@@ -717,7 +724,6 @@
               <li class="plan__row"><i class="plan__tick plan__tick--pro" aria-hidden="true">&#10003;</i>Share any collection by link</li>
               <li class="plan__row"><i class="plan__tick plan__tick--pro" aria-hidden="true">&#10003;</i>Your profile link, people search and friends</li>
               <li class="plan__row"><i class="plan__tick plan__tick--pro" aria-hidden="true">&#10003;</i>AI-curated picks for your taste</li>
-              <li class="plan__row"><i class="plan__tick plan__tick--pro" aria-hidden="true">&#10003;</i>Every route alternative, not just one</li>
               <li class="plan__row"><i class="plan__tick plan__tick--pro" aria-hidden="true">&#10003;</i>No sponsored cards, ever</li>
             </ul>
             <a class="btn btn--solid plan__cta" href="#join" data-scrollto data-magnetic>Claim 30 days free</a>
@@ -820,7 +826,7 @@
 
           <nav class="footer__col" aria-labelledby="fcol-app">
             <p class="utility footer__coltitle" id="fcol-app">THE APP</p>
-            <a class="footer__link" href="#explore" data-scrollto>Explore the map</a>
+            <a class="footer__link" href="#mood" data-scrollto>Explore the map</a>
             <a class="footer__link" href="#clock" data-scrollto>The Return Clock</a>
             <a class="footer__link" href="#vote" data-scrollto>Trip plans &amp; voting</a>
             <a class="footer__link" href="#informed" data-scrollto>Weather &amp; good to know</a>
@@ -861,6 +867,6 @@
     </main>
 
     <script src="/vendor/maplibre-gl/maplibre-gl.js" defer></script>
-    <script src="/main.js?v=hero-sequence-18" defer></script>
+    <script src="/main.js?v=hero-sequence-23" defer></script>
   </body>
 </html>

@@ -1045,6 +1045,305 @@
 
   if (document.getElementById("hero-gl")) initHeroTour();
 
+  /* ---------- Filters section: real places behind the chip river ----------
+     Every chip is a real category with real members — 5 closest per lane,
+     pulled from lighthouse-backend/config/places_seed.yaml, not invented.
+     One pin per active category gets the full bubble; the rest stay dots,
+     same "one detailed, rest quiet" pattern as the hero tour. No thumbnails:
+     most of these catalog places don't have a prepared image asset yet, and
+     a broken-image icon reads worse than no photo at all. */
+  var CATEGORY_SPOTS = {
+    "Wild Lakeside": [
+      { name: "Iggalur Dam", meta: "33m · 26 km", lat: 12.781144, lon: 77.701449 },
+      { name: "Muninagara Dam", meta: "39m · 34 km", lat: 12.747621, lon: 77.5411 },
+      { name: "Thally Lake", meta: "46m · 41 km", lat: 12.706188, lon: 77.79252 },
+      { name: "Dabbaguli", meta: "56m · 44 km", lat: 12.892845, lon: 77.322024 },
+      { name: "Maralawadi Dam", meta: "59m · 48 km", lat: 12.612133, lon: 77.525212 },
+    ],
+    "Summit Treks": [
+      { name: "Nijagal Betta", meta: "47m · 53 km", lat: 13.247256, lon: 77.217321 },
+      { name: "Hutridurga", meta: "1h 17m · 70 km", lat: 12.961743, lon: 77.123189 },
+      { name: "Huliyurdurga", meta: "1h 20m · 81 km", lat: 12.829908, lon: 77.035017 },
+      { name: "Gudibande Fort", meta: "1h 38m · 93 km", lat: 13.676317, lon: 77.701001 },
+      { name: "Channarayana Durga", meta: "1h 34m · 98 km", lat: 13.597742, lon: 77.208665 },
+    ],
+    "Night Drives": [
+      { name: "The Bidadi Midnight Sprint (NH275)", meta: "36m · 33 km", lat: 12.7984, lon: 77.397 },
+      { name: "The Kolar Night Run (NH75 East)", meta: "59m · 66 km", lat: 13.1362, lon: 78.1291 },
+      { name: "The Kunigal Bypass (Stargazing Sprint)", meta: "1h 12m · 73 km", lat: 13.0233, lon: 77.0145 },
+    ],
+    "Breakfast Runs": [
+      { name: "Turahalli Forest", meta: "22m · 18 km", lat: 12.88275, lon: 77.525668 },
+      { name: "Nrityagram", meta: "38m · 32 km", lat: 13.1634, lon: 77.459703 },
+      { name: "Devanahalli Fort", meta: "37m · 36 km", lat: 13.243559, lon: 77.709153 },
+      { name: "Indian Paratha Company (The Airport Runway)", meta: "43m · 39 km", lat: 13.2625, lon: 77.7126 },
+      { name: "Rocky Ridge Cafe & Malur Backroads", meta: "42m · 45 km", lat: 13.0033, lon: 77.9405 },
+    ],
+    "Secret Cascades": [
+      { name: "Hemagiri", meta: "1h 26m · 85 km", lat: 12.813244, lon: 77.048844 },
+      { name: "Ganalu Falls", meta: "1h 48m · 98 km", lat: 12.348032, lon: 77.197294 },
+      { name: "Avulapalle Waterfalls", meta: "2h 32m · 170 km", lat: 13.402787, lon: 78.823388 },
+      { name: "Chunchanakatte Falls", meta: "2h 38m · 193 km", lat: 12.503849, lon: 76.293375 },
+      { name: "Amirthi Falls", meta: "2h 52m · 206 km", lat: 12.731921, lon: 79.056128 },
+    ],
+    "Coastal Drives": [
+      { name: "Dharmadam Island", meta: "4h 48m · 319 km", lat: 11.769611, lon: 75.450726 },
+      { name: "Muzhappilangad Beach", meta: "4h 50m · 320 km", lat: 11.794446, lon: 75.443321 },
+      { name: "Chootad Beach", meta: "5h 8m · 334 km", lat: 12.02132, lon: 75.231798 },
+      { name: "Kavvayi Backwaters", meta: "5h 9m · 339 km", lat: 12.092158, lon: 75.182112 },
+      { name: "Ezhimala", meta: "5h 19m · 341 km", lat: 12.032369, lon: 75.209597 },
+    ],
+    "Misty Hikes": [
+      { name: "Kaurava Kunda", meta: "1h 10m · 65 km", lat: 13.477793, lon: 77.717368 },
+      { name: "Guthirayan Peak", meta: "2h · 99 km", lat: 12.263501, lon: 77.854388 },
+      { name: "Agani Peak", meta: "3h 32m · 261 km", lat: 12.961391, lon: 75.677888 },
+      { name: "Tadiandamol Peak", meta: "3h 49m · 269 km", lat: 12.217564, lon: 75.608815 },
+      { name: "Mullayanagiri Peak & Seethalayyanagiri", meta: "3h 37m · 269 km", lat: 13.3909, lon: 75.7214 },
+    ],
+    "Tarmac Therapy": [
+      { name: "Manchanabele Reservoir Viewpoint", meta: "57m · 44 km", lat: 12.89887, lon: 77.326947 },
+      { name: "Kailasagiri", meta: "1h 13m · 75 km", lat: 13.39151, lon: 78.025448 },
+      { name: "Minakanagurki", meta: "1h 12m · 78 km", lat: 13.519337, lon: 77.610156 },
+      { name: "Mogili Ghat", meta: "2h 3m · 148 km", lat: 13.186611, lon: 78.832454 },
+      { name: "Melpattu", meta: "3h 11m · 164 km", lat: 12.356268, lon: 78.662195 },
+    ],
+    "Corner Carving": [
+      { name: "Devarayanadurga (DD Hills)", meta: "1h 7m · 69 km", lat: 13.3719, lon: 77.2096 },
+      { name: "Muthathi River Bank", meta: "1h 41m · 92 km", lat: 12.305418, lon: 77.311772 },
+      { name: "Alangayam Ghat", meta: "2h 33m · 173 km", lat: 12.622667, lon: 78.752504 },
+      { name: "Jogimatti", meta: "2h 48m · 206 km", lat: 14.176981, lon: 76.388974 },
+      { name: "Paalchuram", meta: "4h 5m · 263 km", lat: 11.848952, lon: 75.914528 },
+    ],
+    "Coffee Country": [
+      { name: "Glenmorgan", meta: "3h 46m · 272 km", lat: 11.499757, lon: 76.591471 },
+      { name: "Baba Budangiri & The Datta Peeta Ridge", meta: "3h 58m · 280 km", lat: 13.4242, lon: 75.7667 },
+      { name: "Devaramane & The Mudigere Twisties", meta: "3h 54m · 302 km", lat: 13.0649, lon: 75.5415 },
+      { name: "Charmadi Ghat (The Green Ribbon)", meta: "3h 59m · 321 km", lat: 13.0485, lon: 75.4323 },
+    ],
+    "Hidden Forest Camps": [
+      { name: "K. Gudi Wilderness (BR Hills)", meta: "2h 55m · 181 km", lat: 11.8973, lon: 77.135 },
+      { name: "Devala", meta: "3h 29m · 264 km", lat: 11.471192, lon: 76.3738 },
+      { name: "Aralam Wildlife Sanctuary", meta: "4h 2m · 274 km", lat: 11.993157, lon: 75.682689 },
+      { name: "Bisle Reserve Forest", meta: "3h 51m · 277 km", lat: 12.7214, lon: 75.6888 },
+      { name: "Sharavathi Valley & Honnemardu", meta: "5h 55m · 436 km", lat: 14.1283, lon: 74.8694 },
+    ],
+  };
+
+  function initFiltersMap() {
+    var wrap = document.getElementById("filters-map");
+    var gl = document.getElementById("filters-gl");
+    var list = document.getElementById("filters-list");
+    if (!wrap || !gl || !list || !window.maplibregl) return;
+
+    var chips = Array.prototype.filter.call(list.querySelectorAll(".filters__chip"), function (c) {
+      return c.dataset.cat;
+    });
+    var cats = chips.map(function (c) { return c.dataset.cat; });
+    if (!cats.length) return;
+
+    // A second copy of the category chips sits after the originals so the rail
+    // can keep travelling right-to-left when the cycle wraps, instead of
+    // snapping back to the first chip.
+    chips.forEach(function (c) {
+      var clone = c.cloneNode(true);
+      clone.classList.add("filters__chip--clone");
+      clone.setAttribute("aria-hidden", "true");
+      clone.tabIndex = -1;
+      list.appendChild(clone);
+    });
+    var clones = Array.prototype.filter.call(list.querySelectorAll(".filters__chip--clone"), function (c) {
+      return c.dataset.cat;
+    });
+
+    var map = new window.maplibregl.Map({
+      container: gl,
+      style: HERO_STYLE,
+      center: [77.5946, 12.9716],
+      zoom: 6.6,
+      interactive: false,
+      attributionControl: false,
+      fadeDuration: 0,
+      failIfMajorPerformanceCaveat: false
+    });
+    requestAnimationFrame(function () { map.resize(); });
+    var ready = false;
+    window.setTimeout(function () {
+      if (ready) return;
+      wrap.classList.add("is-raster");
+      try { map.setStyle(HERO_RASTER); } catch (err) { /* keep waiting */ }
+    }, 4000);
+
+    var pinsByCat = {};
+    var idx = -1;
+    var timer = 0;
+    var inView = true;
+    var railRaf = 0;
+    var RAIL_MS = 960;
+
+    function filtersPad() {
+      // On a phone the copy + chip rail occupy the top of the section. Padding
+      // the camera by that measured height keeps the labelled pin in the open
+      // map well instead of sliding under the chips. Cap it so a tall overlay
+      // can never eat the whole map — that's how spread categories (Coffee
+      // Country, coastal) were flying their pin off-screen.
+      var h = wrap.clientHeight || innerHeight;
+      if (innerWidth < 720) {
+        var content = document.querySelector(".filters__content");
+        var top = content ? Math.round(content.getBoundingClientRect().height + 16) : 280;
+        top = Math.min(top, Math.round(h * 0.44));
+        return { top: top, bottom: Math.max(64, Math.round(h * 0.1)), left: 28, right: 28 };
+      }
+      return { top: 60, bottom: 150, left: 40, right: 40 };
+    }
+
+    function railLeft(el) {
+      var listRect = list.getBoundingClientRect();
+      var elRect = el.getBoundingClientRect();
+      var next = list.scrollLeft + (elRect.left + elRect.width / 2) - (listRect.left + listRect.width / 2);
+      var max = Math.max(0, list.scrollWidth - list.clientWidth);
+      return Math.max(0, Math.min(max, next));
+    }
+
+    function labelledZoom(spots) {
+      if (spots.length < 2) return 8.4;
+      var origin = spots[0];
+      var maxD = 0;
+      for (var i = 1; i < spots.length; i += 1) {
+        maxD = Math.max(maxD, Math.hypot(spots[i].lat - origin.lat, spots[i].lon - origin.lon));
+      }
+      if (maxD > 1.8) return 6.6;
+      if (maxD > 0.9) return 7.4;
+      return 8.2;
+    }
+
+    function animateRail(to, done) {
+      if (railRaf) cancelAnimationFrame(railRaf);
+      var from = list.scrollLeft;
+      var dist = to - from;
+      if (Math.abs(dist) < 2 || reduced) {
+        list.scrollLeft = to;
+        if (done) done();
+        return;
+      }
+      var start = performance.now();
+      function tick(now) {
+        var t = clamp((now - start) / RAIL_MS, 0, 1);
+        var e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        list.scrollLeft = from + dist * e;
+        if (t < 1) {
+          railRaf = requestAnimationFrame(tick);
+          return;
+        }
+        railRaf = 0;
+        if (done) done();
+      }
+      railRaf = requestAnimationFrame(tick);
+    }
+
+    function markCategory(cat) {
+      list.querySelectorAll(".filters__chip[data-cat]").forEach(function (c) {
+        c.classList.toggle("is-on", c.dataset.cat === cat);
+      });
+    }
+
+    function showCategory(i, opts) {
+      var snap = !!(opts && opts.snap);
+      var wrapping = idx >= 0 && i < idx;
+      var prev = idx;
+      idx = i;
+      var cat = cats[idx];
+      var target = wrapping && clones[idx] ? clones[idx] : chips[idx];
+
+      if (innerWidth < 720 && target) {
+        if (snap || prev < 0) {
+          markCategory(cat);
+          list.scrollLeft = railLeft(chips[idx]);
+        } else {
+          animateRail(railLeft(target), function () {
+            markCategory(cat);
+            if (wrapping) list.scrollLeft = railLeft(chips[idx]);
+          });
+          // Light the arriving chip mid-travel so the glow rides in with it
+          // rather than popping on after the rail has already stopped.
+          window.setTimeout(function () { markCategory(cat); }, Math.round(RAIL_MS * 0.42));
+        }
+      } else {
+        markCategory(cat);
+      }
+      cats.forEach(function (c) {
+        (pinsByCat[c] || []).forEach(function (el) { el.classList.toggle("is-cat-on", c === cat); });
+      });
+      var spots = CATEGORY_SPOTS[cat] || [];
+      if (!spots.length) return;
+      // Always park the labelled pin (spots[0]) in the open well. fitBounds on
+      // the whole cluster pushed Glenmorgan / coastal pins to the south edge,
+      // which on a phone is below the section — "no spot" for Coffee Country.
+      map.easeTo({
+        center: [spots[0].lon, spots[0].lat],
+        zoom: labelledZoom(spots),
+        padding: filtersPad(),
+        duration: reduced || (opts && opts.snap) ? 0 : 1400,
+        essential: true
+      });
+    }
+
+    function schedule() {
+      window.clearTimeout(timer);
+      if (reduced || !inView) return;
+      timer = window.setTimeout(function () {
+        showCategory((idx + 1) % cats.length);
+        schedule();
+      }, 4200);
+    }
+
+    map.once("style.load", function () {
+      try { map.setPaintProperty("background", "background-color", "#0F0F12"); } catch (e) { /* style id drift */ }
+      try { map.setPaintProperty("water", "fill-color", "#15151a"); } catch (e) { /* style id drift */ }
+      var layers = (map.getStyle() && map.getStyle().layers) || [];
+      layers.forEach(function (layer) {
+        if (layer.type === "symbol") {
+          try { map.setLayoutProperty(layer.id, "visibility", "none"); } catch (e) { /* ok */ }
+        }
+      });
+      ready = true;
+      wrap.classList.add("is-live");
+      map.resize();
+
+      cats.forEach(function (cat) {
+        var spots = CATEGORY_SPOTS[cat] || [];
+        pinsByCat[cat] = spots.map(function (spot, i) {
+          var el = document.createElement("div");
+          el.className = "filters-pin" + (i === 0 ? " is-on" : "");
+          el.innerHTML =
+            '<div class="filters-pin__dot"></div>' +
+            '<div class="filters-pin__bubble"><b>' + spot.name + '</b><small>' + spot.meta + '</small></div>';
+          new window.maplibregl.Marker({ element: el, anchor: "bottom" })
+            .setLngLat([spot.lon, spot.lat])
+            .addTo(map);
+          return el;
+        });
+      });
+
+      showCategory(0, { snap: true });
+      schedule();
+    });
+
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        inView = entries.some(function (e) { return e.isIntersecting; });
+        if (inView) schedule(); else window.clearTimeout(timer);
+      }, { threshold: 0.2 });
+      io.observe(wrap);
+    }
+
+    window.addEventListener("resize", function () {
+      map.resize();
+      if (idx >= 0) showCategory(idx, { snap: true });
+    });
+  }
+
+  if (document.getElementById("filters-gl")) initFiltersMap();
+
   /* ---------- Click sonar ---------- */
   if (!reduced) {
     document.addEventListener('pointerdown', function (e) {

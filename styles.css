@@ -2326,6 +2326,58 @@ body.has-custom-cursor .btn { cursor: none; }
 }
 
 /* ---------- Live filters ---------- */
+.filters__map {
+  /* .filters has no auto margins — its own left edge already sits at the
+     true viewport edge, so this reaches full width without the usual
+     left:50%/translateX(-50%) centering trick (which assumes a centered
+     parent and, here, was skewing the map left by the parent's own inset). */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #0F0F12;
+}
+.filters__gl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.filters__map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(15, 15, 18, 0.5) 0%, rgba(15, 15, 18, 0.68) 45%, rgba(15, 15, 18, 0.93) 100%);
+}
+.filters__map .maplibregl-map,
+.filters__map .maplibregl-canvas-container {
+  width: 100%;
+  height: 100%;
+}
+.filters__map .maplibregl-canvas {
+  max-width: none !important;
+  max-height: none !important;
+  filter: saturate(0.85) brightness(0.8) hue-rotate(2deg);
+}
+.filters__map.is-raster .maplibregl-canvas {
+  filter: invert(1) hue-rotate(180deg) brightness(0.5) saturate(0.4);
+}
+.filters__map .maplibregl-ctrl-attrib,
+.filters__map .maplibregl-ctrl-logo,
+.filters__map .maplibregl-ctrl-bottom-right,
+.filters__map .maplibregl-ctrl-bottom-left {
+  display: none !important;
+}
+.filters__content {
+  position: relative;
+  z-index: 1;
+}
 .filters {
   position: relative;
   z-index: 1;
@@ -2377,6 +2429,10 @@ body.has-custom-cursor .btn { cursor: none; }
   letter-spacing: -0.02em;
   cursor: default;
   outline: none;
+  transition:
+    color 0.55s var(--ease-standard),
+    border-color 0.55s var(--ease-standard),
+    box-shadow 0.55s var(--ease-standard);
 }
 .filters__chip-inner {
   position: relative;
@@ -2401,6 +2457,7 @@ body.has-custom-cursor .btn { cursor: none; }
   opacity: 0;
   z-index: 0;
   pointer-events: none;
+  transition: opacity 0.4s linear;
 }
 .filters__chip::after {
   content: "";
@@ -2412,16 +2469,18 @@ body.has-custom-cursor .btn { cursor: none; }
   pointer-events: none;
 }
 .filters__chip:hover::before,
-.filters__chip:focus-visible::before {
+.filters__chip:focus-visible::before,
+.filters__chip.is-on::before {
   opacity: 1;
   animation: filter-neon 1.6s linear infinite;
 }
 .filters__chip:hover,
-.filters__chip:focus-visible {
+.filters__chip:focus-visible,
+.filters__chip.is-on {
   border-color: transparent;
   box-shadow:
-    0 0 0 1px rgba(93, 202, 165, 0.15),
-    0 0 28px rgba(93, 202, 165, 0.32);
+    0 0 0 1px rgba(93, 202, 165, 0.5),
+    0 0 12px rgba(93, 202, 165, 0.2);
   color: var(--mint);
 }
 .filters__chip--more {
@@ -2434,8 +2493,121 @@ body.has-custom-cursor .btn { cursor: none; }
 }
 .filters__chip--more:hover,
 .filters__chip--more:focus-visible { color: var(--mint); }
+/* Loop copies exist so the mobile rail can keep travelling RTL. Hidden
+   everywhere else or the wrap layout would paint every category twice. */
+.filters__chip--clone { display: none; }
 @keyframes filter-neon {
   to { transform: rotate(360deg); }
+}
+
+/* Mobile: chips wrap into a tall left stack that sits on the highlighted
+   place bubble. Collapse them to one horizontal rail under the copy so the
+   map well below is free for the label. Camera padding in main.js is measured
+   off `.filters__content`, so this height is the clearance the pin lives in. */
+@media (max-width: 720px) {
+  .filters {
+    min-height: 100svh;
+    padding-bottom: 0;
+  }
+  .filters__lede { margin-bottom: 16px; }
+  .filters__list {
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scrollbar-width: none;
+    scroll-behavior: auto;
+    margin-inline: calc(var(--pad) * -1);
+    padding: 18px 0 22px;
+    /* Enough side padding that the last chips (Coffee Country, Hidden Forest)
+       can actually sit in the open centre — without it scrollLeft maxes out
+       while the chip is still under the right fade. Vertical padding is so
+       the mint bloom can fade out instead of getting sheared into a rectangle
+       by overflow-y: hidden. */
+    padding-inline: max(var(--pad), calc(50% - 70px));
+    mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+  }
+  .filters__list::-webkit-scrollbar { display: none; }
+  .filters__chip {
+    flex: none;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+  .filters__chip--clone { display: block; }
+  .filters__chip-count { font-size: 9px; }
+  .filters__map::after {
+    background: linear-gradient(
+      180deg,
+      rgba(15, 15, 18, 0.78) 0%,
+      rgba(15, 15, 18, 0.42) 38%,
+      rgba(15, 15, 18, 0.16) 62%,
+      rgba(15, 15, 18, 0.55) 100%
+    );
+  }
+}
+
+/* Real places, cycled with the chips — one per category gets the full
+   bubble (name + drive time), the rest stay dots so the map doesn't turn
+   into a cluttered pincushion. No thumbnails: most of these catalog places
+   don't have a prepared image asset yet, and a broken-image icon is worse
+   than no photo. */
+.filters-pin {
+  display: none;
+  width: max-content;
+  max-width: min(210px, 72vw);
+  transform: scale(1);
+  transform-origin: bottom center;
+  transition: transform 0.44s var(--ease-standard), opacity 0.44s var(--ease-standard);
+  pointer-events: none;
+}
+.filters-pin.is-cat-on { display: block; }
+.filters-pin__dot {
+  width: 11px;
+  height: 11px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 0 4px rgba(93, 202, 165, 0.2);
+}
+.filters-pin.is-on {
+  transform: scale(1.06);
+  z-index: 3;
+}
+.filters-pin.is-on .filters-pin__dot {
+  box-shadow: 0 0 0 5px rgba(93, 202, 165, 0.3), 0 0 18px rgba(93, 202, 165, 0.5);
+}
+.filters-pin__bubble {
+  display: none;
+  margin: 8px auto 0;
+  padding: 7px 14px;
+  width: max-content;
+  max-width: 100%;
+  border-radius: 999px;
+  background: rgba(26, 26, 31, 0.95);
+  border: 1.5px solid var(--mint);
+  box-shadow: 0 0 24px rgba(93, 202, 165, 0.35);
+  text-align: center;
+}
+.filters-pin.is-on .filters-pin__bubble { display: block; }
+.filters-pin__bubble b {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filters-pin__bubble small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--mint);
+  white-space: nowrap;
 }
 
 /* ---------- Selling pitches: Return Clock + trip vote ---------- */
@@ -2886,9 +3058,12 @@ body.has-custom-cursor .btn { cursor: none; }
   .search-card__n > span { transform: none; opacity: 1; }
   .search-card__shimmer { animation: none !important; }
   .filters__chip:hover,
-  .filters__chip:focus-visible { border-color: var(--mint); }
+  .filters__chip:focus-visible,
+  .filters__chip.is-on { border-color: var(--mint); }
   .filters__chip:hover::before,
-  .filters__chip:focus-visible::before { opacity: 0; animation: none !important; }
+  .filters__chip:focus-visible::before,
+  .filters__chip.is-on::before { opacity: 0; animation: none !important; }
+  .filters-pin { transition: none !important; }
   .trip-tap { animation: none !important; }
   .display__pop.is-swiping,
   .display__push.is-swiping { animation: none !important; }
@@ -3558,7 +3733,7 @@ body.has-custom-cursor .wshare__copy { cursor: none; }
   flex-direction: column;
   padding: 34px 30px 30px;
   border: 1px solid var(--hairline-strong);
-  border-radius: 0;
+  border-radius: 36px;
   background: rgba(255, 255, 255, 0.015);
 }
 .plan--pro {
