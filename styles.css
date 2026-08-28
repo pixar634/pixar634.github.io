@@ -78,6 +78,141 @@ em { font-style: normal; color: var(--mint); }
   color: var(--text-3);
 }
 
+/* ---------- Hero-map loader — scoped to the background, never the page ---------- */
+@property --hero-loader-r {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: -8%;
+}
+@property --hero-torch-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 18%;
+}
+@property --hero-torch-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 46%;
+}
+@property --hero-torch-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 48deg;
+}
+
+.hero-loader {
+  --hero-loader-r: -8%;
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-mask-image:
+    radial-gradient(circle at 50% 50%, transparent var(--hero-loader-r), #000 calc(var(--hero-loader-r) + 8%));
+  mask-image:
+    radial-gradient(circle at 50% 50%, transparent var(--hero-loader-r), #000 calc(var(--hero-loader-r) + 8%));
+  will-change: opacity, -webkit-mask-image, mask-image;
+}
+.hero-loader.is-opening {
+  animation:
+    hero-loader-scan-open 0.58s var(--transition-fluid) forwards,
+    hero-loader-fade 0.16s linear 0.46s forwards;
+}
+.hero-loader.is-fading {
+  opacity: 0;
+  transition: opacity 0.25s linear;
+}
+.hero-loader__radar {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  margin-bottom: 18px;
+  opacity: 0;
+  transition: opacity 0.24s var(--ease-standard);
+}
+.hero-loader.is-running .hero-loader__radar,
+.hero-loader.is-running .hero-loader__track { opacity: 1; }
+.hero-loader:not(.is-running) .hero-loader__sweep,
+.hero-loader:not(.is-running) .hero-loader__halo { animation-play-state: paused; }
+.hero-loader__sweep,
+.hero-loader__halo,
+.hero-loader__orbit,
+.hero-loader__beacon {
+  position: absolute;
+  border-radius: 50%;
+}
+.hero-loader__sweep {
+  inset: 0;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(93, 202, 165, 0.34) 28deg,
+      transparent 70deg
+    );
+  animation: hero-loader-sweep 0.72s linear infinite;
+}
+.hero-loader__halo {
+  inset: 0;
+  border: 1.5px solid var(--mint);
+  animation: hero-loader-ping 0.98s var(--ease-sonar) infinite;
+}
+.hero-loader__halo--late { animation-delay: 0.49s; }
+.hero-loader__orbit {
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hero-loader__beacon {
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: var(--mint);
+  box-shadow:
+    0 0 0 1px rgba(93, 202, 165, 0.2),
+    0 0 18px rgba(93, 202, 165, 0.8),
+    0 0 46px rgba(93, 202, 165, 0.34);
+}
+.hero-loader__track {
+  width: 160px;
+  height: 2px;
+  margin-top: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.24s var(--ease-standard);
+}
+.hero-loader__track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--mint);
+  will-change: transform;
+}
+
+@keyframes hero-loader-ping {
+  from { transform: scale(0.3); opacity: 0.7; }
+  to { transform: scale(1.9); opacity: 0; }
+}
+@keyframes hero-loader-sweep {
+  to { transform: rotate(360deg); }
+}
+@keyframes hero-loader-scan-open {
+  from { --hero-loader-r: -8%; }
+  to { --hero-loader-r: 125%; }
+}
+@keyframes hero-loader-fade {
+  to { opacity: 0; }
+}
+
 /* ---------- Atmosphere ---------- */
 .grain {
   position: fixed; inset: -50%;
@@ -163,6 +298,7 @@ em { font-style: normal; color: var(--mint); }
   transition:
     padding 0.5s var(--transition-fluid),
     transform 0.4s var(--transition-fluid),
+    opacity 0.7s var(--ease-standard),
     background 0.4s var(--transition-fluid),
     border-color 0.4s var(--transition-fluid);
 }
@@ -276,6 +412,181 @@ body.has-custom-cursor .btn { cursor: none; }
 }
 .hero > *:not(.hero__map) { position: relative; z-index: 2; }
 
+.hero__torch {
+  --hero-torch-x: 18%;
+  --hero-torch-y: 46%;
+  --hero-torch-angle: 48deg;
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+  will-change: opacity;
+}
+.hero__torch-shade,
+.hero__torch-ray,
+.hero__torch-pool {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+.hero__torch-shade {
+  inset: 0;
+  background: rgba(7, 8, 10, 0.78);
+  -webkit-mask-image: radial-gradient(
+    ellipse 27vw 16vw at var(--hero-torch-x) var(--hero-torch-y),
+    transparent 0,
+    rgba(0, 0, 0, 0.16) 48%,
+    rgba(0, 0, 0, 0.84) 78%,
+    #000 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 27vw 16vw at var(--hero-torch-x) var(--hero-torch-y),
+    transparent 0,
+    rgba(0, 0, 0, 0.16) 48%,
+    rgba(0, 0, 0, 0.84) 78%,
+    #000 100%
+  );
+}
+.hero__torch-ray {
+  left: -2vw;
+  top: -15vw;
+  width: 116vw;
+  height: 30vw;
+  transform-origin: 0 50%;
+  transform: rotate(var(--hero-torch-angle));
+  clip-path: polygon(0 47%, 100% 4%, 100% 96%, 0 53%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16) 0,
+    rgba(93, 202, 165, 0.095) 26%,
+    rgba(255, 255, 255, 0.075) 62%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(90deg, #000 0, rgba(0, 0, 0, 0.9) 58%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, rgba(0, 0, 0, 0.9) 58%, transparent 100%);
+  mix-blend-mode: screen;
+  filter: blur(clamp(9px, 1.35vw, 22px));
+  animation: hero-torch-ray-breathe 480ms steps(3, end) infinite alternate;
+  will-change: transform, opacity;
+}
+.hero__torch-pool {
+  left: var(--hero-torch-x);
+  top: var(--hero-torch-y);
+  width: clamp(210px, 34vw, 560px);
+  height: clamp(110px, 19vw, 310px);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse, rgba(255, 255, 255, 0.22), transparent 17%),
+    radial-gradient(ellipse, rgba(93, 202, 165, 0.13), transparent 68%);
+  mix-blend-mode: screen;
+  filter: blur(clamp(10px, 1.35vw, 22px)) saturate(1.12);
+  transform: translate(-50%, -50%) rotate(calc(var(--hero-torch-angle) - 18deg));
+  animation: hero-torch-hand-tremor 340ms steps(2, end) infinite alternate;
+  will-change: transform;
+}
+.hero__torch-pool::after {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  border-radius: inherit;
+  -webkit-backdrop-filter: brightness(1.14) saturate(1.08);
+  backdrop-filter: brightness(1.14) saturate(1.08);
+  -webkit-mask-image: radial-gradient(ellipse, #000 0, rgba(0, 0, 0, 0.86) 46%, transparent 76%);
+  mask-image: radial-gradient(ellipse, #000 0, rgba(0, 0, 0, 0.86) 46%, transparent 76%);
+}
+.hero__torch.is-headline {
+  animation: hero-torch-headline 1.22s var(--ease-standard) both;
+}
+/* Both stages are cut to the loader's own pace: the sweep to centre has to
+   arrive before progress completes, and the lift-off has to finish inside the
+   mask reveal, or the torch is still moving over an already-visible map. */
+.hero__torch.is-loader {
+  animation: hero-torch-loader 0.82s var(--ease-standard) both;
+}
+.hero__torch.is-clearing {
+  animation: hero-torch-clear 0.6s var(--transition-fluid) both;
+}
+
+@keyframes hero-torch-headline {
+  0%   { --hero-torch-x: 4%;  --hero-torch-y: 58%; --hero-torch-angle: 62deg; opacity: 0; }
+  24%  { --hero-torch-x: 25%; --hero-torch-y: 37%; --hero-torch-angle: 40deg; opacity: 0.88; }
+  43%  { --hero-torch-x: 17%; --hero-torch-y: 48%; --hero-torch-angle: 52deg; opacity: 1; }
+  61%  { --hero-torch-x: 22%; --hero-torch-y: 41%; --hero-torch-angle: 45deg; }
+  76%  { --hero-torch-x: 19%; --hero-torch-y: 45%; --hero-torch-angle: 50deg; }
+  88%  { --hero-torch-x: 21%; --hero-torch-y: 43%; --hero-torch-angle: 46deg; }
+  100% { --hero-torch-x: 20%; --hero-torch-y: 44%; --hero-torch-angle: 48deg; opacity: 1; }
+}
+/* Picks up where the headline stage rested — the sequence goes headline → loader
+   → clear, so this must start from the headline's position, not a third place. */
+@keyframes hero-torch-loader {
+  0%   { --hero-torch-x: 20%; --hero-torch-y: 44%; --hero-torch-angle: 48deg; opacity: 1; }
+  26%  { --hero-torch-x: 38%; --hero-torch-y: 38%; --hero-torch-angle: 40deg; }
+  52%  { --hero-torch-x: 60%; --hero-torch-y: 56%; --hero-torch-angle: 30deg; }
+  70%  { --hero-torch-x: 45%; --hero-torch-y: 46%; --hero-torch-angle: 31deg; }
+  85%  { --hero-torch-x: 53%; --hero-torch-y: 52%; --hero-torch-angle: 25deg; }
+  100% { --hero-torch-x: 50%; --hero-torch-y: 50%; --hero-torch-angle: 27deg; opacity: 1; }
+}
+@keyframes hero-torch-clear {
+  0%   { --hero-torch-x: 50%; --hero-torch-y: 50%; --hero-torch-angle: 27deg; opacity: 1; }
+  34%  { --hero-torch-x: 49%; --hero-torch-y: 52%; --hero-torch-angle: 29deg; opacity: 0.9; }
+  100% { --hero-torch-x: 50%; --hero-torch-y: 50%; --hero-torch-angle: 27deg; opacity: 0; }
+}
+@keyframes hero-torch-hand-tremor {
+  0%   { transform: translate(calc(-50% - 2px), calc(-50% + 1px)) rotate(calc(var(--hero-torch-angle) - 18deg)) scale(0.985); }
+  35%  { transform: translate(calc(-50% + 1px), calc(-50% - 2px)) rotate(calc(var(--hero-torch-angle) - 17.4deg)) scale(1.01); }
+  68%  { transform: translate(calc(-50% + 3px), calc(-50% + 1px)) rotate(calc(var(--hero-torch-angle) - 18.7deg)) scale(0.995); }
+  100% { transform: translate(calc(-50% - 1px), calc(-50% - 1px)) rotate(calc(var(--hero-torch-angle) - 17.8deg)) scale(1.015); }
+}
+@keyframes hero-torch-ray-breathe {
+  0%   { opacity: 0.72; }
+  38%  { opacity: 0.88; }
+  71%  { opacity: 0.76; }
+  100% { opacity: 0.92; }
+}
+
+@media (max-width: 720px) {
+  .hero__torch-shade {
+    -webkit-mask-image: radial-gradient(
+      ellipse 42vw 18vw at var(--hero-torch-x) var(--hero-torch-y),
+      transparent 0,
+      rgba(0, 0, 0, 0.16) 48%,
+      rgba(0, 0, 0, 0.84) 78%,
+      #000 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 42vw 18vw at var(--hero-torch-x) var(--hero-torch-y),
+      transparent 0,
+      rgba(0, 0, 0, 0.16) 48%,
+      rgba(0, 0, 0, 0.84) 78%,
+      #000 100%
+    );
+  }
+  .hero__torch-ray {
+    top: -24vw;
+    width: 128vh;
+    height: 48vw;
+  }
+  @keyframes hero-torch-headline {
+    0%   { --hero-torch-x: 4%;  --hero-torch-y: 38%; --hero-torch-angle: 78deg; opacity: 0; }
+    24%  { --hero-torch-x: 28%; --hero-torch-y: 35%; --hero-torch-angle: 60deg; opacity: 0.88; }
+    43%  { --hero-torch-x: 17%; --hero-torch-y: 48%; --hero-torch-angle: 72deg; opacity: 1; }
+    61%  { --hero-torch-x: 24%; --hero-torch-y: 41%; --hero-torch-angle: 64deg; }
+    76%  { --hero-torch-x: 19%; --hero-torch-y: 45%; --hero-torch-angle: 69deg; }
+    88%  { --hero-torch-x: 22%; --hero-torch-y: 43%; --hero-torch-angle: 65deg; }
+    100% { --hero-torch-x: 20%; --hero-torch-y: 44%; --hero-torch-angle: 66deg; opacity: 1; }
+  }
+  @keyframes hero-torch-loader {
+    0%   { --hero-torch-x: 20%; --hero-torch-y: 44%; --hero-torch-angle: 66deg; opacity: 1; }
+    26%  { --hero-torch-x: 34%; --hero-torch-y: 52%; --hero-torch-angle: 62deg; }
+    52%  { --hero-torch-x: 56%; --hero-torch-y: 44%; --hero-torch-angle: 48deg; }
+    70%  { --hero-torch-x: 46%; --hero-torch-y: 54%; --hero-torch-angle: 58deg; }
+    86%  { --hero-torch-x: 53%; --hero-torch-y: 48%; --hero-torch-angle: 52deg; }
+    100% { --hero-torch-x: 50%; --hero-torch-y: 50%; --hero-torch-angle: 55deg; opacity: 1; }
+  }
+}
+
 .hero__map {
   position: absolute;
   inset: 0;
@@ -292,6 +603,25 @@ body.has-custom-cursor .btn { cursor: none; }
   transition: filter 0.44s var(--ease-standard);
 }
 .hero__map.is-pulse .hero__gl { filter: blur(8px); }
+/* The opening dive is a long camera move, so its blur has to ramp with the
+   flight rather than sit at one value — `--hero-dive-ms` is written from the
+   flight duration in main.js so the two can't drift apart. */
+.hero__map.is-dive .hero__gl {
+  transition: none;
+  animation: hero-dive-blur var(--hero-dive-ms, 2600ms) var(--ease-standard) both;
+}
+@keyframes hero-dive-blur {
+  0%   { filter: blur(0px) saturate(1); }
+  16%  { filter: blur(13px) saturate(1.14); }
+  58%  { filter: blur(9px) saturate(1.08); }
+  86%  { filter: blur(2.5px) saturate(1.02); }
+  100% { filter: blur(0px) saturate(1); }
+}
+/* Eight labelled bubbles at regional zoom is a cluster of unreadable dots, so
+   the overview keeps only the destination's — it says where the camera is about
+   to go. This has to fade the bubble rather than the marker root, because
+   MapLibre writes `opacity` inline on the root and inline beats any rule here. */
+.hero__map.is-farview .hero-pin:not(.is-on) .hero-pin__bubble { opacity: 0; }
 .hero__map .maplibregl-map,
 .hero__map .maplibregl-canvas-container {
   width: 100%;
@@ -354,18 +684,36 @@ body.has-custom-cursor .btn { cursor: none; }
   opacity: 1;
   background: rgba(20, 28, 38, 0.14);
 }
+.hero__wx.is-mist {
+  opacity: 1;
+  background-color: rgba(158, 172, 196, 0.025);
+  background-image:
+    radial-gradient(60% 45% at 20% 80%, rgba(158, 172, 196, 0.13), transparent 70%),
+    radial-gradient(55% 40% at 75% 65%, rgba(158, 172, 196, 0.1), transparent 70%);
+  background-size: 200% 100%;
+  animation: hero-mist-drift 16s var(--ease-standard) infinite alternate;
+  will-change: background-position;
+}
 .hero__wx > span {
   position: absolute;
   inset: 0;
   pointer-events: none;
   opacity: 0;
 }
+.hero__wx:not(.is-rain) > span { animation-play-state: paused; }
 .hero__wx.is-rain > span { opacity: 1; }
 .hero__wx.is-rain .hero__wx-far { opacity: 0.72; }
 .hero__wx.is-rain .hero__wx-mid { opacity: 0.88; }
 .hero__wx.is-rain .hero__wx-near { opacity: 1; }
 .hero__wx.is-rain .hero__wx-glass { opacity: 0.82; }
 .hero__wx.is-rain .hero__wx-front { opacity: 1; }
+@keyframes hero-mist-drift {
+  to {
+    background-position:
+      60% 0,
+      -40% 0;
+  }
+}
 .hero__motes {
   position: absolute;
   inset: 0;
@@ -381,15 +729,15 @@ body.has-custom-cursor .btn { cursor: none; }
   max-width: min(220px, 78vw);
   transform: scale(1);
   transform-origin: bottom center;
-  transition: transform 0.44s var(--ease-standard), opacity 0.26s var(--ease-standard);
-  opacity: 0.72;
+  transition: transform 0.44s var(--ease-standard);
   pointer-events: none;
 }
 .hero-pin.is-on {
-  opacity: 1;
   transform: scale(1.12);
   z-index: 3;
 }
+/* Opacity lives on the bubble, not the marker root: MapLibre sets the root's
+   opacity inline, so anything declared for it here is dead. */
 .hero-pin__bubble {
   position: relative;
   display: flex;
@@ -402,8 +750,11 @@ body.has-custom-cursor .btn { cursor: none; }
   border: 1.5px solid var(--mint);
   overflow: hidden;
   box-sizing: border-box;
+  opacity: 0.72;
+  transition: opacity 0.26s var(--ease-standard);
 }
 .hero-pin.is-on .hero-pin__bubble {
+  opacity: 1;
   box-shadow: 0 0 24px rgba(93, 202, 165, 0.4);
 }
 .hero-pin:not(.is-on) .hero-pin__bubble {
@@ -530,6 +881,11 @@ body.has-custom-cursor .btn { cursor: none; }
   -webkit-text-stroke: 1.4px rgba(255, 255, 255, 0.52);
   letter-spacing: -0.04em;
 }
+.display__your {
+  font-family: var(--font-accent);
+  font-style: italic;
+  color: inherit;
+}
 .display__line--end {
   font-family: var(--font-accent);
   font-weight: 800;
@@ -561,59 +917,168 @@ body.has-custom-cursor .btn { cursor: none; }
   margin-bottom: clamp(32px, 5vh, 52px);
   font-weight: 400;
 }
+.hero__go {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-accent);
+  font-style: normal;
+  font-weight: 800;
+  color: var(--mint);
+  animation: go-glitch-main 780ms steps(1, end) 1.25s forwards;
+  animation-play-state: paused;
+}
+.hero__go::before,
+.hero__go::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font: inherit;
+  font-style: italic;
+  color: var(--mint);
+  opacity: 0;
+}
+.hero__go::before {
+  clip-path: inset(4% 0 55% 0);
+  animation: go-glitch-top 780ms steps(1, end) 1.25s forwards;
+  animation-play-state: paused;
+}
+.hero__go::after {
+  clip-path: inset(56% 0 5% 0);
+  animation: go-glitch-bottom 780ms steps(1, end) 1.25s forwards;
+  animation-play-state: paused;
+}
+
+@keyframes go-glitch-main {
+  0%, 18% { transform: translate(0); font-style: normal; text-shadow: none; }
+  20% { transform: translate(-0.05em, 0.01em) skewX(-7deg); text-shadow: 0.055em 0 rgba(255, 255, 255, 0.45); }
+  29% { transform: translate(0.04em, -0.015em) skewX(5deg); text-shadow: -0.045em 0 rgba(93, 202, 165, 0.5); }
+  38% { transform: translate(-0.02em, 0.02em); opacity: 0.72; }
+  47% { transform: translate(0.035em, 0); opacity: 1; font-style: italic; }
+  58% { transform: translate(-0.015em, 0); text-shadow: 0.025em 0 rgba(255, 255, 255, 0.3); }
+  68%, 100% { transform: translate(0); font-style: italic; text-shadow: none; opacity: 1; }
+}
+@keyframes go-glitch-top {
+  0%, 18%, 62%, 100% { opacity: 0; transform: translate(0); }
+  20% { opacity: 0.9; transform: translate(0.09em, -0.025em); }
+  29% { opacity: 0.5; transform: translate(-0.07em, 0.015em); }
+  38% { opacity: 0.8; transform: translate(0.04em, 0); }
+  50% { opacity: 0.35; transform: translate(-0.025em, 0); }
+}
+@keyframes go-glitch-bottom {
+  0%, 23%, 62%, 100% { opacity: 0; transform: translate(0); }
+  25% { opacity: 0.75; transform: translate(-0.08em, 0.025em); }
+  34% { opacity: 0.45; transform: translate(0.065em, -0.01em); }
+  43% { opacity: 0.85; transform: translate(-0.035em, 0); }
+  54% { opacity: 0.3; transform: translate(0.02em, 0); }
+}
 
 .reveal {
   animation: fade-up 1s var(--ease-standard) both;
   animation-delay: 0.72s;
 }
-.hero__lede.reveal { animation-delay: 0.62s; }
-.waitlist.reveal { animation-delay: 0.82s; }
+/* Hero act three. The lede ("Let's go.") and the early-access form are held at
+   their from-state until the map has finished revealing, then run together —
+   `.is-ready` is added by main.js on the hero-map-revealed event. Pausing rather
+   than re-timing keeps every delay relative to the reveal, not to page load. */
+.hero__lede.reveal {
+  animation-name: hero-go-entry;
+  animation-duration: 1.1s;
+  animation-timing-function: var(--ease-standard);
+  animation-delay: 0s;
+  animation-play-state: paused;
+}
+.hero .waitlist.reveal {
+  animation-delay: 0.08s;
+  animation-play-state: paused;
+}
+.hero.is-ready .hero__lede.reveal,
+.hero.is-ready .waitlist.reveal,
+.hero.is-ready .hero__go,
+.hero.is-ready .hero__go::before,
+.hero.is-ready .hero__go::after {
+  animation-play-state: running;
+}
+
+@media (min-width: 721px) {
+  .display__line--end {
+    text-align: left;
+  }
+  .hero__lede {
+    position: absolute;
+    top: 52%;
+    right: var(--pad);
+    max-width: none;
+    margin: 0;
+    font-family: var(--font-accent);
+    font-size: clamp(58px, 7.6vw, 112px);
+    font-weight: 800;
+    line-height: 0.88;
+    letter-spacing: -0.055em;
+    text-align: right;
+    color: var(--text);
+  }
+}
+
+@keyframes hero-go-entry {
+  0% {
+    opacity: 0;
+    transform: translateY(0.7em);
+    filter: blur(14px);
+  }
+  58% {
+    opacity: 0.9;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
 
 @media (max-width: 720px) {
   .hero {
-    padding: 92px var(--pad) 28px;
+    padding: 92px var(--pad) 38px;
   }
   .hero__meta {
-    margin-bottom: 18px;
+    margin-bottom: 24px;
   }
   .hero__attrib { display: none; }
   .display {
-    font-size: clamp(40px, 12.2vw, 56px);
-    line-height: 0.96;
-    letter-spacing: -0.045em;
-    margin-bottom: 14px;
+    width: 100%;
+    font-size: clamp(78px, 21vw, 104px);
+    line-height: 0.78;
+    letter-spacing: -0.06em;
+    margin-bottom: 36px;
+    text-align: left;
   }
   .display__line {
-    overflow: visible;
-  }
-  .display__line:nth-child(1),
-  .display__line--ghost {
-    display: inline;
-  }
-  .display__line:nth-child(1) .display__inner,
-  .display__line--ghost .display__inner {
-    display: inline;
-  }
-  .display__line--ghost {
-    margin-left: 0.18em;
+    display: block;
+    overflow: hidden;
+    text-align: left;
   }
   .display__line--ghost .display__inner {
-    color: var(--text);
-    -webkit-text-stroke: 0;
-    font-weight: 600;
+    color: transparent;
+    -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.72);
+    font-weight: 500;
   }
   .display__line--end {
     display: block;
     text-align: left;
-    font-size: 0.5em;
-    padding-top: 0.32em;
-    font-weight: 700;
+    font-size: 0.78em;
+    padding-top: 0.2em;
+    font-weight: 800;
   }
   .hero__lede {
     max-width: none;
-    font-size: 15px;
-    line-height: 1.45;
-    margin-bottom: 22px;
+    font-family: var(--font-accent);
+    font-size: clamp(50px, 13.5vw, 68px);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.055em;
+    color: var(--text);
+    margin-bottom: 38px;
   }
 }
 
@@ -739,7 +1204,94 @@ body.has-custom-cursor .btn { cursor: none; }
   color: var(--mint);
 }
 .stage__lede { max-width: 38ch; font-size: clamp(15px, 1.6vw, 18px); line-height: 1.55; color: var(--text-2); }
-.stage__device { justify-self: center; width: min(100%, var(--iphone-w)); }
+/* Type anchor. It sits at z-index 0 under the device, so the phone itself masks
+   it — the entry is a genuine reveal from behind the mockup, no clip-path.
+   Narrow: rests above the phone and rises up out of it. */
+.stage__promise {
+  position: relative;
+  z-index: 0;
+  margin: clamp(24px, 4vh, 44px) 0 clamp(22px, 4vh, 40px);
+  font-family: var(--font-display);
+  font-size: clamp(38px, 21cqw, 96px);
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+  text-align: center;
+  color: var(--text);
+  opacity: 0;
+  transition: opacity 0.5s linear;
+  will-change: opacity;
+}
+.stage__promise.is-in { opacity: 1; }
+.stage__promise > span,
+.stage__promise > em {
+  display: block;
+  white-space: nowrap;
+  will-change: transform;
+}
+/* Narrow only: the two lines rise out of the phone at different speeds, for the
+   displaced-scroll feel. "Map out." travels further and faster, but it waits out
+   a delay so both land together — that ordering is what keeps the fast line's
+   remaining distance always greater than the slow one's, so the gap between them
+   can only open, never close. They can't touch at any point in the run. */
+.stage__promise > span { transform: translateY(150px); transition: transform 1.85s var(--transition-fluid); }
+.stage__promise > em { transform: translateY(250px); transition: transform 1.05s var(--transition-fluid) 0.8s; }
+.stage__promise.is-in > span,
+.stage__promise.is-in > em { transform: translateY(0); }
+.stage__promise > span {
+  margin-bottom: 0.08em;
+  font-size: 0.44em;
+  letter-spacing: -0.035em;
+  color: var(--text-2);
+}
+.stage__promise > em {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 800;
+  color: var(--mint);
+}
+/* The italic 't' and the period collide under the display tracking. */
+.stage__promise-dot { margin-left: 0.09em; }
+.stage__device {
+  justify-self: center;
+  width: min(100%, var(--iphone-w));
+  container-type: inline-size;
+}
+.stage__device .iphone { position: relative; z-index: 1; }
+/* Wide: the type leaves the flow and parks in the open space left of the phone,
+   vertically centred on it, right-aligned so both lines rag against the device's
+   left edge. Entry slides the lines out leftward from fully behind the mockup.
+   Gated at 1240px — below that the copy column is too close to collide with. */
+@media (min-width: 1240px) {
+  .stage__device { position: relative; }
+  .stage__promise {
+    position: absolute;
+    top: 46%;
+    right: 100%;
+    width: max-content;
+    margin: 0 clamp(16px, 1.5vw, 28px) 0 0;
+    font-size: clamp(56px, 22cqw, 92px);
+    text-align: right;
+    /* Parent only holds the vertical centring; the travel lives on each line. */
+    transform: translateY(-50%);
+    transition: opacity 0.55s linear;
+  }
+  /* Same split-speed idea as narrow, run sideways. Offsets are a percentage of
+     each line's own width, so both start fully inside the phone's silhouette
+     however wide they render, and "Map out." — the longer line — covers far more
+     ground in less time. No collision risk here: the lines move along their own
+     rows, so only the shared right edge changes. */
+  .stage__promise > span {
+    transform: translateX(120%);
+    transition: transform 1.95s var(--transition-fluid);
+  }
+  .stage__promise > em {
+    transform: translateX(114%);
+    transition: transform 1.15s var(--transition-fluid) 0.8s;
+  }
+  .stage__promise.is-in > span,
+  .stage__promise.is-in > em { transform: translateX(0); }
+}
 .stage__hint { text-align: center; margin-top: 14px; }
 .stage__nav { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
 .stage__arrow {
@@ -1106,12 +1658,23 @@ body.has-custom-cursor .btn { cursor: none; }
 .lh__peek {
   position: absolute; left: 0; right: 0; bottom: 34px; z-index: 5;
   overflow: hidden;
-  touch-action: pan-x;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.lh__peek.is-dragging {
+  cursor: grabbing;
+}
+.lh__peek.is-dragging .lh__track {
+  transition: none;
 }
 .lh__track {
   display: flex;
   width: 700%;
   transition: transform 0.44s var(--ease-standard);
+  will-change: transform;
 }
 .lh__card {
   width: 14.285%;
@@ -1131,6 +1694,8 @@ body.has-custom-cursor .btn { cursor: none; }
   width: 80px; height: 80px; border-radius: 20px; flex: none;
   object-fit: cover;
   background: #24382c;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 .lh__thumb--empty {
   background:
@@ -2177,11 +2742,27 @@ body.has-custom-cursor .btn { cursor: none; }
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .display__inner, .reveal, .sonar-ring, .answers__line, .close__line span, .pitch__line span {
+  .hero__torch { display: none; }
+  .hero-loader__sweep,
+  .hero-loader__halo { animation: none; }
+  .hero__go {
+    animation: none;
+    font-style: italic;
+  }
+  .hero__go::before,
+  .hero__go::after { display: none; }
+  .display__inner, .reveal, .sonar-ring, .answers__line, .close__line span, .pitch__line span,
+  .stage__promise {
     animation: none !important;
     transition: none !important;
   }
   .display__inner, .reveal { opacity: 1; transform: none; filter: none; }
+  /* Transitions off only — `is-in` is applied immediately here, and it already
+     carries the resting state (including the wide layout's -50% centring, which
+     a blanket `transform: none` would throw away). */
+  .stage__promise,
+  .stage__promise > span,
+  .stage__promise > em { transition: none !important; }
   .answers { height: auto; }
   .answers__pin { position: relative; height: auto; padding: var(--section-pad) var(--pad); }
   .answers__stage { min-height: 0; display: flex; flex-direction: column; gap: 64px; }
@@ -2207,6 +2788,7 @@ body.has-custom-cursor .btn { cursor: none; }
   .display { filter: none !important; }
   .hero__map.is-pulse .hero__gl,
   .lh__map.is-pulse .lh__gl { filter: none; }
+  .hero__map.is-dive .hero__gl { animation: none; filter: none; }
   .hero__motes { display: none !important; }
   .hero-pin__sonar, .hero-you__halo { animation: none !important; opacity: 0; }
   .sonar-ring { display: none; }

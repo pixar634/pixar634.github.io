@@ -36,30 +36,30 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Lighthouse" />
     <meta property="og:locale" content="en_IN" />
-    <meta property="og:title" content="Lighthouse — Pick a place. Leave the city." />
+    <meta property="og:title" content="Lighthouse — Find your kind of away." />
     <meta
       property="og:description"
-      content="Hundreds of getaways from Bangalore — waterfalls, forts, sunrise drives, monsoon treks. Drive time already on the card. Same day, midnight, or a whole weekend."
+      content="Find your kind of away. Let’s go."
     />
     <meta property="og:url" content="https://letsgolighthouse.co.in/" />
-    <meta property="og:image" content="https://letsgolighthouse.co.in/og.png?v=2" />
+    <meta property="og:image" content="https://letsgolighthouse.co.in/og.png?v=4" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Pick a place. Leave the city."
+      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Find your kind of away. Let’s go."
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Lighthouse — Pick a place. Leave the city." />
+    <meta name="twitter:title" content="Lighthouse — Find your kind of away." />
     <meta
       name="twitter:description"
-      content="Hundreds of getaways from Bangalore — waterfalls, forts, sunrise drives, monsoon treks. Drive time already on the card."
+      content="Find your kind of away. Let’s go."
     />
-    <meta name="twitter:image" content="https://letsgolighthouse.co.in/og.png?v=2" />
+    <meta name="twitter:image" content="https://letsgolighthouse.co.in/og.png?v=4" />
     <meta
       name="twitter:image:alt"
-      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Pick a place. Leave the city."
+      content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Find your kind of away. Let’s go."
     />
 
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
@@ -79,7 +79,7 @@
          order — so Lenis is still defined before main.js reads it, minus a
          render-blocking round trip to a third-party CDN on first paint. -->
     <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js" defer></script>
-    <link rel="stylesheet" href="/styles.css?v=card-fit" />
+    <link rel="stylesheet" href="/styles.css?v=hero-sequence-24" />
     <link rel="stylesheet" href="/vendor/maplibre-gl/maplibre-gl.css" />
 
     <!-- Structured data. One @graph so Organization can be referenced rather than
@@ -161,7 +161,7 @@
             "applicationSubCategory": "Weekend trip discovery and planning",
             "operatingSystem": "Android, Web",
             "url": "https://letsgolighthouse.co.in/",
-            "description": "Pick a place within a weekend's reach of Bangalore, see the real drive time and what the weather will do, shortlist four, and let the group vote on which one wins.",
+            "description": "See what's around Bangalore this weekend, with real drive times and a group vote that settles where everyone is going.",
             "featureList": [
               "Hundreds of real places within a weekend's reach of Bangalore",
               "Computed drive times and leave-by times, never estimated by a model",
@@ -176,14 +176,8 @@
       }
     </script>
   </head>
-  <body class="is-splashing">
+  <body>
     <a class="skip" href="#join">Skip to waitlist</a>
-    <div class="splash" id="splash" aria-hidden="true">
-      <p class="splash__type" id="splash-type">
-        <span class="splash__line" id="splash-a"></span>
-        <span class="splash__line splash__line--brand" id="splash-b"></span>
-      </p>
-    </div>
     <div class="grain" aria-hidden="true"></div>
     <div class="cursor" id="cursor" aria-hidden="true"></div>
     <div class="beam" aria-hidden="true"></div>
@@ -213,21 +207,35 @@
             <span class="hero__wx-front"></span>
           </div>
           <p class="hero__attrib">© OpenStreetMap</p>
+          <div class="hero-loader" id="hero-loader">
+            <div class="hero-loader__radar">
+              <span class="hero-loader__sweep"></span>
+              <span class="hero-loader__halo"></span>
+              <span class="hero-loader__halo hero-loader__halo--late"></span>
+              <span class="hero-loader__orbit"></span>
+              <span class="hero-loader__beacon"></span>
+            </div>
+            <div class="hero-loader__track"><span id="hero-loader-bar"></span></div>
+          </div>
+        </div>
+        <div class="hero__torch" id="hero-torch" aria-hidden="true">
+          <span class="hero__torch-shade"></span>
+          <span class="hero__torch-ray"></span>
+          <span class="hero__torch-pool"></span>
         </div>
         <p class="hero__meta utility">
           <span>12°58′N  77°35′E</span>
-          <span>OUT OF BANGALORE</span>
+          <span>AROUND BANGALORE</span>
         </p>
 
         <h1 class="display" id="display">
-          <span class="display__line"><span class="display__inner">Pick a</span></span>
-          <span class="display__line display__line--ghost"><span class="display__inner">place</span></span>
-          <span class="display__line display__line--end"><span class="display__inner">leave the <em>city</em>.</span></span>
+          <span class="display__line"><span class="display__inner">Find</span></span>
+          <span class="display__line display__line--ghost"><span class="display__inner"><em class="display__your">your</em> kind</span></span>
+          <span class="display__line display__line--end"><span class="display__inner">of <em>away.</em></span></span>
         </h1>
 
         <p class="hero__lede reveal">
-          Hundreds of getaways from Bangalore — waterfalls, forts, sunrise drives, monsoon treks.
-          Drive time already on the card. Same day, midnight, or a weekend.
+          Let’s <em class="hero__go" data-text="go.">go.</em>
         </p>
 
         <!-- #join is the wrapper, not the form: once someone has joined, the form
@@ -252,6 +260,8 @@
               <span class="waitlist__btn-label">Get early access</span>
             </button>
           </div>
+          <!-- Role choice hidden for now: the signup should stay focused on one
+               action instead of asking people to classify themselves first.
           <div class="waitlist__role" role="group" aria-label="How you travel">
             <span class="utility waitlist__role-label">IN YOUR GROUP, YOU'RE THE ONE WHO</span>
             <div class="waitlist__role-opts">
@@ -259,6 +269,7 @@
               <button type="button" class="rolepill" data-role="rider" aria-pressed="false">Just shows up</button>
             </div>
           </div>
+          -->
 
           <p class="waitlist__note utility" data-state-idle>BANGALORE FIRST, IN WAVES. INVITE 3 AFTER YOU JOIN AND SKIP TO THE FRONT. NO SPAM.</p>
           <p class="waitlist__note waitlist__note--err utility" data-state-err hidden>COULDN'T REACH THE LIGHTHOUSE — TRY AGAIN</p>
@@ -298,7 +309,7 @@
           <div class="answers__stage">
             <h2 class="answers__line is-on" data-a="0">
               <span>Look around.</span>
-              <span class="answers__sub">The weekend is already sitting on the map. You just haven't left yet.</span>
+              <span class="answers__sub">The weekend is already sitting on the map. You just haven't looked yet.</span>
             </h2>
             <h2 class="answers__line" data-a="1" aria-hidden="true">
               <span>Pick a hunger.</span>
@@ -343,15 +354,20 @@
       <section class="stage" id="explore">
         <div class="stage__copy">
           <p class="utility stage__kicker">JUST GO</p>
-          <h2 class="stage__title">A road trip<br /><em>you didn't plan.</em></h2>
+          <h2 class="stage__title">A weekend<br /><em>you didn't plan.</em></h2>
           <p class="stage__lede">
-            You're looking around until one of them is the road trip. Swipe, pick what
-            feels like today, leave how you like. Car, bike, a bus. Misty mountains,
-            wild lakesides, coastal drives — all of it still inside the time you chose
-            to be back.
+            You saw it on a reel. Then Maps, then the weather, then reviews —
+            and by then you’d lost interest. So you keep scrolling, still
+            hunting for something that fits your mood. Skip the relay: every
+            card already knows how far it is, how it looks, what the sky’s
+            doing and what to watch for. Just swipe by mood.
           </p>
         </div>
         <div class="stage__device">
+          <p class="stage__promise">
+            <span>Mood in.</span>
+            <em>Map out<span class="stage__promise-dot">.</span></em>
+          </p>
           <div class="iphone">
             <div class="iphone__glass">
             <div class="iphone__screen">
@@ -380,7 +396,7 @@
             </div>
             <img class="iphone__skin" src="/assets/device/iphone-17-pro-max.png?v=3" alt="" />
           </div>
-          <p class="stage__hint utility">LOOK AROUND · THE WORLD MOVES WITH YOU</p>
+          <p class="stage__hint utility">SWIPE THE CARD ABOVE · CHOOSE YOUR GETAWAY · LET’S GO.</p>
           <div class="stage__nav">
             <button type="button" class="stage__arrow" id="lh-prev" aria-label="Previous place">‹</button>
             <button type="button" class="stage__arrow" id="lh-next" aria-label="Next place">›</button>
@@ -389,7 +405,7 @@
       </section>
 
       <section class="brief" id="informed">
-        <p class="utility brief__kicker">BEFORE YOU LEAVE</p>
+        <p class="utility brief__kicker">BEFORE YOU GO</p>
         <h2 class="brief__title">Never go<br /><em>uninformed.</em></h2>
         <p class="brief__lede">
           Live 24-hour forecast on the place — temperature and chance of rain, from Open-Meteo,
@@ -731,7 +747,12 @@
              product: Fleet (the operator dashboard, ARCHITECTURE §4.25) is designed
              but not built and is gated behind the consumer bets clearing, so nothing
              here may read as "sign up". The offsite number is real — 62 rows of
-             category "Team Offsites" in places_seed.yaml. -->
+             category "Team Offsites" in places_seed.yaml.
+
+             Commented out for now: the page is a consumer waitlist first, and a
+             supply-side ask this early splits the one decision we want. Restore
+             when there is something to hand an operator. -->
+        <!--
         <section class="bizband" aria-labelledby="bizband-title">
           <div class="bizband__head">
             <p class="utility bizband__kicker" id="bizband-title">WORK WITH LIGHTHOUSE</p>
@@ -774,6 +795,7 @@
             </a>
           </div>
         </section>
+        -->
 
         <div class="footer__top">
           <div class="footer__brand">
@@ -830,6 +852,6 @@
     </main>
 
     <script src="/vendor/maplibre-gl/maplibre-gl.js" defer></script>
-    <script src="/main.js?v=card-fit" defer></script>
+    <script src="/main.js?v=hero-sequence-18" defer></script>
   </body>
 </html>

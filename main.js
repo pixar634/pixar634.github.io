@@ -59,6 +59,128 @@
   }
   initScroll();
 
+  /* ---------- Hero-map loader ----------
+     This is deliberately scoped to #hero-map, not the page. Header, waitlist
+     and all other HTML render independently while the map initializes behind
+     this simulated 0→100 sonar moment. */
+  var heroLoaderDone = false;
+  var HERO_LOADER_DONE_EVENT = "lighthouse:hero-map-revealed";
+  function finishHeroLoader(loader) {
+    window.setTimeout(function () {
+      heroLoaderDone = true;
+      document.dispatchEvent(new CustomEvent(HERO_LOADER_DONE_EVENT));
+    }, 560);
+    window.setTimeout(function () { loader.remove(); }, 660);
+  }
+  function initHeroLoader() {
+    var loader = document.getElementById("hero-loader");
+    var bar = document.getElementById("hero-loader-bar");
+    var torch = document.getElementById("hero-torch");
+    var torchStage = "";
+
+    function focusTorch(stage) {
+      if (!torch || reduced || torchStage === stage) return;
+      torchStage = stage;
+      torch.classList.remove("is-headline", "is-loader", "is-clearing");
+      torch.classList.add("is-" + stage);
+    }
+
+    if (torch && reduced) {
+      torch.remove();
+      torch = null;
+    } else if (torch) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { focusTorch("headline"); });
+      });
+    }
+
+    if (!loader) {
+      heroLoaderDone = true;
+      releaseHeroCopy();
+      if (torch) {
+        torch.remove();
+        torch = null;
+      }
+      return;
+    }
+
+    function finishReduced() {
+      if (bar) bar.style.transform = "scaleX(1)";
+      loader.classList.add("is-fading");
+      heroLoaderDone = true;
+      document.dispatchEvent(new CustomEvent(HERO_LOADER_DONE_EVENT));
+      window.setTimeout(function () { loader.remove(); }, 280);
+    }
+
+    var duration = 780;
+    var running = false;
+    function easeInOut(t) {
+      return t < 0.5
+        ? 2 * t * t
+        : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function startLoader() {
+      if (running) return;
+      running = true;
+      focusTorch("loader");
+      loader.classList.add("is-running");
+      if (reduced) {
+        window.setTimeout(finishReduced, 400);
+        return;
+      }
+
+      var started = performance.now();
+      function tick(now) {
+        var t = clamp((now - started) / duration, 0, 1);
+        var value = easeInOut(t);
+        if (bar) bar.style.transform = "scaleX(" + value.toFixed(4) + ")";
+        if (t < 1) {
+          requestAnimationFrame(tick);
+          return;
+        }
+        window.setTimeout(function () {
+          focusTorch("clearing");
+          loader.classList.add("is-opening");
+          finishHeroLoader(loader);
+        }, 60);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    if (reduced) {
+      window.setTimeout(startLoader, 400);
+      return;
+    }
+
+    // The loader is act two: it starts the moment the headline's last line has
+    // finished clipping up. A fallback protects the map if animation events are
+    // suppressed by an unusual browser or extension.
+    var lastHeadline = document.querySelector(".display__line--end .display__inner");
+    if (!lastHeadline) {
+      startLoader();
+      return;
+    }
+    var fallback = window.setTimeout(startLoader, 3000);
+    var onHeadlineEnd = function (event) {
+      if (event.animationName !== "clip-up") return;
+      lastHeadline.removeEventListener("animationend", onHeadlineEnd);
+      window.clearTimeout(fallback);
+      startLoader();
+    };
+    lastHeadline.addEventListener("animationend", onHeadlineEnd);
+  }
+
+  /* Act three: "Let's go." and the early-access form are held paused in CSS and
+     released together once the map has revealed, so the hero reads
+     headline → loader → map → (go + join) rather than racing the map. */
+  function releaseHeroCopy() {
+    var hero = document.getElementById("hero");
+    if (hero) hero.classList.add("is-ready");
+  }
+  document.addEventListener(HERO_LOADER_DONE_EVENT, releaseHeroCopy);
+  initHeroLoader();
+
   document.querySelectorAll('[data-scrollto]').forEach(function (a) {
     a.addEventListener('click', function (e) {
       e.preventDefault();
@@ -170,14 +292,16 @@
 
   /* ---------- Type river is CSS-infinite; no scroll hitch ---------- */
 
-  /* ---------- Clip-up on pitch + close ---------- */
-  var clipTargets = document.querySelectorAll('.close, .pitch');
-  if (reduced) {
+  /* ---------- Clip-up on pitch + close, slide-out on the type anchor ---------- */
+  var clipTargets = document.querySelectorAll('.close, .pitch, .stage__promise');
+  if (reduced || !('IntersectionObserver' in window)) {
     clipTargets.forEach(function (el) { el.classList.add('is-in'); });
-  } else if ('IntersectionObserver' in window) {
-    var clipIo = new IntersectionObserver(function (entries) {
+  } else {
+    var clipIo = new IntersectionObserver(function (entries, obs) {
       entries.forEach(function (e) {
-        if (e.isIntersecting) e.target.classList.add('is-in');
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-in');
+        if (e.target.classList.contains('stage__promise')) obs.unobserve(e.target);
       });
     }, { threshold: 0.28 });
     clipTargets.forEach(function (el) { clipIo.observe(el); });
@@ -534,20 +658,46 @@
 
   /* ---------- Hero map tour (OpenFreeMap + MapLibre, same stack as the app) ---------- */
   var HERO_SPOTS = [
-    { name: "Skandagiri", meta: "1h 30m · 68 km", lat: 13.417256, lon: 77.682669, img: "/assets/places/skandagiri.jpg", color: "#5DCAA5" },
-    { name: "Makalidurga", meta: "1h 31m · 68 km", lat: 13.432865, lon: 77.501498, img: "/assets/places/makalidurga.jpg", color: "#E0A458" },
-    { name: "Savandurga", meta: "57m · 43 km", lat: 12.915961, lon: 77.297772, img: "/assets/places/savandurga.jpg", color: "#5DCAA5" },
-    { name: "Rayakottai Fort", meta: "2h · 90 km", lat: 12.521642, lon: 78.037022, img: "/assets/places/rayakottai.jpg", color: "#E0A458" },
-    { name: "Kapu Lighthouse", meta: "8h · 400 km", lat: 13.2241, lon: 74.7380, img: "/assets/places/kapu.jpg", color: "#5DCAA5" }
+    { name: "Skandagiri", meta: "1h 2m · 60 km", lat: 13.417256, lon: 77.682669, img: "/assets/places/skandagiri.jpg", color: "#5DCAA5" },
+    { name: "Makalidurga", meta: "56m · 57 km", lat: 13.432865, lon: 77.501498, img: "/assets/places/makalidurga.jpg", color: "#E0A458" },
+    { name: "Savandurga", meta: "1h 4m · 56 km", lat: 12.915961, lon: 77.297772, img: "/assets/places/savandurga.jpg", color: "#5DCAA5" },
+    { name: "Rayakottai Fort", meta: "1h 12m · 76 km", lat: 12.521642, lon: 78.037022, img: "/assets/places/rayakottai.jpg", color: "#E0A458" },
+    { name: "Kapu Lighthouse", meta: "5h 21m · 404 km", lat: 13.2241, lon: 74.7380, img: "/assets/places/kapu.jpg", color: "#5DCAA5" },
+    { name: "Devarayanadurga", meta: "1h 7m · 69 km", lat: 13.3719, lon: 77.2096, img: "/assets/places/devarayanadurga.jpg", color: "#E0A458" },
+    { name: "Kinnakorai", meta: "4h 58m · 347 km", lat: 11.222806, lon: 76.664879, img: "/assets/places/kinnakorai.jpg", color: "#5DCAA5" },
+    { name: "Kakkadampoyil Ghat", meta: "4h 27m · 318 km", lat: 11.335265, lon: 76.110903, img: "/assets/places/kakkadampoyil.jpg", color: "#E0A458" }
   ];
-  (function pickHeroRain() {
-    var a = Math.floor(Math.random() * HERO_SPOTS.length);
-    var b = Math.floor(Math.random() * (HERO_SPOTS.length - 1));
-    if (b >= a) b += 1;
-    HERO_SPOTS[a].rain = true;
-    HERO_SPOTS[b].rain = true;
+  (function rotateHeroSpots() {
+    // Which place opens the tour is random per load, but the rotation is a shift
+    // rather than a shuffle: the array is ordered so consecutive hops stay
+    // short, and shuffling would put 400km between neighbours.
+    var offset = Math.floor(Math.random() * HERO_SPOTS.length);
+    if (!offset) return;
+    HERO_SPOTS = HERO_SPOTS.slice(offset).concat(HERO_SPOTS.slice(0, offset));
+  })();
+  (function pickHeroWeather() {
+    // Two rain scenes and two mist scenes per load, always on different places.
+    // Assignment—not the number of effects—is random, so the tour keeps its
+    // rhythm without making every destination look stormy.
+    var order = HERO_SPOTS.map(function (_, i) { return i; });
+    for (var i = order.length - 1; i > 0; i -= 1) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var swap = order[i];
+      order[i] = order[j];
+      order[j] = swap;
+    }
+    HERO_SPOTS[order[0]].weather = "rain";
+    HERO_SPOTS[order[1]].weather = "rain";
+    HERO_SPOTS[order[2]].weather = "mist";
+    HERO_SPOTS[order[3]].weather = "mist";
   })();
   var HERO_YOU = { lat: 12.9716, lon: 77.5946 };
+  // A regional frame over the peninsular tip — wide enough to hold every place
+  // in the tour, so the opening reads as "here's the region" before the camera
+  // commits to one of them.
+  var HERO_OVERVIEW = [[74.0, 9.8], [79.8, 15.3]];
+  var HERO_DIVE_MS = 2600;
+  var HERO_DWELL_MS = 1000;
   var HERO_STYLE = "https://tiles.openfreemap.org/styles/liberty";
   var HERO_RASTER = {
     version: 8,
@@ -634,8 +784,8 @@
     var map = new window.maplibregl.Map({
       container: gl,
       style: HERO_STYLE,
-      center: [HERO_SPOTS[0].lon, HERO_SPOTS[0].lat],
-      zoom: 11.05,
+      center: [76.9, 12.5],
+      zoom: innerWidth < 720 ? 6.3 : 7,
       interactive: false,
       attributionControl: false,
       fadeDuration: 0,
@@ -654,6 +804,7 @@
     var inView = true;
     var ready = false;
     var settled = false;
+    var weatherTimer = 0;
 
     function setOn(i) {
       pinEls.forEach(function (el, n) { el.classList.toggle("is-on", n === i); });
@@ -665,9 +816,18 @@
       window.setTimeout(function () { wrap.classList.remove("is-pulse"); }, 440);
     }
 
-    function setRain(on) {
+    function setWeather(kind, immediate) {
       var wx = document.getElementById("hero-wx");
-      if (wx) wx.classList.toggle("is-rain", !reduced && !!on);
+      if (!wx) return;
+      if (weatherTimer) {
+        window.clearTimeout(weatherTimer);
+        weatherTimer = 0;
+      }
+      wx.classList.remove("is-rain", "is-mist");
+      if (reduced || !kind) return;
+      var show = function () { wx.classList.add("is-" + kind); };
+      if (immediate) show();
+      else weatherTimer = window.setTimeout(show, 180);
     }
 
     function flyTo(i, duration) {
@@ -675,7 +835,7 @@
       var prev = HERO_SPOTS[idx];
       idx = i;
       setOn(i);
-      setRain(spot.rain);
+      setWeather(spot.weather);
       pulse();
       map.flyTo({
         center: [spot.lon, spot.lat],
@@ -692,13 +852,15 @@
 
     function schedule() {
       stopTour();
-      if (!ready || !settled || reduced || !inView || document.hidden) return;
+      if (!heroLoaderDone || !ready || !settled || reduced || !inView || document.hidden) return;
       var next = (idx + 1) % HERO_SPOTS.length;
       var ms = hopMs(HERO_SPOTS[idx], HERO_SPOTS[next]);
+      // Re-arm on landing, not on landing plus a dwell, so HERO_DWELL_MS is the
+      // whole pause between hops rather than half of it.
       timer = window.setTimeout(function () {
         flyTo(next, ms);
-        timer = window.setTimeout(schedule, ms + 2400);
-      }, 2400);
+        timer = window.setTimeout(schedule, ms);
+      }, HERO_DWELL_MS);
     }
 
     map.once("style.load", function onStyle() {
@@ -706,11 +868,10 @@
       wrap.classList.add("is-live");
       ready = true;
       map.resize();
-      map.jumpTo({
-        center: [HERO_SPOTS[0].lon, HERO_SPOTS[0].lat],
-        zoom: 11.05,
-        padding: heroPad()
-      });
+      // fitBounds folds the padding into the camera it computes instead of
+      // setting it on the map, which is what keeps the region in the open space
+      // beside the headline rather than centred under it.
+      map.fitBounds(HERO_OVERVIEW, { padding: heroPad(), duration: 0 });
 
       HERO_SPOTS.forEach(function (spot, i) {
         var el = makeHeroPin(spot, i);
@@ -727,33 +888,49 @@
         .setLngLat([HERO_YOU.lon, HERO_YOU.lat])
         .addTo(map);
 
-      setRain(HERO_SPOTS[0].rain);
-      if (reduced) {
-        settled = true;
-        return;
+      function beginHeroTour() {
+        if (settled) return;
+        var origin = HERO_SPOTS[0];
+        setWeather(origin.weather, true);
+        if (reduced) {
+          map.jumpTo({
+            center: [origin.lon, origin.lat],
+            zoom: 11.05,
+            padding: heroPad()
+          });
+          settled = true;
+          return;
+        }
+
+        // A short beat on the region before the camera commits — without it the
+        // overview is gone before the scan-open has finished handing it over.
+        wrap.classList.add("is-farview");
+        window.setTimeout(function dive() {
+          wrap.style.setProperty("--hero-dive-ms", HERO_DIVE_MS + "ms");
+          wrap.classList.add("is-dive");
+          map.flyTo({
+            center: [origin.lon, origin.lat],
+            zoom: 11.05,
+            duration: HERO_DIVE_MS,
+            curve: 1.42,
+            padding: heroPad(),
+            essential: true
+          });
+          // Pins come back before the camera stops, so the place is already
+          // labelled as you arrive instead of popping in after the fact.
+          window.setTimeout(function () {
+            wrap.classList.remove("is-farview");
+          }, HERO_DIVE_MS - 620);
+          map.once("moveend", function () {
+            wrap.classList.remove("is-dive", "is-farview");
+            settled = true;
+            schedule();
+          });
+        }, 650);
       }
 
-      var origin = [HERO_SPOTS[0].lon, HERO_SPOTS[0].lat];
-      map.easeTo({
-        center: origin,
-        zoom: 11.55,
-        duration: 520,
-        padding: heroPad(),
-        essential: true
-      });
-      map.once("moveend", function () {
-        map.easeTo({
-          center: origin,
-          zoom: 11.05,
-          duration: 480,
-          padding: heroPad(),
-          essential: true
-        });
-        map.once("moveend", function () {
-          settled = true;
-          schedule();
-        });
-      });
+      if (heroLoaderDone) beginHeroTour();
+      else document.addEventListener(HERO_LOADER_DONE_EVENT, beginHeroTour, { once: true });
     });
 
     if ("IntersectionObserver" in window && hero) {
@@ -873,7 +1050,7 @@
       shareProgress.classList.toggle('is-complete', got >= goal);
     }
     if (shareWa) {
-      var msg = 'Found the thing for weekend plans — Bangalore getaways with drive '
+      var msg = 'The weekend is already on the map — Bangalore getaways with drive '
         + 'times and a group vote so nobody has to say "up to you". '
         + 'Joining the early list: ' + url;
       shareWa.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
@@ -1515,14 +1692,53 @@
 
   var peekEl = document.getElementById("lh-peek");
   if (peekEl) {
-    var startX = 0;
-    peekEl.addEventListener("pointerdown", function (e) { startX = e.clientX; });
-    peekEl.addEventListener("pointerup", function (e) {
-      var dx = e.clientX - startX;
-      if (Math.abs(dx) < 36) return;
-      setPeek(peekIdx + (dx < 0 ? 1 : -1), true);
+    var dragPointer = null;
+    var dragStartX = 0;
+    var dragStartY = 0;
+
+    function settlePeekDrag(e, cancelled) {
+      if (dragPointer === null || e.pointerId !== dragPointer) return;
+      var dx = e.clientX - dragStartX;
+      var dy = e.clientY - dragStartY;
+      var threshold = Math.min(48, Math.max(30, peekEl.clientWidth * 0.1));
+      dragPointer = null;
+      peekEl.classList.remove("is-dragging");
+      if (peekEl.hasPointerCapture && peekEl.hasPointerCapture(e.pointerId)) {
+        peekEl.releasePointerCapture(e.pointerId);
+      }
+
+      if (!cancelled && Math.abs(dx) >= threshold && Math.abs(dx) > Math.abs(dy) * 1.1) {
+        setPeek(peekIdx + (dx < 0 ? 1 : -1), true);
+        stopPeekLoop();
+        return;
+      }
+      setPeek(peekIdx);
+      if (!peekUser) startPeekLoop();
+    }
+
+    peekEl.addEventListener("dragstart", function (e) { e.preventDefault(); });
+    peekEl.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      dragPointer = e.pointerId;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      peekEl.classList.add("is-dragging");
       stopPeekLoop();
+      if (peekEl.setPointerCapture) peekEl.setPointerCapture(e.pointerId);
     });
+    peekEl.addEventListener("pointermove", function (e) {
+      if (dragPointer === null || e.pointerId !== dragPointer) return;
+      var dx = e.clientX - dragStartX;
+      var dy = e.clientY - dragStartY;
+      if (Math.abs(dx) <= Math.abs(dy) || Math.abs(dx) < 4) return;
+      e.preventDefault();
+      var resistance = Math.max(-peekEl.clientWidth * 0.42, Math.min(peekEl.clientWidth * 0.42, dx));
+      if (track) {
+        track.style.transform = "translateX(calc(" + (-peekIdx * CARD_W) + "% + " + resistance.toFixed(1) + "px))";
+      }
+    });
+    peekEl.addEventListener("pointerup", function (e) { settlePeekDrag(e, false); });
+    peekEl.addEventListener("pointercancel", function (e) { settlePeekDrag(e, true); });
   }
 
   var demo = document.getElementById("explore-demo");
