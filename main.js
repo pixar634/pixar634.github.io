@@ -855,14 +855,15 @@
     if (shareLede) {
       shareLede.innerHTML = data.returning
         ? "No need to sign up twice — we've got you. Here's your invite link, same as before."
-        : "Bangalore opens first, in batches. Bring the people you'd "
-          + "<em>actually</em> go with — three of them moves you into the first one.";
+        : "Bangalore opens in waves, not all at once. Invite 3 friends with "
+          + "your link and <em>you</em> skip straight to the first wave — "
+          + "they'll need their own 3 to do the same.";
     }
 
     if (shareLink) shareLink.textContent = url.replace(/^https:\/\//, '');
     if (shareCount) {
       shareCount.textContent = got >= goal
-        ? "YOU'RE IN THE FIRST BATCH"
+        ? "YOU SKIPPED THE LINE"
         : got + ' OF ' + goal + ' JOINED';
     }
     if (shareProgress) {
