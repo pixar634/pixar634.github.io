@@ -13,15 +13,44 @@
   var lastY = 0;
   var vel = 0;
   var typeBlur = 0;
+  var navHideTimer = 0;
+  var NAV_HIDE_AFTER_MS = 1400;
+
+  function navPinned() {
+    return scrollYNow <= 180;
+  }
+  function navBusy() {
+    return !!(nav && (nav.matches(':hover') || nav.contains(document.activeElement)));
+  }
+  function showNav() {
+    if (!nav) return;
+    nav.style.transform = 'translateY(0)';
+  }
+  function hideNav() {
+    if (!nav) return;
+    nav.style.transform = 'translateY(-140%)';
+  }
+  function scheduleNavHide() {
+    window.clearTimeout(navHideTimer);
+    navHideTimer = window.setTimeout(function () {
+      if (navPinned() || navBusy()) return;
+      hideNav();
+    }, NAV_HIDE_AFTER_MS);
+  }
 
   function onScroll(y, limit) {
     scrollYNow = y;
     if (nav) {
       nav.classList.toggle('nav--shrunk', y > 24);
-      if (y > 180) {
-        nav.style.transform = nav._dir === 1 ? 'translateY(-140%)' : 'translateY(0)';
+      if (navPinned()) {
+        window.clearTimeout(navHideTimer);
+        showNav();
+      } else if (nav._dir === 1) {
+        window.clearTimeout(navHideTimer);
+        hideNav();
       } else {
-        nav.style.transform = 'translateY(0)';
+        showNav();
+        scheduleNavHide();
       }
     }
     document.documentElement.style.setProperty('--beam-rot', (y * 0.045).toFixed(2) + 'deg');
@@ -561,17 +590,20 @@
   paintClockCounts(3, "instant");
   clockChips.forEach(function (chip, n) { chip.classList.toggle("is-on", n === 3); });
 
-  var clockDemo = document.getElementById("clock-demo");
+  /* Observe the section, not the phone replica: the Ultra peeks from the
+     section bottom (same placement as Moody) and is clipped, so #clock-demo
+     can miss the observer while the cycling type is on screen. */
+  var clockSection = document.getElementById("clock");
   if (reduced) {
     paintClockFrame(CLOCK_MARK.countIn + 4);
-  } else if (clockDemo && "IntersectionObserver" in window) {
+  } else if (clockSection && "IntersectionObserver" in window) {
     var clockIo = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (e.isIntersecting) startClockLoop();
         else stopClockLoop();
       });
-    }, { threshold: 0.28 });
-    clockIo.observe(clockDemo);
+    }, { threshold: 0.12 });
+    clockIo.observe(clockSection);
   } else if (clockItems.length) {
     startClockLoop();
   }
@@ -1133,7 +1165,7 @@
     var wrap = document.getElementById("filters-map");
     var gl = document.getElementById("filters-gl");
     var list = document.getElementById("filters-list");
-    if (!wrap || !gl || !list || !window.maplibregl) return;
+    if (!list) return;
 
     var chips = Array.prototype.filter.call(list.querySelectorAll(".filters__chip"), function (c) {
       return c.dataset.cat;
@@ -1155,23 +1187,30 @@
       return c.dataset.cat;
     });
 
-    var map = new window.maplibregl.Map({
-      container: gl,
-      style: HERO_STYLE,
-      center: [77.5946, 12.9716],
-      zoom: 6.6,
-      interactive: false,
-      attributionControl: false,
-      fadeDuration: 0,
-      failIfMajorPerformanceCaveat: false
-    });
-    requestAnimationFrame(function () { map.resize(); });
-    var ready = false;
-    window.setTimeout(function () {
-      if (ready) return;
-      wrap.classList.add("is-raster");
-      try { map.setStyle(HERO_RASTER); } catch (err) { /* keep waiting */ }
-    }, 4000);
+    var hasMap = !!(wrap && gl && window.maplibregl);
+    var map = null;
+    if (hasMap) {
+      map = new window.maplibregl.Map({
+        container: gl,
+        style: HERO_STYLE,
+        center: [77.5946, 12.9716],
+        zoom: 6.6,
+        interactive: false,
+        attributionControl: false,
+        fadeDuration: 0,
+        failIfMajorPerformanceCaveat: false
+      });
+      requestAnimationFrame(function () { map.resize(); });
+    }
+
+    var ready = !hasMap;
+    if (hasMap) {
+      window.setTimeout(function () {
+        if (ready) return;
+        wrap.classList.add("is-raster");
+        try { map.setStyle(HERO_RASTER); } catch (err) { /* keep waiting */ }
+      }, 4000);
+    }
 
     var pinsByCat = {};
     var idx = -1;
@@ -1181,19 +1220,17 @@
     var RAIL_MS = 960;
 
     function filtersPad() {
-      // On a phone the copy + chip rail occupy the top of the section. Padding
-      // the camera by that measured height keeps the labelled pin in the open
-      // map well instead of sliding under the chips. Cap it so a tall overlay
-      // can never eat the whole map — that's how spread categories (Coffee
-      // Country, coastal) were flying their pin off-screen.
-      var h = wrap.clientHeight || innerHeight;
-      if (innerWidth < 720) {
-        var content = document.querySelector(".filters__content");
-        var top = content ? Math.round(content.getBoundingClientRect().height + 16) : 280;
-        top = Math.min(top, Math.round(h * 0.44));
-        return { top: top, bottom: Math.max(64, Math.round(h * 0.1)), left: 28, right: 28 };
-      }
-      return { top: 60, bottom: 150, left: 40, right: 40 };
+      /* Phone is half-clipped at the bottom, so the labelled pin has to
+         sit in the top half of the Ultra — the part that's actually on
+         screen. */
+      var h = wrap.clientHeight || 400;
+      var w = wrap.clientWidth || 280;
+      return {
+        top: Math.max(56, Math.round(h * 0.1)),
+        bottom: Math.max(90, Math.round(h * 0.52)),
+        left: Math.max(18, Math.round(w * 0.08)),
+        right: Math.max(18, Math.round(w * 0.08))
+      };
     }
 
     function railLeft(el) {
@@ -1273,6 +1310,7 @@
       cats.forEach(function (c) {
         (pinsByCat[c] || []).forEach(function (el) { el.classList.toggle("is-cat-on", c === cat); });
       });
+      if (!map) return;
       var spots = CATEGORY_SPOTS[cat] || [];
       if (!spots.length) return;
       // Always park the labelled pin (spots[0]) in the open well. fitBounds on
@@ -1296,53 +1334,129 @@
       }, 4200);
     }
 
-    map.once("style.load", function () {
-      try { map.setPaintProperty("background", "background-color", "#0F0F12"); } catch (e) { /* style id drift */ }
-      try { map.setPaintProperty("water", "fill-color", "#15151a"); } catch (e) { /* style id drift */ }
-      var layers = (map.getStyle() && map.getStyle().layers) || [];
-      layers.forEach(function (layer) {
-        if (layer.type === "symbol") {
-          try { map.setLayoutProperty(layer.id, "visibility", "none"); } catch (e) { /* ok */ }
-        }
-      });
-      ready = true;
-      wrap.classList.add("is-live");
-      map.resize();
-
-      cats.forEach(function (cat) {
-        var spots = CATEGORY_SPOTS[cat] || [];
-        pinsByCat[cat] = spots.map(function (spot, i) {
-          var el = document.createElement("div");
-          el.className = "filters-pin" + (i === 0 ? " is-on" : "");
-          el.innerHTML =
-            '<div class="filters-pin__dot"></div>' +
-            '<div class="filters-pin__bubble"><b>' + spot.name + '</b><small>' + spot.meta + '</small></div>';
-          new window.maplibregl.Marker({ element: el, anchor: "bottom" })
-            .setLngLat([spot.lon, spot.lat])
-            .addTo(map);
-          return el;
-        });
-      });
-
+    function bootChips() {
       showCategory(0, { snap: true });
       schedule();
-    });
+    }
 
-    if ("IntersectionObserver" in window) {
+    if (map) {
+      map.once("style.load", function () {
+        try { map.setPaintProperty("background", "background-color", "#0F0F12"); } catch (e) { /* style id drift */ }
+        try { map.setPaintProperty("water", "fill-color", "#15151a"); } catch (e) { /* style id drift */ }
+        var layers = (map.getStyle() && map.getStyle().layers) || [];
+        layers.forEach(function (layer) {
+          if (layer.type === "symbol") {
+            try { map.setLayoutProperty(layer.id, "visibility", "none"); } catch (e) { /* ok */ }
+          }
+        });
+        ready = true;
+        wrap.classList.add("is-live");
+        function sizeMap() {
+          map.resize();
+          if (idx >= 0) showCategory(idx, { snap: true });
+        }
+        cats.forEach(function (cat) {
+          var spots = CATEGORY_SPOTS[cat] || [];
+          pinsByCat[cat] = spots.map(function (spot, i) {
+            var el = document.createElement("div");
+            el.className = "filters-pin" + (i === 0 ? " is-on" : "");
+            el.innerHTML =
+              '<div class="filters-pin__dot"></div>' +
+              '<div class="filters-pin__bubble"><b>' + spot.name + '</b><small>' + spot.meta + '</small></div>';
+            new window.maplibregl.Marker({ element: el, anchor: "bottom" })
+              .setLngLat([spot.lon, spot.lat])
+              .addTo(map);
+            return el;
+          });
+        });
+
+        bootChips();
+        sizeMap();
+        requestAnimationFrame(sizeMap);
+        window.setTimeout(sizeMap, 280);
+      });
+    } else {
+      bootChips();
+    }
+
+    var moodSection = document.getElementById("mood");
+    var observeEl = moodSection || wrap || list;
+    if ("IntersectionObserver" in window && observeEl) {
       var io = new IntersectionObserver(function (entries) {
         inView = entries.some(function (e) { return e.isIntersecting; });
-        if (inView) schedule(); else window.clearTimeout(timer);
-      }, { threshold: 0.2 });
-      io.observe(wrap);
+        if (inView) {
+          if (map) map.resize();
+          schedule();
+        } else {
+          window.clearTimeout(timer);
+        }
+      }, { threshold: 0.08 });
+      io.observe(observeEl);
     }
 
     window.addEventListener("resize", function () {
-      map.resize();
+      if (map) map.resize();
       if (idx >= 0) showCategory(idx, { snap: true });
     });
+    if (map && typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(function () { map.resize(); }).observe(wrap);
+    }
   }
 
-  if (document.getElementById("filters-gl")) initFiltersMap();
+  if (document.getElementById("filters-list")) initFiltersMap();
+
+  (function loopSectionFilms() {
+    var saveData = !!(navigator.connection && navigator.connection.saveData);
+    if (reduced || saveData) return;
+    var films = [
+      { id: "mood", sel: ".filters__bg-vid" },
+      { id: "clock", sel: ".pitch__bg-vid" }
+    ];
+    films.forEach(function (film) {
+      var section = document.getElementById(film.id);
+      if (!section) return;
+      var vid = section.querySelector(film.sel);
+      if (!vid) return;
+      var src = vid.getAttribute("data-src");
+      var armed = false;
+      var inView = false;
+      vid.muted = true;
+      vid.defaultMuted = true;
+      vid.playsInline = true;
+      vid.loop = true;
+      vid.preload = "none";
+      vid.setAttribute("fetchpriority", "low");
+      function arm() {
+        if (armed || !src) return;
+        armed = true;
+        vid.src = src;
+      }
+      function play() {
+        if (!inView) return;
+        arm();
+        var p = vid.play();
+        if (p && p.catch) p.catch(function () { /* autoplay blocked */ });
+      }
+      function stop() {
+        inView = false;
+        vid.pause();
+      }
+      if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries) {
+          if (entries.some(function (e) { return e.isIntersecting; })) {
+            inView = true;
+            play();
+          } else {
+            stop();
+          }
+        }, { rootMargin: "320px 0px", threshold: 0.01 });
+        io.observe(section);
+      } else {
+        inView = true;
+        play();
+      }
+    });
+  })();
 
   /* ---------- Click sonar ---------- */
   if (!reduced) {
@@ -1964,8 +2078,8 @@
       setTimeout(function () { mapEl.classList.remove("is-pulse"); }, 440);
     }
     if (wxEl) wxEl.classList.toggle("is-rain", !reduced && !!p.rain);
-    startGtk(p.notes);
-    loadWeather(p);
+    if (document.getElementById("gtk-list")) startGtk(p.notes);
+    if (document.getElementById("wx")) loadWeather(p);
   }
 
   function initExploreMap() {

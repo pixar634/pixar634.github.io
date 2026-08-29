@@ -79,7 +79,7 @@
          order — so Lenis is still defined before main.js reads it, minus a
          render-blocking round trip to a third-party CDN on first paint. -->
     <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js" defer></script>
-    <link rel="stylesheet" href="/styles.css?v=hero-sequence-30" />
+    <link rel="stylesheet" href="/styles.css?v=hero-sequence-51" />
     <link rel="stylesheet" href="/vendor/maplibre-gl/maplibre-gl.css" />
 
     <!-- Structured data. One @graph so Organization can be referenced rather than
@@ -308,8 +308,8 @@
       </section>
 
       <section class="filters" id="mood">
-        <div class="filters__map" id="filters-map" aria-hidden="true">
-          <div class="filters__gl" id="filters-gl"></div>
+        <div class="filters__bg" aria-hidden="true">
+          <video class="filters__bg-vid" poster="/assets/video/mood-bg.jpg" muted loop playsinline preload="none" data-src="/assets/video/mood-bg.mp4"></video>
         </div>
         <div class="filters__content">
         <p class="utility filters__kicker">IN CASE YOU GET MOODY</p>
@@ -335,6 +335,22 @@
           <li class="filters__chip" tabindex="0" data-cat="Hidden Forest Camps" aria-label="Hidden Forest Camps, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Hidden Forest Camps</span><span class="filters__chip-count">5 places</span></span></li>
           <li class="filters__chip filters__chip--more" tabindex="0"><span class="filters__chip-inner"><span class="filters__chip-name">Many more</span></span></li>
         </ul>
+        </div>
+        <div class="filters__device" aria-hidden="true">
+          <div class="iphone">
+            <div class="iphone__glass">
+              <div class="iphone__screen">
+                <div class="filters__map" id="filters-map">
+                  <div class="filters__gl" id="filters-gl"></div>
+                </div>
+                <div class="iphone-chrome">
+                  <div class="iphone-status"><span>9:41</span><span class="iphone-status__end"></span></div>
+                  <div class="iphone-home"></div>
+                </div>
+              </div>
+            </div>
+            <img class="iphone__skin" src="/assets/device/galaxy-s-ultra.png?v=1" alt="" />
+          </div>
         </div>
       </section>
 
@@ -430,13 +446,12 @@
                 </div>
                 <div class="iphone-chrome" aria-hidden="true">
                   <div class="iphone-status"><span>9:41</span><span class="iphone-status__end"></span></div>
-                  <div class="iphone-island"><i></i><i></i></div>
                   <div class="iphone-home"></div>
                 </div>
               </div>
             </div>
             </div>
-            <img class="iphone__skin" src="/assets/device/iphone-17-pro-max.png?v=3" alt="" />
+            <img class="iphone__skin" src="/assets/device/galaxy-s-ultra.png?v=1" alt="" />
           </div>
           <p class="stage__hint utility">SWIPE THE CARD ABOVE · CHOOSE YOUR GETAWAY · LET’S GO.</p>
           <div class="stage__nav">
@@ -447,6 +462,11 @@
       </section>
       -->
 
+      <!-- Never-go-uninformed (live Open-Meteo chart + Good to know). Parked —
+           the waitlist page is a signup, not a weather demo. Attribution for
+           Open-Meteo / OSM / Wikidata / Commons lives on /terms.html. Restore
+           when the landing can carry a second product story again. -->
+      <!--
       <section class="brief" id="informed">
         <p class="utility brief__kicker">BEFORE YOU GO</p>
         <h2 class="brief__title">Never go<br /><em>uninformed.</em></h2>
@@ -470,6 +490,7 @@
           </div>
         </div>
       </section>
+      -->
 
       <section class="river" aria-label="Places and collections in Lighthouse">
         <div class="river__viewport">
@@ -493,24 +514,32 @@
       </section>
 
       <section class="pitch pitch--clock" id="clock">
-        <div class="pitch__copy">
-          <p class="utility pitch__kicker">THE RETURN CLOCK</p>
-          <h2 class="pitch__title">
-            <span class="pitch__line"><span>You name</span></span>
-            <span class="pitch__line pitch__line--mint"><span>the return.</span></span>
-          </h2>
-          <p class="pitch__lede">
-            Every pin is filtered by when you need to be home. Same-day, midnight, overnight,
-            or the whole weekend. Drive time is computed — never guessed, never written by a model.
-          </p>
-          <ul class="clocklist" aria-label="Return Clock options">
-            <li class="is-on">Back by dark</li>
-            <li>Back by midnight</li>
-            <li>Overnight</li>
-            <li>Whole weekend</li>
-          </ul>
+        <div class="pitch__bg" aria-hidden="true">
+          <video class="pitch__bg-vid" poster="/assets/video/clock-bg.jpg" muted loop playsinline webkit-playsinline preload="none" data-src="/assets/video/clock-bg.mp4"></video>
         </div>
-        <div class="stage__device">
+        <div class="pitch__copy">
+          <h2 class="pitch__title pitch__title--babe">
+            <span class="pitch__line"><span>Last minute 5am plans?</span></span>
+            <span class="pitch__line pitch__line--mint"><span>Now <em>stress free.</em></span></span>
+          </h2>
+          <ul class="clocklist" aria-label="When you want to be back">
+            <li class="is-on">dark</li>
+            <li>midnight</li>
+            <li>overnight</li>
+            <li>the weekend</li>
+          </ul>
+          <p class="pitch__feature">
+            <span class="utility">THE RETURN CLOCK</span>
+            Make those memories. Clock out when you
+            need to be home. More than 20+ curated collections and 400+ locations
+            to choose from —
+            and each one only shows what still fits your time, with a calculated
+            route, estimated round-trip time, weather, and more. Or drop the
+            filters, set the clock, and explore everything that still gets you
+            back. Same-day sunset to the whole weekend.
+          </p>
+        </div>
+        <div class="clock__device" aria-hidden="true">
           <div class="iphone">
             <div class="iphone__glass">
             <div class="iphone__screen">
@@ -544,13 +573,12 @@
             </div>
                 <div class="iphone-chrome" aria-hidden="true">
                   <div class="iphone-status"><span>9:41</span><span class="iphone-status__end"></span></div>
-                  <div class="iphone-island"><i></i><i></i></div>
                   <div class="iphone-home"></div>
                 </div>
               </div>
             </div>
             </div>
-            <img class="iphone__skin" src="/assets/device/iphone-17-pro-max.png?v=3" alt="" />
+            <img class="iphone__skin" src="/assets/device/galaxy-s-ultra.png?v=1" alt="" />
           </div>
         </div>
       </section>
@@ -656,13 +684,12 @@
             </div>
                 <div class="iphone-chrome" aria-hidden="true">
                   <div class="iphone-status"><span>9:41</span><span class="iphone-status__end"></span></div>
-                  <div class="iphone-island"><i></i><i></i></div>
                   <div class="iphone-home"></div>
                 </div>
               </div>
             </div>
             </div>
-            <img class="iphone__skin" src="/assets/device/iphone-17-pro-max.png?v=3" alt="" />
+            <img class="iphone__skin" src="/assets/device/galaxy-s-ultra.png?v=1" alt="" />
           </div>
           <p class="stage__hint utility">ONE LINK · THEY VOTE · THAT'S THE PLAN</p>
         </div>
@@ -829,7 +856,6 @@
             <a class="footer__link" href="#mood" data-scrollto>Explore the map</a>
             <a class="footer__link" href="#clock" data-scrollto>The Return Clock</a>
             <a class="footer__link" href="#vote" data-scrollto>Trip plans &amp; voting</a>
-            <a class="footer__link" href="#informed" data-scrollto>Weather &amp; good to know</a>
           </nav>
 
           <nav class="footer__col" aria-labelledby="fcol-company">
@@ -848,15 +874,6 @@
           </nav>
         </div>
 
-        <!-- Attribution is a licensing obligation (ODbL / CC0), and it is also the
-             clearest statement of the thing that separates this catalog from a
-             scraped one. It belongs in the footer of every page, not a sub-page. -->
-        <p class="footer__attrib">
-          Place data from <strong>OpenStreetMap</strong>, <strong>Wikidata</strong> and
-          <strong>Wikimedia Commons</strong>. Weather from <strong>Open-Meteo</strong>.
-          Every photograph is licensed and credited to its author — nothing here is scraped.
-        </p>
-
         <div class="footer__meta">
           <span class="utility">© 2026 TELLTALE SOFTWARES PVT LTD</span>
           <span class="footer__sep" aria-hidden="true">·</span>
@@ -867,6 +884,6 @@
     </main>
 
     <script src="/vendor/maplibre-gl/maplibre-gl.js" defer></script>
-    <script src="/main.js?v=hero-sequence-23" defer></script>
+    <script src="/main.js?v=hero-sequence-32" defer></script>
   </body>
 </html>

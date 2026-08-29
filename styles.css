@@ -1408,16 +1408,16 @@ body.has-custom-cursor .btn { cursor: none; }
 .stage__arrow:hover { border-color: var(--mint); color: var(--mint); }
 .stage__arrow:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
 
-/* iPhone 17 Pro Max — Cosmic Orange aluminum, 6.9" 2868×1320 (CSS 440×956).
-   Skin: generated front photo with a transparent screen hole.
-   Glass mask = the hole, so the screen fill is one pitch black and follows the bezel. */
+/* Galaxy S Ultra — Phantom Black, generated front photo with a punched
+   transparent screen. No iPhone squircle mask: the screen is a hard rect
+   so the replica / video fills the flatter Ultra display. */
 .iphone {
   position: relative;
   width: 100%;
-  aspect-ratio: 707 / 1365;
-  overflow: hidden;
-  border-radius: 13% / 6.7%;
-  background: #0F0F12;
+  aspect-ratio: 686 / 1466;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
   filter: drop-shadow(0 36px 70px rgba(0, 0, 0, 0.62));
 }
 .iphone__skin {
@@ -1434,22 +1434,15 @@ body.has-custom-cursor .btn { cursor: none; }
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: #0F0F12;
-  -webkit-mask-image: url("/assets/device/iphone-screen-mask.png?v=3");
-  mask-image: url("/assets/device/iphone-screen-mask.png?v=3");
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+  background: transparent;
 }
 .iphone__screen {
   position: absolute;
-  left: 6.08%;
-  top: 1.83%;
-  width: 88.12%;
-  height: 95.16%;
-  /* Top only — bottom already follows the photo. Hard rects leak at the island. */
-  border-radius: 24% 24% 0 0 / 11% 11% 0 0;
+  left: 5.1%;
+  top: 2.25%;
+  width: 89.07%;
+  height: 94.61%;
+  border-radius: 0;
   overflow: hidden;
   background: #0F0F12;
   z-index: 1;
@@ -1502,38 +1495,6 @@ body.has-custom-cursor .btn { cursor: none; }
   box-shadow: inset 15px 0 0 #fff;
   position: relative;
 }
-.iphone-island {
-  position: absolute;
-  top: 11px;
-  left: 50%;
-  width: 28.6%;
-  height: 37px;
-  transform: translateX(-50%);
-  background: #0a0a0c;
-  border-radius: 19px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 0 10px 0 0;
-  box-sizing: border-box;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-.iphone-island i:first-child {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #1a2230;
-  box-shadow: inset 0 0 0 1.5px #0d121c;
-  margin-right: auto;
-  margin-left: 12px;
-}
-.iphone-island i:last-child {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, #3a5a8a, #0b1020 70%);
-}
 .iphone-home {
   position: absolute;
   left: 50%;
@@ -1550,12 +1511,12 @@ body.has-custom-cursor .btn { cursor: none; }
   width: 100%;
   height: 100%;
   min-height: 0;
-  border-radius: inherit;
+  border-radius: 0;
   background: #0F0F12;
   overflow: hidden;
 }
 .lh__hud {
-  position: absolute; top: 62px; left: 16px; right: 16px; z-index: 4;
+  position: absolute; top: 48px; left: 16px; right: 16px; z-index: 4;
   display: flex; justify-content: space-between; align-items: center;
   gap: 8px;
   pointer-events: none;
@@ -2325,17 +2286,135 @@ body.has-custom-cursor .btn { cursor: none; }
   to { transform: translate3d(0, 0, 0); }
 }
 
-/* ---------- Live filters ---------- */
-.filters__map {
-  /* .filters has no auto margins — its own left edge already sits at the
-     true viewport edge, so this reaches full width without the usual
-     left:50%/translateX(-50%) centering trick (which assumes a centered
-     parent and, here, was skewing the map left by the parent's own inset). */
+/* ---------- Live filters ----------
+   Map is no longer the section background. Copy + chips sit in the page
+   flow; the map and pin jumps live only on the laptop screen. */
+.filters {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: clamp(64px, 10vh, 120px) var(--pad) var(--section-pad);
+  border-top: 1px solid var(--hairline);
+}
+.filters__bg {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.filters__bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* One light wash — stacked gradients were compounding to ~90% black. */
+  background:
+    linear-gradient(105deg, rgba(15, 15, 18, 0.38) 0%, rgba(15, 15, 18, 0.1) 36%, rgba(15, 15, 18, 0.04) 100%);
+}
+.filters__bg-vid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(1.22) contrast(1.06) saturate(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .filters__bg-vid { display: none; }
+  .filters__bg {
+    background: #0F0F12 url("/assets/video/mood-bg.jpg") center / cover no-repeat;
+  }
+}
+.filters__content {
+  position: relative;
+  z-index: 2;
+}
+.filters__device {
+  position: absolute;
+  z-index: 1;
   left: 0;
-  width: 100vw;
+  right: 0;
+  /* 55% of the Ultra's own height hangs off — section % was sending
+     it off-screen. About 45% of the phone stays visible. */
+  bottom: calc(min(300px, 62vw) * 1466 / 686 * -0.55);
+  width: min(300px, 62vw);
+  margin-inline: auto;
+  transform: none;
+  pointer-events: none;
+}
+.filters__device .iphone {
+  width: 100%;
+  filter: none;
+}
+.filters__device .iphone__skin {
+  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.62));
+}
+.filters__device .filters__map,
+.filters__device .filters__gl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.filters__device .maplibregl-map,
+.filters__device .maplibregl-canvas-container,
+.filters__device .maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+@media (min-width: 721px) {
+  .filters__device {
+    left: auto;
+    right: clamp(32px, 5vw, 88px);
+    bottom: 0;
+    margin-inline: 0;
+    transform: translateY(48%);
+    width: min(340px, 30vw);
+  }
+}
+.laptop {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 960px);
+  aspect-ratio: 1417 / 909;
+  margin: 40px auto 0;
+  overflow: visible;
+  background: transparent;
+  filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.55));
+}
+.laptop__skin {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 8;
+}
+.laptop__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+}
+.laptop__screen {
+  position: absolute;
+  left: 9.24%;
+  top: 4.51%;
+  width: 81.44%;
+  height: 83.83%;
+  overflow: hidden;
+  border-radius: 0;
+  background: #0F0F12;
+  z-index: 1;
+}
+.filters__map {
+  position: absolute;
+  inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
@@ -2353,7 +2432,7 @@ body.has-custom-cursor .btn { cursor: none; }
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(15, 15, 18, 0.5) 0%, rgba(15, 15, 18, 0.68) 45%, rgba(15, 15, 18, 0.93) 100%);
+  background: linear-gradient(180deg, rgba(15, 15, 18, 0.12) 0%, transparent 28%, rgba(15, 15, 18, 0.22) 100%);
 }
 .filters__map .maplibregl-map,
 .filters__map .maplibregl-canvas-container {
@@ -2373,17 +2452,6 @@ body.has-custom-cursor .btn { cursor: none; }
 .filters__map .maplibregl-ctrl-bottom-right,
 .filters__map .maplibregl-ctrl-bottom-left {
   display: none !important;
-}
-.filters__content {
-  position: relative;
-  z-index: 1;
-}
-.filters {
-  position: relative;
-  z-index: 1;
-  padding: clamp(64px, 10vh, 120px) var(--pad) var(--section-pad);
-  border-top: 1px solid var(--hairline);
-  max-width: 1100px;
 }
 .filters__kicker { color: var(--amber); margin-bottom: 22px; }
 .filters__title {
@@ -2500,14 +2568,26 @@ body.has-custom-cursor .btn { cursor: none; }
   to { transform: rotate(360deg); }
 }
 
-/* Mobile: chips wrap into a tall left stack that sits on the highlighted
-   place bubble. Collapse them to one horizontal rail under the copy so the
-   map well below is free for the label. Camera padding in main.js is measured
-   off `.filters__content`, so this height is the clearance the pin lives in. */
+/* Desktop: copy + chips over the film. Compact the chips a little so
+   they don't eat the whole frame. */
+@media (min-width: 960px) {
+  .filters__lede { margin-bottom: 22px; }
+  .filters__list { gap: 8px; max-width: 42rem; }
+  .filters__chip {
+    padding: 7px 12px;
+    font-size: 14px;
+  }
+  .filters__chip-inner { gap: 7px; }
+  .filters__chip-count {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+}
+
+/* Mobile: chips stay a horizontal rail over the film. */
 @media (max-width: 720px) {
   .filters {
-    min-height: 100svh;
-    padding-bottom: 0;
+    padding-bottom: var(--section-pad);
   }
   .filters__lede { margin-bottom: 16px; }
   .filters__list {
@@ -2538,15 +2618,6 @@ body.has-custom-cursor .btn { cursor: none; }
   }
   .filters__chip--clone { display: block; }
   .filters__chip-count { font-size: 9px; }
-  .filters__map::after {
-    background: linear-gradient(
-      180deg,
-      rgba(15, 15, 18, 0.78) 0%,
-      rgba(15, 15, 18, 0.42) 38%,
-      rgba(15, 15, 18, 0.16) 62%,
-      rgba(15, 15, 18, 0.55) 100%
-    );
-  }
 }
 
 /* Real places, cycled with the chips — one per category gets the full
@@ -2678,22 +2749,158 @@ body.has-custom-cursor .btn { cursor: none; }
 }
 
 .pitch--clock {
-  display: grid;
-  gap: 48px;
-  align-items: stretch;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100svh;
+  padding: 88px var(--pad) 36px;
+}
+.pitch--clock .pitch__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.pitch--clock .pitch__bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(105deg, rgba(15, 15, 18, 0.42) 0%, rgba(15, 15, 18, 0.12) 40%, rgba(15, 15, 18, 0.08) 100%);
+}
+.pitch--clock .pitch__bg-vid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(1.18) contrast(1.05) saturate(1.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pitch--clock .pitch__bg-vid { display: none; }
+  .pitch--clock .pitch__bg {
+    background: #0F0F12 url("/assets/video/clock-bg.jpg") center / cover no-repeat;
+  }
+}
+.pitch--clock .pitch__copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 88px);
+  padding-top: 8px;
+  /* Same peek as Moody: keep the note above the visible ~45% of the Ultra. */
+  padding-bottom: calc(min(300px, 62vw) * 1466 / 686 * 0.45 + 12px);
+}
+.pitch--clock .pitch__title--babe {
+  font-size: clamp(42px, 13vw, 96px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  margin-bottom: 10px;
+}
+.pitch--clock .pitch__title--babe .pitch__line:first-child {
+  font-weight: 600;
+  font-size: 0.58em;
+  letter-spacing: -0.04em;
+  line-height: 1.06;
+}
+.pitch--clock .pitch__title--babe .pitch__line--mint {
+  font-size: clamp(28px, 9.2vw, 88px);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.88;
+  margin-top: 0.08em;
+}
+.pitch--clock .pitch__title--babe .pitch__line--mint span {
+  white-space: nowrap;
+}
+.pitch--clock .pitch__title--babe .pitch__line--mint em {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 800;
+  font-synthesis: none;
+}
+.pitch--clock .clocklist {
+  flex: 1 1 auto;
+  justify-content: space-evenly;
+  gap: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 0 12px;
+}
+.pitch--clock .clocklist li {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 800;
+  font-size: clamp(40px, 12.5vw, 92px);
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  text-shadow: none;
+  filter: none;
+}
+.pitch--clock .pitch__feature {
+  flex: none;
+  max-width: 44ch;
+  margin: 8px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  font-size: clamp(15px, 1.65vw, 18px);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.pitch--clock .pitch__feature .utility {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--amber);
+}
+.clock__device {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  /* Match Moody: 55% of the Ultra hangs off, ~45% stays in the section. */
+  bottom: calc(min(300px, 62vw) * 1466 / 686 * -0.55);
+  width: min(300px, 62vw);
+  margin-inline: auto;
+  transform: none;
+  pointer-events: none;
+}
+.clock__device .iphone {
+  width: 100%;
+  filter: none;
+}
+.clock__device .iphone__skin {
+  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.62));
+}
+@media (min-width: 721px) {
+  .clock__device {
+    left: auto;
+    right: clamp(32px, 5vw, 88px);
+    bottom: 0;
+    margin-inline: 0;
+    transform: translateY(48%);
+    width: min(340px, 30vw);
+  }
+  .pitch--clock .pitch__copy {
+    justify-content: center;
+    padding-bottom: 0;
+    max-width: min(52rem, calc(100% - min(340px, 30vw) - clamp(32px, 5vw, 88px) - 40px));
+  }
 }
 @media (min-width: 960px) {
   .pitch--clock {
-    grid-template-columns: 1fr minmax(280px, var(--iphone-w));
-    gap: 56px;
+    padding: clamp(72px, 10vh, 120px) var(--pad);
   }
-}
-.pitch--clock .stage__device {
-  width: min(100%, var(--iphone-w));
-  justify-self: center;
-  align-self: center;
-  display: block;
-  height: auto;
+  .pitch--clock .pitch__title--babe {
+    font-size: clamp(48px, 5.4vw, 84px);
+    max-width: none;
+  }
+  .pitch--clock .pitch__title--babe .pitch__line--mint {
+    font-size: clamp(52px, 5.8vw, 92px);
+  }
+  .pitch--clock .clocklist li {
+    font-size: clamp(40px, 4.6vw, 72px);
+  }
 }
 .pitch--clock .lh {
   width: 100%;
@@ -3594,7 +3801,7 @@ body.has-custom-cursor .wshare__copy { cursor: none; }
 .viz {
   position: absolute;
   display: block;
-  border-radius: 18px;
+  border-radius: 0;
   border: 1px solid var(--hairline-strong);
   /* Layered, diffuse depth — never a flat 0 4px 6px box-shadow. */
   box-shadow:
