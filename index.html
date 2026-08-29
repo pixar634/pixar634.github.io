@@ -247,6 +247,7 @@
              at a display:none form is a CTA that silently does nothing. -->
         <div class="joinblock" id="join">
         <p class="utility waitlist__refnote" id="refnote" hidden>YOU GOT PERSONALLY INVITED. DON’T GHOST.</p>
+        <p class="utility waitlist__bouncenote" id="bouncenote" hidden>THAT EMAIL BOUNCED — IT NEVER REACHED YOUR INBOX. TRY A DIFFERENT ONE.</p>
         <form class="waitlist reveal" novalidate>
           <label class="sr-only" for="email">Email</label>
           <div class="waitlist__field">
@@ -699,12 +700,13 @@
         </div>
       </section>
 
-      <!-- Pricing. Tiers and the hidden ₹149 come from lighthouse-backend/config/
-           features.yaml (`pro.price_inr_monthly`). The figure is in the DOM as
-           data-price-inr so we can surface it later without guessing — it is not
-           shown. `realtime_booking` is still not listed: paywalled in that file,
-           no implementation, and selling in-app checkout we haven't built would
-           be both a lie and a change of legal posture. -->
+      <!-- Pricing. Parked — not showing pricing right now. Tiers and the hidden
+           ₹149 come from lighthouse-backend/config/features.yaml
+           (`pro.price_inr_monthly`). Restore when ready to show numbers again;
+           `realtime_booking` is still not listed even then: paywalled in that
+           file, no implementation, and selling in-app checkout we haven't built
+           would be both a lie and a change of legal posture. -->
+      <!--
       <section class="pricing" id="pricing">
         <div class="pricing__head">
           <p class="utility pricing__kicker">FIRST 500</p>
@@ -762,6 +764,7 @@
           </article>
         </div>
       </section>
+      -->
 
       <section class="close">
         <p class="utility close__kicker">ANDROID · OR THE BROWSER</p>
@@ -889,5 +892,6 @@
 
     <script src="/vendor/maplibre-gl/maplibre-gl.js" defer></script>
     <script src="/main.js?v=hero-sequence-32" defer></script>
+    <script src="/analytics.js" defer></script>
   </body>
 </html>

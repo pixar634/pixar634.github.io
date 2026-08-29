@@ -1581,6 +1581,20 @@
     shareEl.hidden = false;
   };
 
+  var bouncenote = document.getElementById('bouncenote');
+
+  // A bounce is never knowable at signup — Resend only confirms it handed the
+  // email off, not that the mailbox exists; the real answer lands async, via
+  // resend-webhook, sometime after this visitor has already left. So this is
+  // the moment that finds out: whatever the form remembered gets clean-slated
+  // and the visitor is put back in front of the join form with a reason why.
+  var handleBounce = function () {
+    try { localStorage.removeItem(ME_KEY); } catch (err) { /* private mode */ }
+    if (shareEl) shareEl.hidden = true;
+    document.querySelectorAll('.waitlist').forEach(function (f) { f.hidden = false; });
+    if (bouncenote) bouncenote.hidden = false;
+  };
+
   // Someone who already joined shouldn't be asked to join again — show them their
   // link and their current count straight away.
   var mine = readStore(ME_KEY);
@@ -1590,6 +1604,37 @@
       if (saved && saved.code) {
         renderShare(saved);
         document.querySelectorAll('.waitlist').forEach(function (f) { f.hidden = true; });
+
+        // Refresh against the server once the cached render is already on
+        // screen — this is a background correction, not something the visit
+        // waits on. If it fails (offline, RLS hiccup) the cached view just
+        // stays as-is, which is the same experience as before this existed.
+        fetch(
+          'https://axsgjzhdlhlkpkydqxbp.supabase.co/rest/v1/rpc/check_waitlist_status',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              // Same publishable key main.js already ships lower down for
+              // join_waitlist — duplicated rather than shared, since WAITLIST
+              // isn't declared until further down this same script and this
+              // runs before that assignment executes.
+              apikey: 'sb_publishable_h2budOgii7_5LbHnFQhOmQ_E42LaD2G',
+              Authorization: 'Bearer sb_publishable_h2budOgii7_5LbHnFQhOmQ_E42LaD2G'
+            },
+            body: JSON.stringify({ p_code: saved.code })
+          }
+        ).then(function (res) { return res.json(); }).then(function (status) {
+          if (!status || status.ok === false) return;
+          if (status.bounced) {
+            handleBounce();
+            return;
+          }
+          saved.referrals = status.referrals;
+          saved.verified = status.verified;
+          try { localStorage.setItem(ME_KEY, JSON.stringify(saved)); } catch (err) { /* private mode */ }
+          renderShare(saved);
+        }).catch(function () { /* stale cache is fine, next visit tries again */ });
       }
     } catch (err) { /* corrupt cache — just show the form */ }
   }
