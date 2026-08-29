@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>You're confirmed — Lighthouse</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0F0F12" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="beam" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <a class="nav__brand" href="/">LIGHTHOUSE<span class="nav__dot">.</span></a>
+    <div class="nav__right">
+      <span class="utility nav__label">CONFIRMED</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="docpage__hero verify__hero">
+      <p class="utility docpage__eyebrow" id="verifyEyebrow">CHECKING&hellip;</p>
+      <h1 class="docpage__title" id="verifyTitle">One sec.</h1>
+      <p class="docpage__sub" id="verifySub">Confirming this was really you.</p>
+
+      <div class="verify__chip" id="verifyChip" hidden>
+        <span class="utility verify__chip-label">YOUR CODE</span>
+        <code class="verify__chip-code" id="verifyCode"></code>
+      </div>
+
+      <a class="btn btn--solid verify__cta" id="verifyCta" href="/#join" data-magnetic hidden>Go to your invite panel</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <h2 class="footer__big">Let's go<span class="footer__dot">.</span></h2>
+    <a class="btn btn--solid footer__cta" href="/#join" data-magnetic>Join the waitlist</a>
+    <nav class="footer__nav">
+      <a class="footer__link utility" href="/about.html">ABOUT US</a>
+      <a class="footer__link utility" href="/support.html">SUPPORT</a>
+      <a class="footer__link utility" href="/contact.html">CONTACT</a>
+      <a class="footer__link utility" href="/terms.html">TERMS &amp; CONDITIONS</a>
+      <a class="footer__link utility" href="/privacy.html">PRIVACY POLICY</a>
+    </nav>
+    <div class="footer__meta">
+      <a href="https://www.instagram.com/letsgolighthouse.co.in" target="_blank" rel="noopener" class="footer__link utility">INSTAGRAM ↗</a>
+      <span class="utility">MADE IN BANGALORE</span>
+      <span class="utility">© 2026 LIGHTHOUSE. ALL RIGHTS RESERVED.</span>
+    </div>
+  </footer>
+
+  <script>
+    // This page is a pure redirect target from verify-waitlist's 302 — every
+    // word of copy comes from its query string, there is no server render.
+    // Seeding localStorage here (not just on the original signup device) is
+    // what makes "confirm on your phone, signed up on your laptop" land on
+    // the SAME share panel main.js already renders from lh_wl — see main.js's
+    // "mine" check. Without this, a cross-device confirm dead-ends on an
+    // empty signup form.
+    (function () {
+      var qs = new URLSearchParams(location.search);
+      var state = qs.get('state');
+      var role = qs.get('role');
+      var code = qs.get('code');
+      var referrals = parseInt(qs.get('referrals') || '0', 10) || 0;
+
+      var eyebrow = document.getElementById('verifyEyebrow');
+      var title = document.getElementById('verifyTitle');
+      var sub = document.getElementById('verifySub');
+      var chip = document.getElementById('verifyChip');
+      var chipCode = document.getElementById('verifyCode');
+      var cta = document.getElementById('verifyCta');
+
+      if ((state === 'ok' || state === 'already') && code) {
+        try {
+          localStorage.setItem('lh_wl', JSON.stringify({
+            code: code, referrals: referrals, goal: 3, returning: state === 'already', verified: true
+          }));
+        } catch (err) { /* private mode — the page still confirms, just doesn't seed the panel */ }
+      }
+
+      if (state === 'ok' && code) {
+        eyebrow.textContent = "YOU'RE CONFIRMED ✦";
+        title.textContent = "confirmed. that's it, that's the email.";
+        sub.textContent = role === 'organizer'
+          ? "Get 3 friends through your link and your whole group skips to wave one."
+          : "Your invite link is live below — hand it to your group whenever.";
+        chipCode.textContent = code;
+        chip.hidden = false;
+        cta.hidden = false;
+      } else if (state === 'already' && code) {
+        eyebrow.textContent = 'ALREADY CONFIRMED ✦';
+        title.textContent = "yep, still you. nothing left to do here.";
+        sub.textContent = 'Your invite link and progress are waiting in your panel.';
+        chipCode.textContent = code;
+        chip.hidden = false;
+        cta.hidden = false;
+      } else {
+        eyebrow.textContent = 'HMM';
+        title.textContent = "that link's had it.";
+        sub.textContent = "It's expired or already used. Rejoin below and we'll send a fresh one.";
+        cta.textContent = 'Back to the waitlist';
+        cta.href = '/#join';
+        cta.hidden = false;
+      }
+    })();
+  </script>
+
+  <script src="/pages.js" defer></script>
+</body>
+</html>

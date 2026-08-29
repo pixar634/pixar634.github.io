@@ -3480,6 +3480,14 @@ body.has-custom-cursor .rolepill { cursor: none; }
   padding-bottom: 1px;
 }
 
+.wshare__inbox-note {
+  color: var(--amber);
+  border: 1px dashed rgba(224, 164, 88, 0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
 .wshare__progress {
   display: flex;
   align-items: center;
@@ -3538,6 +3546,31 @@ body.has-custom-cursor .wshare__copy { cursor: none; }
 .wshare__copy:hover { background: var(--mint-dim); color: var(--mint); }
 .wshare__copy:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
 .wshare__wa { padding: 12px 28px; }
+
+/* ---------- verified.html — the confirmation landing page ---------- */
+.verify__hero { padding-bottom: 40px; }
+.verify__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  padding: 10px 10px 10px 22px;
+  background: rgba(255, 255, 255, 0.02);
+  margin: 28px 0 24px;
+}
+.verify__chip-label { color: var(--text-3); }
+.verify__chip-code {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--mint);
+  background: var(--mint-dim);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+.verify__cta { display: inline-flex; }
 
 /* ---------- Next long weekend, on the closer ---------- */
 .close__weekend {

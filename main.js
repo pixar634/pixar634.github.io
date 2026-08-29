@@ -1517,6 +1517,7 @@
   var shareCopy = document.getElementById('wshare-copy');
   var shareWa = document.getElementById('wshare-wa');
   var shareProgress = document.getElementById('wshare-progress');
+  var shareInboxNote = document.getElementById('wshare-inbox-note');
 
   var inviteUrl = function (code) {
     return 'https://letsgolighthouse.co.in/?r=' + code;
@@ -1542,6 +1543,11 @@
           + "your link and <em>you</em> skip straight to the first wave — "
           + "they'll need their own 3 to do the same.";
     }
+
+    // Verified only ever arrives from verified.html seeding localStorage after
+    // a real email click — join_waitlist()'s own response never sets it, so a
+    // brand-new signup correctly still shows the reminder below.
+    if (shareInboxNote) shareInboxNote.hidden = !!data.verified;
 
     if (shareLink) shareLink.textContent = url.replace(/^https:\/\//, '');
     if (shareCount) {
