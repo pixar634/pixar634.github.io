@@ -1571,13 +1571,14 @@
       { id: "mood", sel: ".filters__bg-vid" },
       { id: "clock", sel: ".pitch__bg-vid" }
     ];
-    // 4K on every viewport that plays the film, including phones. Save-Data
-    // never reaches here (loop returns above). hd/sm stay as fallbacks if
-    // the 4K file is missing.
+    // 4K on desktop only. Phones were stalling on the 11–19MB files
+    // (readyState 3 with a few frames, then waiting, then play, repeat).
+    // 540p Baseline is the mobile cut; Save-Data never reaches this loop.
     function pickFilmSrc(vid) {
       var sm = vid.getAttribute("data-src-sm") || vid.getAttribute("data-src") || "";
       var hd = vid.getAttribute("data-src-hd") || sm;
       var uhd = vid.getAttribute("data-src-uhd");
+      if (innerWidth < 721 || liteFx) return sm;
       return uhd || hd || sm;
     }
     function watchFilm(film) {
@@ -1587,6 +1588,7 @@
       if (!vid) return;
       var src = pickFilmSrc(vid);
       if (!src) return;
+      var mobile = innerWidth < 721;
       var armed = false;
       var inView = false;
       var tries = 0;
@@ -1613,14 +1615,22 @@
       function playWhenReady() {
         if (!inView) return;
         arm();
-        if (vid.readyState >= 3) {
+        // Phones need a real buffer (HAVE_ENOUGH_DATA) or they start, starve,
+        // fire waiting, and the loop looks like stop-play-stop.
+        var enough = mobile ? 4 : 3;
+        if (vid.readyState >= enough) {
           playNow();
           return;
         }
-        vid.addEventListener("canplay", playNow, { once: true });
+        vid.addEventListener(mobile ? "canplaythrough" : "canplay", playNow, { once: true });
       }
       vid.addEventListener("playing", function () {
         vid.classList.add("is-on");
+      });
+      vid.addEventListener("waiting", function () {
+        if (!mobile) return;
+        vid.removeEventListener("canplaythrough", playNow);
+        vid.addEventListener("canplaythrough", playNow, { once: true });
       });
       vid.addEventListener("error", function () {
         if (tries >= 2) return;
