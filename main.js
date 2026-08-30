@@ -1571,15 +1571,16 @@
       { id: "mood", sel: ".filters__bg-vid" },
       { id: "clock", sel: ".pitch__bg-vid" }
     ];
-    // 4K on desktop only. Phones were stalling on the 11–19MB files
-    // (readyState 3 with a few frames, then waiting, then play, repeat).
-    // 540p Baseline is the mobile cut; Save-Data never reaches this loop.
+    // Desktop: 4K. Phone: 1080p (the -uhd cuts). 540p is only a last-resort
+    // fallback. Mobile still waits for canplaythrough so a 4–9MB file does
+    // not start on a thin buffer the way 4K did.
     function pickFilmSrc(vid) {
       var sm = vid.getAttribute("data-src-sm") || vid.getAttribute("data-src") || "";
       var hd = vid.getAttribute("data-src-hd") || sm;
-      var uhd = vid.getAttribute("data-src-uhd");
-      if (innerWidth < 721 || liteFx) return sm;
-      return uhd || hd || sm;
+      var fhd = vid.getAttribute("data-src-fhd") || hd;
+      var fourk = vid.getAttribute("data-src-4k") || vid.getAttribute("data-src-uhd");
+      if (innerWidth >= 721 && !liteFx) return fourk || fhd;
+      return fhd || hd || sm;
     }
     function watchFilm(film) {
       var section = document.getElementById(film.id);
