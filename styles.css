@@ -2896,6 +2896,45 @@ html.is-lite-fx .pitch--clock .pitch__bg-vid { filter: none; }
 .clock__device .iphone__skin {
   filter: drop-shadow(0 1.75rem 3.125rem rgba(0, 0, 0, 0.62));
 }
+/* Peek phone is ~215px of screen. A 14px three-word label wraps into a
+   giant pill next to the 36px back button; keep the bar one line. */
+@media (max-width: 720px) {
+  .clock__device .search-app {
+    padding: 52px 8px 28px;
+  }
+  .clock__device .search-app__bar {
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .clock__device .search-app__back {
+    width: 26px;
+    height: 26px;
+  }
+  .clock__device .search-app__back svg {
+    width: 13px;
+    height: 13px;
+  }
+  .clock__device .search-app__field {
+    height: 26px;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .clock__device .search-app__field span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .clock__device .search-app__field svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+  }
+}
 @media (min-width: 721px) {
   .clock__device {
     left: auto;
