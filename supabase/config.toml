@@ -1,0 +1,14 @@
+# All three functions authenticate themselves in code rather than via a
+# Supabase user JWT — send-waitlist-email checks a shared TRIGGER_SECRET
+# header, verify-waitlist is a public link-click endpoint, resend-webhook
+# checks Resend's own Svix signature — so the platform's own JWT check has
+# to be turned off or every call 401s before reaching the handler.
+
+[functions.send-waitlist-email]
+verify_jwt = false
+
+[functions.verify-waitlist]
+verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false

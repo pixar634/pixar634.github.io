@@ -1,0 +1,34 @@
+{
+  "name": "lighthouse-landing-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pre-rendered app-simulation videos for the Lighthouse landing page.",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio src/Root.tsx",
+    "render": "node render.mjs",
+        "render:peek": "remotion render src/Root.tsx ExplorePeek ../assets/video/remotion/explorepeek.mp4 --log=verbose",
+        "render:hero": "remotion render src/Root.tsx HeroMorph ../assets/video/remotion/heromorph.mp4 --log=verbose",
+    "render:reel": "remotion render src/Root.tsx ReelImport ../assets/video/remotion/reelimport.mp4 --log=verbose",
+        "render:vote": "remotion render src/Root.tsx GroupVote ../assets/video/remotion/groupvote.mp4 --log=verbose",
+        "render:clock": "remotion render src/Root.tsx ReturnClock ../assets/video/remotion/returnclock.mp4 --log=verbose",
+    "render:scout": "remotion render src/Root.tsx AiScout ../assets/video/remotion/aiscout.mp4 --log=verbose",
+    "render:radar": "remotion render src/Root.tsx Radar ../assets/video/remotion/radar.mp4 --log=verbose",
+    "render:weather": "remotion render src/Root.tsx Weather ../assets/video/remotion/weather.mp4 --log=verbose",
+    "render:logistics": "remotion render src/Root.tsx Logistics ../assets/video/remotion/logistics.mp4 --log=verbose",
+    "render:collections": "remotion render src/Root.tsx CollectionsFriends ../assets/video/remotion/collectionsfriends.mp4 --log=verbose",
+    "render:pro": "remotion render src/Root.tsx ProUpgrade ../assets/video/remotion/proupgrade.mp4 --log=verbose"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.229",
+    "@remotion/player": "4.0.229",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.229"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.6.3"
+  }
+}

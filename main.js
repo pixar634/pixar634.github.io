@@ -6,6 +6,12 @@
   var finePointer = window.matchMedia('(pointer: fine)').matches;
   var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var saveData = !!(navigator.connection && navigator.connection.saveData);
+  var liteFx = document.documentElement.classList.contains("is-lite-fx");
+  if (!liteFx && (saveData || (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4)) {
+    liteFx = true;
+    document.documentElement.classList.add("is-lite-fx");
+  }
 
   var scrollYNow = 0;
   var nav = document.getElementById('nav');
@@ -86,14 +92,26 @@
       onScroll(e.scroll, e.limit);
     });
   }
-  initScroll();
+  requestAnimationFrame(function () {
+    requestAnimationFrame(initScroll);
+  });
 
   /* ---------- Hero-map loader ----------
-     This is deliberately scoped to #hero-map, not the page. Header, waitlist
-     and all other HTML render independently while the map initializes behind
-     this simulated 0→100 sonar moment. */
+     Copy (nav, coords, headline, quote, waitlist) paints on its own. This
+     cover sits only on #hero-map. The sonar can idle while tiles fetch; the
+     scan-open splash waits until MapLibre has actually painted, so we never
+     wipe onto a black rectangle. */
   var heroLoaderDone = false;
+  var heroFxReady = false;
+  var heroMapPainted = false;
   var HERO_LOADER_DONE_EVENT = "lighthouse:hero-map-revealed";
+  var HERO_MAP_PAINTED_EVENT = "lighthouse:hero-map-painted";
+  var HERO_FX_READY_EVENT = "lighthouse:hero-fx-ready";
+  function announceHeroMapPainted() {
+    if (heroMapPainted) return;
+    heroMapPainted = true;
+    document.dispatchEvent(new CustomEvent(HERO_MAP_PAINTED_EVENT));
+  }
   function finishHeroLoader(loader) {
     window.setTimeout(function () {
       heroLoaderDone = true;
@@ -114,18 +132,19 @@
       torch.classList.add("is-" + stage);
     }
 
-    if (torch && reduced) {
+    if (torch && (reduced || liteFx)) {
       torch.remove();
       torch = null;
-    } else if (torch) {
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () { focusTorch("headline"); });
-      });
     }
+
+    // Copy no longer waits on the map. Release it on the first frame so any
+    // leftover `.hero__lede` / go-glitch rules still run, without hiding the
+    // quote or the form.
+    releaseHeroCopy();
 
     if (!loader) {
       heroLoaderDone = true;
-      releaseHeroCopy();
+      announceHeroMapPainted();
       if (torch) {
         torch.remove();
         torch = null;
@@ -141,68 +160,36 @@
       window.setTimeout(function () { loader.remove(); }, 280);
     }
 
-    var duration = 780;
-    var running = false;
-    function easeInOut(t) {
-      return t < 0.5
-        ? 2 * t * t
-        : 1 - Math.pow(-2 * t + 2, 2) / 2;
-    }
-
-    function startLoader() {
-      if (running) return;
-      running = true;
-      focusTorch("loader");
-      loader.classList.add("is-running");
+    function splash() {
+      if (loader.getAttribute("data-splashed") === "1") return;
+      loader.setAttribute("data-splashed", "1");
+      if (bar) bar.style.transform = "scaleX(1)";
       if (reduced) {
-        window.setTimeout(finishReduced, 400);
+        finishReduced();
         return;
       }
-
-      var started = performance.now();
-      function tick(now) {
-        var t = clamp((now - started) / duration, 0, 1);
-        var value = easeInOut(t);
-        if (bar) bar.style.transform = "scaleX(" + value.toFixed(4) + ")";
-        if (t < 1) {
-          requestAnimationFrame(tick);
-          return;
-        }
-        window.setTimeout(function () {
-          focusTorch("clearing");
-          loader.classList.add("is-opening");
-          finishHeroLoader(loader);
-        }, 60);
-      }
-      requestAnimationFrame(tick);
+      // A short ping, then the scan-open — both only after tiles exist, so
+      // the wipe never lands on a black field and never sits on the type
+      // while we wait.
+      loader.classList.add("is-running");
+      focusTorch("loader");
+      window.setTimeout(function () {
+        focusTorch("clearing");
+        loader.classList.add("is-opening");
+        finishHeroLoader(loader);
+      }, 180);
     }
 
-    if (reduced) {
-      window.setTimeout(startLoader, 400);
-      return;
-    }
+    if (heroMapPainted) splash();
+    else document.addEventListener(HERO_MAP_PAINTED_EVENT, splash, { once: true });
 
-    // The loader is act two: it starts the moment the headline's last line has
-    // finished clipping up. A fallback protects the map if animation events are
-    // suppressed by an unusual browser or extension.
-    var lastHeadline = document.querySelector(".display__line--end .display__inner");
-    if (!lastHeadline) {
-      startLoader();
-      return;
-    }
-    var fallback = window.setTimeout(startLoader, 3000);
-    var onHeadlineEnd = function (event) {
-      if (event.animationName !== "clip-up") return;
-      lastHeadline.removeEventListener("animationend", onHeadlineEnd);
-      window.clearTimeout(fallback);
-      startLoader();
-    };
-    lastHeadline.addEventListener("animationend", onHeadlineEnd);
+    window.setTimeout(function () {
+      if (!heroLoaderDone) splash();
+    }, 6000);
   }
 
-  /* Act three: "Let's go." and the early-access form are held paused in CSS and
-     released together once the map has revealed, so the hero reads
-     headline → loader → map → (go + join) rather than racing the map. */
+  /* Copy is already on the first paint. This class remains for the leftover
+     `.hero__lede` / go-glitch rules, not for hiding the quote or the form. */
   function releaseHeroCopy() {
     var hero = document.getElementById("hero");
     if (hero) hero.classList.add("is-ready");
@@ -210,9 +197,9 @@
   document.addEventListener(HERO_LOADER_DONE_EVENT, releaseHeroCopy);
   initHeroLoader();
 
-  /* A rotating line of travel quotes fills the old lede's slot, on the same
-     paused "Act three" reveal timing (`.quote-cycle.reveal` in styles.css),
-     then cycles on its own clock once released. Fixed list, no lookup. */
+  /* A rotating line of travel quotes fills the old lede's slot. First paint
+     already has a quote in the HTML; this shuffles the rest onto that same
+     slot and cycles once the page is live. */
   var QUOTES = [
     { text: "I love road trips, I love driving, I love finding little towns. I just think it's the best way to travel.", author: "Scarlett Johansson" },
     { text: "I didn't say no because between safety and adventure I choose adventure.", author: "Craig Ferguson" },
@@ -303,6 +290,7 @@
 
   /* ---------- Velocity blur on display type ---------- */
   var blurTargets = document.querySelectorAll('.display');
+  var blurArmed = false;
   function tickBlur() {
     if (reduced) return;
     var target = clamp(Math.abs(vel) * 0.045, 0, 10);
@@ -310,12 +298,24 @@
     var px = typeBlur < 0.08 ? 0 : typeBlur;
     var val = px.toFixed(2) + 'px';
     for (var i = 0; i < blurTargets.length; i++) {
-      blurTargets[i].style.setProperty('--type-blur', val);
+      if (px === 0) {
+        blurTargets[i].classList.remove('is-blurred');
+        blurTargets[i].style.removeProperty('--type-blur');
+      } else {
+        blurTargets[i].style.setProperty('--type-blur', val);
+        blurTargets[i].classList.add('is-blurred');
+      }
     }
     vel *= 0.92;
     requestAnimationFrame(tickBlur);
   }
-  if (!reduced) requestAnimationFrame(tickBlur);
+  function armTypeBlur() {
+    if (blurArmed || reduced) return;
+    blurArmed = true;
+    requestAnimationFrame(tickBlur);
+  }
+  window.addEventListener('wheel', armTypeBlur, { once: true, passive: true });
+  window.addEventListener('touchmove', armTypeBlur, { once: true, passive: true });
 
   /* ---------- Sticky three-gesture scene ---------- */
   var answers = document.querySelector('.answers');
@@ -633,18 +633,18 @@
   var tx = cx;
   var ty = cy;
 
-  if (cursor && finePointer && !reduced) {
+  if (cursor && finePointer && !reduced && !liteFx) {
     window.addEventListener('pointermove', function (e) {
       tx = e.clientX;
       ty = e.clientY;
       cursor.classList.add('is-on');
+      document.body.classList.add('has-custom-cursor');
     });
     document.addEventListener('pointerleave', function () { cursor.classList.remove('is-on'); });
     document.querySelectorAll('a, button, input, [data-magnetic]').forEach(function (el) {
       el.addEventListener('pointerenter', function () { cursor.classList.add('is-hot'); });
       el.addEventListener('pointerleave', function () { cursor.classList.remove('is-hot'); });
     });
-    document.body.classList.add('has-custom-cursor');
     (function loop() {
       cx += (tx - cx) * 0.22;
       cy += (ty - cy) * 0.22;
@@ -655,11 +655,25 @@
     cursor.remove();
   }
 
-  /* ---------- Fireflies (app BeaconScene: drift + pointer parallax) ---------- */
+  /* ---------- Fireflies (app BeaconScene: drift + pointer parallax) ----------
+     Held until the hero map is idle. Starting a 96-particle canvas while
+     MapLibre is still compiling shaders is what jittered old laptops on
+     first paint. Weak machines skip this layer entirely. */
   (function initMotes() {
     var canvas = document.getElementById("motes");
     var host = document.getElementById("hero-map");
-    if (!canvas || !host || reduced) return;
+    if (!canvas || !host || reduced || liteFx) {
+      if (canvas) canvas.remove();
+      return;
+    }
+    var started = false;
+    function start() {
+      if (started) return;
+      started = true;
+      boot();
+    }
+    document.addEventListener(HERO_FX_READY_EVENT, start);
+    function boot() {
     var ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
@@ -758,6 +772,7 @@
       }
     }
     requestAnimationFrame(tick);
+    }
   })();
 
   /* ---------- Hero map tour (OpenFreeMap + MapLibre, same stack as the app) ---------- */
@@ -780,6 +795,7 @@
     HERO_SPOTS = HERO_SPOTS.slice(offset).concat(HERO_SPOTS.slice(0, offset));
   })();
   (function pickHeroWeather() {
+    if (liteFx) return;
     // Two rain scenes and two mist scenes per load, always on different places.
     // Assignment—not the number of effects—is random, so the tour keeps its
     // rhythm without making every destination look stormy.
@@ -869,10 +885,13 @@
 
   function makeHeroPin(spot, i) {
     var el = document.createElement("div");
+    var srcAttr = i === 0
+      ? 'src="' + spot.img + '"'
+      : 'data-src="' + spot.img + '"';
     el.className = "hero-pin" + (i === 0 ? " is-on" : "");
     el.innerHTML =
       '<div class="hero-pin__bubble" style="border-color:' + spot.color + '">' +
-        '<img class="hero-pin__dot" alt="" src="' + spot.img + '" width="36" height="36" />' +
+        '<img class="hero-pin__dot" alt="" ' + srcAttr + ' width="36" height="36" decoding="async" />' +
         '<span class="hero-pin__meta"><b>' + spot.name + "</b><small>" + spot.meta + "</small></span>" +
       "</div>";
     return el;
@@ -884,9 +903,13 @@
     var hero = document.getElementById("hero");
     var swipeWord = document.getElementById("swipeWord");
     var awayWord = document.getElementById("awayWord");
-    if (!wrap || !gl) return;
+    if (!wrap || !gl) {
+      announceHeroMapPainted();
+      return;
+    }
     if (!window.maplibregl) {
       console.warn("Lighthouse: MapLibre did not load — hero map skipped");
+      announceHeroMapPainted();
       return;
     }
 
@@ -914,13 +937,22 @@
     var ready = false;
     var settled = false;
     var weatherTimer = 0;
+    var fxArmed = false;
 
     function setOn(i) {
-      pinEls.forEach(function (el, n) { el.classList.toggle("is-on", n === i); });
+      pinEls.forEach(function (el, n) {
+        el.classList.toggle("is-on", n === i);
+        if (n !== i) return;
+        var img = el.querySelector(".hero-pin__dot");
+        if (img && img.dataset.src) {
+          img.src = img.dataset.src;
+          img.removeAttribute("data-src");
+        }
+      });
     }
 
     function pulse() {
-      if (reduced) return;
+      if (reduced || liteFx) return;
       wrap.classList.add("is-pulse");
       window.setTimeout(function () { wrap.classList.remove("is-pulse"); }, 440);
     }
@@ -948,10 +980,46 @@
         weatherTimer = 0;
       }
       wx.classList.remove("is-rain", "is-mist");
-      if (reduced || !kind) return;
+      if (liteFx || reduced || !fxArmed || !kind) return;
       var show = function () { wx.classList.add("is-" + kind); };
       if (immediate) show();
       else weatherTimer = window.setTimeout(show, 180);
+    }
+
+    function armHeroFx() {
+      if (fxArmed || liteFx || reduced) return;
+      function probe() {
+        var frames = 0;
+        var t0 = performance.now();
+        function sample(now) {
+          frames += 1;
+          if (now - t0 < 700) {
+            requestAnimationFrame(sample);
+            return;
+          }
+          var fps = frames / ((now - t0) / 1000);
+          if (fps < 42) {
+            liteFx = true;
+            document.documentElement.classList.add("is-lite-fx");
+            return;
+          }
+          fxArmed = true;
+          heroFxReady = true;
+          document.dispatchEvent(new CustomEvent(HERO_FX_READY_EVENT));
+          setWeather(HERO_SPOTS[idx] && HERO_SPOTS[idx].weather, true);
+        }
+        requestAnimationFrame(sample);
+      }
+      var giveUp = window.setTimeout(function () {
+        liteFx = true;
+        document.documentElement.classList.add("is-lite-fx");
+      }, 4000);
+      var go = function () {
+        window.clearTimeout(giveUp);
+        probe();
+      };
+      if (map.loaded() && !map.isMoving()) go();
+      else map.once("idle", go);
     }
 
     function flyTo(i, duration) {
@@ -1016,7 +1084,6 @@
       function beginHeroTour() {
         if (settled) return;
         var origin = HERO_SPOTS[0];
-        setWeather(origin.weather, true);
         if (reduced) {
           map.jumpTo({
             center: [origin.lon, origin.lat],
@@ -1031,8 +1098,10 @@
         // overview is gone before the scan-open has finished handing it over.
         wrap.classList.add("is-farview");
         window.setTimeout(function dive() {
-          wrap.style.setProperty("--hero-dive-ms", HERO_DIVE_MS + "ms");
-          wrap.classList.add("is-dive");
+          if (!liteFx) {
+            wrap.style.setProperty("--hero-dive-ms", HERO_DIVE_MS + "ms");
+            wrap.classList.add("is-dive");
+          }
           map.flyTo({
             center: [origin.lon, origin.lat],
             zoom: 11.05,
@@ -1050,12 +1119,21 @@
             wrap.classList.remove("is-dive", "is-farview");
             settled = true;
             schedule();
+            armHeroFx();
           });
         }, 650);
       }
 
-      if (heroLoaderDone) beginHeroTour();
-      else document.addEventListener(HERO_LOADER_DONE_EVENT, beginHeroTour, { once: true });
+      var paintedOnce = false;
+      function onPainted() {
+        if (paintedOnce) return;
+        paintedOnce = true;
+        announceHeroMapPainted();
+        if (heroLoaderDone) beginHeroTour();
+        else document.addEventListener(HERO_LOADER_DONE_EVENT, beginHeroTour, { once: true });
+      }
+      map.once("idle", onPainted);
+      if (map.loaded() && !map.isMoving()) onPainted();
     });
 
     if ("IntersectionObserver" in window && hero) {
@@ -1075,7 +1153,49 @@
     });
   }
 
-  if (document.getElementById("hero-gl")) initHeroTour();
+  function loadMapLibre(done) {
+    if (window.maplibregl) {
+      if (done) done();
+      return;
+    }
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "/vendor/maplibre-gl/maplibre-gl.css";
+    document.head.appendChild(css);
+    var s = document.createElement("script");
+    s.src = "/vendor/maplibre-gl/maplibre-gl.js";
+    s.async = true;
+    s.onload = function () { if (done) done(); };
+    s.onerror = function () {
+      console.warn("Lighthouse: MapLibre did not load — maps skipped");
+      announceHeroMapPainted();
+      if (done) done();
+    };
+    document.head.appendChild(s);
+  }
+
+  function whenIdle(fn) {
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(function () { fn(); }, { timeout: 1400 });
+      return;
+    }
+    if (document.readyState === "complete") {
+      window.setTimeout(fn, 0);
+      return;
+    }
+    window.addEventListener("load", function () { fn(); }, { once: true });
+  }
+
+  if (document.getElementById("hero-gl") || document.getElementById("filters-list")) {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        loadMapLibre(function () {
+          if (document.getElementById("hero-gl")) initHeroTour();
+          bootFiltersMap();
+        });
+      });
+    });
+  }
 
   /* ---------- Filters section: real places behind the chip river ----------
      Every chip is a real category with real members — 5 closest per lane,
@@ -1403,59 +1523,146 @@
     }
   }
 
-  if (document.getElementById("filters-list")) initFiltersMap();
+  function bootFiltersMap() {
+    if (!document.getElementById("filters-list")) return;
+    var mood = document.getElementById("mood");
+    if (!mood || !("IntersectionObserver" in window)) {
+      initFiltersMap();
+      return;
+    }
+    var filtersIo = new IntersectionObserver(function (entries) {
+      if (!entries.some(function (e) { return e.isIntersecting; })) return;
+      filtersIo.disconnect();
+      initFiltersMap();
+    }, { rootMargin: "480px 0px" });
+    filtersIo.observe(mood);
+  }
+
+  (function armSectionPosters() {
+    ["mood", "clock"].forEach(function (id) {
+      var section = document.getElementById(id);
+      if (!section) return;
+      var vid = section.querySelector("video");
+      var poster = vid && vid.getAttribute("data-poster");
+      if (!poster) return;
+      function paint() {
+        var host = section.querySelector(".filters__bg, .pitch__bg");
+        if (!host || host.getAttribute("data-posted")) return;
+        host.setAttribute("data-posted", "1");
+        host.style.backgroundImage = 'url("' + poster + '")';
+      }
+      if (!("IntersectionObserver" in window)) {
+        paint();
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        if (!entries.some(function (e) { return e.isIntersecting; })) return;
+        io.disconnect();
+        paint();
+      }, { rootMargin: "200px 0px" });
+      io.observe(section);
+    });
+  })();
 
   (function loopSectionFilms() {
-    var saveData = !!(navigator.connection && navigator.connection.saveData);
     if (reduced || saveData) return;
+    var desktop = innerWidth >= 721 && !liteFx;
     var films = [
       { id: "mood", sel: ".filters__bg-vid" },
       { id: "clock", sel: ".pitch__bg-vid" }
     ];
-    films.forEach(function (film) {
+    // Phone: 540p. Anything wider than mobile: 4K (2x of the 1080p cut).
+    // liteFx / Save-Data stay off 4K so a 4GB laptop does not decode 8M pixels
+    // on a looping background. Those still get 720p HD.
+    function pickFilmSrc(vid) {
+      var sm = vid.getAttribute("data-src-sm") || vid.getAttribute("data-src") || "";
+      var hd = vid.getAttribute("data-src-hd") || sm;
+      var uhd = vid.getAttribute("data-src-uhd");
+      if (saveData) return sm;
+      if (liteFx) return innerWidth >= 721 ? hd : sm;
+      if (uhd && innerWidth >= 721) return uhd;
+      if (innerWidth >= 721) return hd;
+      return sm;
+    }
+    function watchFilm(film) {
       var section = document.getElementById(film.id);
       if (!section) return;
       var vid = section.querySelector(film.sel);
       if (!vid) return;
-      var src = vid.getAttribute("data-src");
+      var src = pickFilmSrc(vid);
+      if (!src) return;
       var armed = false;
       var inView = false;
+      var tries = 0;
       vid.muted = true;
       vid.defaultMuted = true;
       vid.playsInline = true;
+      vid.setAttribute("playsinline", "");
+      vid.setAttribute("webkit-playsinline", "");
       vid.loop = true;
       vid.preload = "none";
-      vid.setAttribute("fetchpriority", "low");
+
       function arm() {
-        if (armed || !src) return;
+        if (armed) return;
         armed = true;
+        vid.preload = "auto";
         vid.src = src;
+        try { vid.load(); } catch (err) { /* older WebViews */ }
       }
-      function play() {
+      function playNow() {
+        if (!inView) return;
+        var p = vid.play();
+        if (p && p.catch) p.catch(function () { /* autoplay blocked — poster stays */ });
+      }
+      function playWhenReady() {
         if (!inView) return;
         arm();
-        var p = vid.play();
-        if (p && p.catch) p.catch(function () { /* autoplay blocked */ });
+        if (vid.readyState >= 3) {
+          playNow();
+          return;
+        }
+        vid.addEventListener("canplay", playNow, { once: true });
       }
-      function stop() {
+      vid.addEventListener("playing", function () {
+        vid.classList.add("is-on");
+      });
+      vid.addEventListener("error", function () {
+        if (tries >= 2) return;
+        tries += 1;
+        armed = false;
+        window.setTimeout(function () {
+          if (inView) playWhenReady();
+        }, 600 * tries);
+      });
+      function enter() {
+        inView = true;
+        playWhenReady();
+      }
+      function leave() {
         inView = false;
         vid.pause();
       }
       if ("IntersectionObserver" in window) {
         var io = new IntersectionObserver(function (entries) {
-          if (entries.some(function (e) { return e.isIntersecting; })) {
-            inView = true;
-            play();
-          } else {
-            stop();
-          }
-        }, { rootMargin: "320px 0px", threshold: 0.01 });
+          if (entries.some(function (e) { return e.isIntersecting; })) enter();
+          else leave();
+        }, { rootMargin: desktop ? "480px 0px" : "120px 0px", threshold: 0.02 });
         io.observe(section);
       } else {
-        inView = true;
-        play();
+        enter();
       }
-    });
+      // 4K Moody is ~11MB — do not race the hero map. The 480px
+      // rootMargin starts it as slide 2 approaches.
+      if (desktop && film.id === "mood" && src.indexOf("-4k.") === -1) arm();
+    }
+    function startFilms() {
+      films.forEach(watchFilm);
+    }
+    // Don't steal bandwidth from the hero map on first paint. Mood sits
+    // immediately under a 100vh hero, so even a small rootMargin would fire
+    // at load and race OpenFreeMap tiles.
+    if (heroLoaderDone) startFilms();
+    else document.addEventListener(HERO_LOADER_DONE_EVENT, startFilms, { once: true });
   })();
 
   /* ---------- Click sonar ---------- */

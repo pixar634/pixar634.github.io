@@ -1,0 +1,11 @@
+{
+  "name": "letsgolighthouse-landing",
+  "private": true,
+  "description": "Cloudflare Pages static site + Functions. The landing page is plain static HTML/CSS/JS; the Remotion project under remotion/ pre-renders app-simulation videos to assets/video/remotion/. Run `npm run render:landing` in this folder after `cd remotion && npm install` to regenerate those assets.",
+  "scripts": {
+    "render:landing": "cd remotion && npm run render"
+  },
+  "dependencies": {
+    "workers-og": "^0.0.25"
+  }
+}

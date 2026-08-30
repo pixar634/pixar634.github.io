@@ -1,0 +1,9 @@
+node_modules/
+build/
+.dist/
+.remotion/
+*.mp4
+*.webm
+*.png
+*.jpg
+.DS_Store
