@@ -1571,18 +1571,14 @@
       { id: "mood", sel: ".filters__bg-vid" },
       { id: "clock", sel: ".pitch__bg-vid" }
     ];
-    // Phone: 540p. Anything wider than mobile: 4K (2x of the 1080p cut).
-    // liteFx / Save-Data stay off 4K so a 4GB laptop does not decode 8M pixels
-    // on a looping background. Those still get 720p HD.
+    // 4K on every viewport that plays the film, including phones. Save-Data
+    // never reaches here (loop returns above). hd/sm stay as fallbacks if
+    // the 4K file is missing.
     function pickFilmSrc(vid) {
       var sm = vid.getAttribute("data-src-sm") || vid.getAttribute("data-src") || "";
       var hd = vid.getAttribute("data-src-hd") || sm;
       var uhd = vid.getAttribute("data-src-uhd");
-      if (saveData) return sm;
-      if (liteFx) return innerWidth >= 721 ? hd : sm;
-      if (uhd && innerWidth >= 721) return uhd;
-      if (innerWidth >= 721) return hd;
-      return sm;
+      return uhd || hd || sm;
     }
     function watchFilm(film) {
       var section = document.getElementById(film.id);
@@ -1646,7 +1642,7 @@
         var io = new IntersectionObserver(function (entries) {
           if (entries.some(function (e) { return e.isIntersecting; })) enter();
           else leave();
-        }, { rootMargin: desktop ? "480px 0px" : "120px 0px", threshold: 0.02 });
+        }, { rootMargin: "480px 0px", threshold: 0.02 });
         io.observe(section);
       } else {
         enter();
