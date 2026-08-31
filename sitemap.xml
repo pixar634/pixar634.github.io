@@ -1,37 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Six static pages, hand-maintained. Update <lastmod> when a page's content
-  actually changes — a sitemap that claims everything changed today is a sitemap
-  Google stops believing, and the dates are the only signal in this file it
-  treats as a hint rather than noise.
+  Hand-maintained. Update <lastmod> when a page's content actually changes.
 
-  Deliberately absent: /go/<code> trip-plan interstitials (noindex by design —
-  see robots.txt) and /api/* (Pages Functions, not pages).
+  Deliberately absent: /go/<code> trip-plan interstitials (noindex by design)
+  and /api/* (not pages). Place pages here are the public sample only —
+  not the full catalog.
 -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://letsgolighthouse.co.in/</loc>
-    <lastmod>2026-08-28</lastmod>
+    <lastmod>2026-08-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/from/bengaluru.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/time/back-by-dark.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/moods/summit-treks.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/moods/misty-hikes.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/moods/secret-cascades.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/moods/wild-lakeside.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/moods/breakfast-runs.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/places/ganalu-falls.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://letsgolighthouse.co.in/assets/places/lg/ganalu.jpg</image:loc>
+      <image:title>Ganalu Falls</image:title>
+      <image:caption>SWE-Yaatrik / Wikimedia Commons / CC BY-SA 4.0</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/places/gundamagere-lake.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://letsgolighthouse.co.in/assets/places/lg/gundamagere.jpg</image:loc>
+      <image:title>Gundamagere Lake</image:title>
+      <image:caption>SWE-Yaatrik / Wikimedia Commons / CC BY-SA 4.0</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/places/rayakottai-fort.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://letsgolighthouse.co.in/assets/places/lg/rayakottai.jpg</image:loc>
+      <image:title>Rayakottai Fort</image:title>
+      <image:caption>Venkasub / Wikimedia Commons / CC BY-SA 3.0</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/places/kakkadampoyil-ghat.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://letsgolighthouse.co.in/assets/places/lg/kakkadampoyil.jpg</image:loc>
+      <image:title>Kakkadampoyil Ghat</image:title>
+      <image:caption>Manojk / Wikimedia Commons / CC BY-SA 4.0</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/places/muthathi.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://letsgolighthouse.co.in/assets/places/lg/muthathi.jpg</image:loc>
+      <image:title>Muthathi River Bank</image:title>
+      <image:caption>Nagaraj Sinhasan / Wikimedia Commons / CC BY-SA 4.0</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://letsgolighthouse.co.in/about.html</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://letsgolighthouse.co.in/support.html</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://letsgolighthouse.co.in/contact.html</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://letsgolighthouse.co.in/privacy.html</loc>

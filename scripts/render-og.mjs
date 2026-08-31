@@ -17,7 +17,8 @@
 // per link and a static file cannot help.
 //
 // RUN IT:  node scripts/render-og.mjs      (from landing/)
-// Re-run after changing the copy, the background still, or the brand palette.
+// Re-run after changing the copy, the air map still, or the brand palette.
+// The card is the landing's air theme: cream paper, ink type, terracotta pop.
 //
 // No new dependency: satori and @resvg/resvg-wasm are already in node_modules as
 // `workers-og`'s own deps, which is the same engine pair the Function uses — so
@@ -26,6 +27,7 @@
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -41,66 +43,55 @@ const CACHE = path.join(HERE, ".cache");
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-// Brand constitution (root CLAUDE.md). No other accent hues.
-const BASE = "#0F0F12";
-const MINT = "#5DCAA5";
-const AMBER = "#E0A458";
-const PAPER = "#F2F4F2";
+// Air theme — the live landing default. Cream paper, ink type, terracotta pop.
+const CREAM = "#F4F1EA";
+const INK = "#1C1915";
+const TERRACOTTA = "#A83F1C";
+const TERRACOTTA_SOFT = "#E8916A";
 
 // The card's copy. Deliberately the hero's own promise rather than a tagline
 // invented for the card — someone who taps through from a WhatsApp unfurl should
 // land on the sentence they just read.
 const BADGE = "WEEKEND TRAVEL · AROUND BANGALORE";
-const TITLE_A = "Your next road trip";
-const TITLE_B = "is a swipe away.";
-const SUBTITLE =
-  "Hundreds of weekend places around Bangalore — waterfalls, forts, sunrise drives. Drive time already on the card.";
 const URL_LINE = "letsgolighthouse.co.in";
 
 // The hero's own map still: the product's actual first frame, pins and drive-time
 // bubble included. It is the map that carries the pitch, so a photograph of one
 // waterfall would say strictly less. Its tiles are OSM, hence the attribution
 // line the card renders bottom-right — ODbL, same as the hero's own credit.
-const BACKGROUND = path.join(LANDING, "assets/hero/map-still.png");
+const BACKGROUND = path.join(LANDING, "assets/hero/map-still-air.jpg");
 const ATTRIBUTION = "© OpenStreetMap contributors";
+const PLACES = path.join(LANDING, "assets/places");
+const NAMED_PIN = { file: "skandagiri.jpg", name: "Skandagiri", meta: "1h 2m · 60 km" };
+const BUBBLE_PINS = [
+  "makalidurga.jpg",
+  "savandurga.jpg",
+  "rayakottai.jpg",
+  "gundamagere.jpg",
+  "devarayanadurga.jpg",
+];
 
 /* ------------------------------------------------------------------ fonts -- */
 
-// Satori parses TTF/OTF/WOFF but not WOFF2, and Google's css2 endpoint decides
-// which to serve from the User-Agent: a modern UA gets woff2, an ancient one gets
-// TTF. Hence the deliberately old Chrome string — the standard trick for every
-// Satori-based renderer, and the same one the Function uses.
-const OLD_CHROME =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
-
-async function loadFont(family, weight) {
-  const slug = `${family.replace(/\s+/g, "-").toLowerCase()}-${weight}.ttf`;
-  const cached = path.join(CACHE, slug);
-  if (existsSync(cached)) return readFile(cached);
-
-  const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(
-    family,
-  )}:wght@${weight}`;
-  const css = await fetch(cssUrl, { headers: { "User-Agent": OLD_CHROME } }).then((r) => {
-    if (!r.ok) throw new Error(`${family} ${weight}: font CSS ${r.status}`);
-    return r.text();
-  });
-
-  // Google answers with one @font-face per unicode-range — cyrillic, greek,
-  // vietnamese, latin-ext, latin — and latin is *last*, not first. Taking the
-  // first url renders this whole card as tofu boxes with a stray capital A where
-  // the Cyrillic А happened to line up; caught on the first render, not reasoned
-  // about. So: pick the block whose range covers Basic Latin.
-  const blocks = css.split("@font-face").filter((b) => b.includes("url("));
-  const latin =
-    blocks.find((b) => /unicode-range:[^;]*U\+0000-00FF/i.test(b)) || blocks[blocks.length - 1];
-  const src = latin?.match(/url\((https:[^)]+\.(?:ttf|otf|woff))\)/)?.[1];
-  if (!src) throw new Error(`${family} ${weight}: no ttf/otf/woff in Google's CSS`);
-
-  const bytes = Buffer.from(await fetch(src).then((r) => r.arrayBuffer()));
+/**
+ * Satori wants TTF; the landing ships Nohemi as woff2. Decompress into
+ * scripts/.cache the same way Google fonts used to be cached — build input, not source.
+ */
+async function loadNohemi(weightName) {
   await mkdir(CACHE, { recursive: true });
-  await writeFile(cached, bytes);
-  return bytes;
+  const ttf = path.join(CACHE, `Nohemi-${weightName}.ttf`);
+  if (!existsSync(ttf)) {
+    const woff2 = path.join(LANDING, "fonts", `Nohemi-${weightName}.woff2`);
+    const py = spawnSync(
+      "python",
+      ["-c", "from fontTools.ttLib.woff2 import decompress; import sys; decompress(sys.argv[1], sys.argv[2])", woff2, ttf],
+      { encoding: "utf8" },
+    );
+    if (py.status !== 0) {
+      throw new Error(`Nohemi ${weightName}: ${py.stderr || py.stdout || "woff2 decompress failed"}`);
+    }
+  }
+  return readFile(ttf);
 }
 
 /* ------------------------------------------------------------- background -- */
@@ -150,12 +141,94 @@ async function loadBackground(file) {
   return { uri: `data:${mime};base64,${buf.toString("base64")}`, width, height };
 }
 
+async function loadPlace(file) {
+  const { uri } = await loadBackground(path.join(PLACES, file));
+  return uri;
+}
+
 /* ---------------------------------------------------------------- the card -- */
 
 const el = (type, style, children) => ({ type, props: { style, children } });
 const text = (style, value) => ({ type: "div", props: { style: { display: "flex", ...style }, children: value } });
 
-function card({ background }) {
+function words(size, parts, extra = {}) {
+  return el("div", {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "baseline",
+    gap: Math.round(size * 0.22),
+    ...extra,
+  }, parts.map(([value, weight, color]) =>
+    text({
+      fontFamily: "Nohemi",
+      fontSize: size,
+      fontWeight: weight,
+      lineHeight: extra.lineHeight || 0.96,
+      letterSpacing: extra.letterSpacing || "-0.04em",
+      color: color || INK,
+    }, value),
+  ));
+}
+
+function pinDot(uri, size) {
+  return el("div", {
+    width: size,
+    height: size,
+    display: "flex",
+    borderRadius: 9999,
+    overflow: "hidden",
+    flexShrink: 0,
+  }, [
+    {
+      type: "img",
+      props: { src: uri, width: size, height: size, style: { objectFit: "cover" } },
+    },
+  ]);
+}
+
+function pinBubble(left, top, uri) {
+  return el("div", {
+    position: "absolute",
+    left,
+    top,
+    width: 44,
+    height: 44,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 9999,
+    backgroundColor: "#FFFCF7",
+    border: "1.5px solid #BA5A36",
+    boxShadow: "0 6px 18px rgba(28,25,21,0.14)",
+  }, [pinDot(uri, 32)]);
+}
+
+function pinNamed(left, top, uri, name, meta) {
+  return el("div", {
+    position: "absolute",
+    left,
+    top,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    height: 52,
+    padding: "0 16px 0 5px",
+    borderRadius: 9999,
+    backgroundColor: "#FFFCF7",
+    border: "1.5px solid #BA5A36",
+    boxShadow: "0 10px 24px rgba(28,25,21,0.14)",
+  }, [
+    pinDot(uri, 40),
+    el("div", { display: "flex", flexDirection: "column", justifyContent: "center" }, [
+      text({ fontSize: 15, fontWeight: 600, lineHeight: 1.1, color: INK, letterSpacing: 0 }, name),
+      text({ fontSize: 12, fontWeight: 400, lineHeight: 1.2, color: "#3F3A36", letterSpacing: 0 }, meta),
+    ]),
+  ]);
+}
+
+function card({ background, named, bubbles }) {
   // Cover-crop by hand rather than leaning on `object-fit`: the geometry is a few
   // lines and it renders identically on every Satori version, which matters for a
   // file regenerated months apart.
@@ -166,8 +239,10 @@ function card({ background }) {
   // Overscanning crops that row away and pushes the pin cluster off the type's
   // side of the card at the same time. FOCUS is the point of the source that
   // lands at the card's centre, in 0-1 source coordinates.
-  const ZOOM = 1.5;
-  const FOCUS = { x: 0.34, y: 0.66 };
+  // Cluster still: named Skandagiri sits upper-centre. Keep it on the right
+  // of the card so the four-line lockup has the left third.
+  const ZOOM = 1.1;
+  const FOCUS = { x: 0.78, y: 0.46 };
 
   const scale = Math.max(WIDTH / background.width, HEIGHT / background.height) * ZOOM;
   const drawW = Math.round(background.width * scale);
@@ -179,7 +254,7 @@ function card({ background }) {
 
   const PAD = 68;
 
-  return el("div", { display: "flex", position: "relative", width: WIDTH, height: HEIGHT, backgroundColor: BASE, fontFamily: "Space Grotesk" }, [
+  return el("div", { display: "flex", position: "relative", width: WIDTH, height: HEIGHT, backgroundColor: CREAM, fontFamily: "Nohemi" }, [
     // The map still, centred and cropped to fill.
     {
       type: "img",
@@ -204,7 +279,7 @@ function card({ background }) {
       height: HEIGHT,
       display: "flex",
       backgroundImage:
-        "linear-gradient(to top, rgba(8,9,11,0.94) 0%, rgba(8,9,11,0.80) 32%, rgba(8,9,11,0.46) 66%, rgba(8,9,11,0.60) 100%)",
+        "linear-gradient(to top, rgba(244,241,234,0.88) 0%, rgba(244,241,234,0.42) 28%, rgba(244,241,234,0.08) 62%, rgba(244,241,234,0.35) 100%)",
     }, undefined),
     el("div", {
       position: "absolute",
@@ -213,7 +288,7 @@ function card({ background }) {
       height: HEIGHT,
       display: "flex",
       backgroundImage:
-        "linear-gradient(to right, rgba(8,9,11,0.90) 0%, rgba(8,9,11,0.72) 38%, rgba(8,9,11,0.12) 74%, rgba(8,9,11,0.30) 100%)",
+        "linear-gradient(to right, rgba(244,241,234,0.92) 0%, rgba(244,241,234,0.62) 32%, rgba(244,241,234,0.04) 58%, rgba(244,241,234,0.08) 100%)",
     }, undefined),
 
     // The beacon: two concentric rings bleeding off the top-right corner. The
@@ -227,7 +302,7 @@ function card({ background }) {
       height: 340,
       display: "flex",
       borderRadius: 9999,
-      border: `2px solid rgba(93,202,165,0.13)`,
+      border: `2px solid rgba(168,63,28,0.14)`,
     }, undefined),
     el("div", {
       position: "absolute",
@@ -237,7 +312,7 @@ function card({ background }) {
       height: 244,
       display: "flex",
       borderRadius: 9999,
-      border: `2px solid rgba(93,202,165,0.22)`,
+      border: `2px solid rgba(168,63,28,0.24)`,
     }, undefined),
 
     // Wordmark.
@@ -247,11 +322,11 @@ function card({ background }) {
         height: 13,
         display: "flex",
         borderRadius: 9999,
-        backgroundColor: MINT,
-        boxShadow: `0 0 26px ${MINT}`,
+        backgroundColor: TERRACOTTA,
+        boxShadow: `0 0 22px rgba(168,63,28,0.35)`,
         marginRight: 16,
       }, undefined),
-      text({ fontSize: 22, fontWeight: 500, letterSpacing: "0.34em", color: "rgba(255,255,255,0.88)" }, "LIGHTHOUSE"),
+      text({ fontSize: 22, fontWeight: 500, letterSpacing: "0.34em", color: INK }, "LIGHTHOUSE"),
     ]),
 
     // The pitch block, bottom-left.
@@ -270,20 +345,32 @@ function card({ background }) {
         padding: "9px 20px",
         marginBottom: 26,
         borderRadius: 9999,
-        border: "1.5px solid rgba(224,164,88,0.55)",
-        backgroundColor: "rgba(224,164,88,0.14)",
+        border: "1.5px solid rgba(168,63,28,0.45)",
+        backgroundColor: "rgba(168,63,28,0.08)",
       }, [
         // Satori has no `text-transform`, so the caps are baked into the string.
-        text({ fontSize: 17, fontWeight: 500, letterSpacing: "0.17em", color: AMBER }, BADGE),
+        text({ fontSize: 17, fontWeight: 500, letterSpacing: "0.17em", color: TERRACOTTA }, BADGE),
       ]),
 
-      text({ fontFamily: "Syne", fontSize: 82, fontWeight: 700, lineHeight: 1.04, letterSpacing: "-0.02em", color: PAPER }, TITLE_A),
-      text({ fontFamily: "Syne", fontSize: 82, fontWeight: 700, lineHeight: 1.04, letterSpacing: "-0.02em", color: MINT }, TITLE_B),
+      // Same lockup as the live hero — Nohemi Thin / Medium / ExtraBold / ExtraLight / Light.
+      // Sized so "Road Trip" occupies about half the card, not a left-third column.
+      words(82, [["Your", 100], ["Next", 500]]),
+      words(88, [["Road", 800], ["Trip", 800]], { marginTop: 4 }),
+      words(50, [["destination", 200], ["Discovery", 800]], { marginTop: 12, letterSpacing: "-0.038em", lineHeight: 1.08 }),
+      words(44, [["is a", 300], ["swipe", 800, TERRACOTTA], ["away.", 400]], { marginTop: 10, lineHeight: 1.02 }),
 
-      text({ marginTop: 24, maxWidth: 800, fontSize: 25, lineHeight: 1.42, color: "rgba(242,244,242,0.74)" }, SUBTITLE),
-
-      text({ marginTop: 30, fontSize: 20, letterSpacing: "0.1em", color: "rgba(93,202,165,0.85)" }, URL_LINE),
+      text({ marginTop: 28, fontSize: 20, fontWeight: 500, letterSpacing: "0.1em", color: TERRACOTTA_SOFT }, URL_LINE),
     ]),
+
+    // Product pins sit on the open right half — one named chip, five photo
+    // bubbles. Painted here rather than trusted to the still's crop, which
+    // kept leaving that side empty.
+    pinNamed(798, 178, named.uri, named.name, named.meta),
+    pinBubble(704, 112, bubbles[0]),
+    pinBubble(918, 96, bubbles[1]),
+    pinBubble(1072, 168, bubbles[2]),
+    pinBubble(948, 312, bubbles[3]),
+    pinBubble(1096, 398, bubbles[4]),
 
     // ODbL credit for the tiles under the still.
     text({
@@ -292,25 +379,39 @@ function card({ background }) {
       bottom: 30,
       fontSize: 14,
       letterSpacing: "0.04em",
-      color: "rgba(242,244,242,0.34)",
+      color: "rgba(28,25,21,0.38)",
     }, ATTRIBUTION),
   ]);
 }
 
 /* ------------------------------------------------------------------- main -- */
 
-const [syne, grotesk, background] = await Promise.all([
-  loadFont("Syne", 700),
-  loadFont("Space Grotesk", 500),
+const [nohemiThin, nohemiExtraLight, nohemiLight, nohemiRegular, nohemiMedium, nohemiExtraBold, background, namedUri, ...bubbleUris] = await Promise.all([
+  loadNohemi("Thin"),
+  loadNohemi("ExtraLight"),
+  loadNohemi("Light"),
+  loadNohemi("Regular"),
+  loadNohemi("Medium"),
+  loadNohemi("ExtraBold"),
   loadBackground(BACKGROUND),
+  loadPlace(NAMED_PIN.file),
+  ...BUBBLE_PINS.map(loadPlace),
 ]);
 
-const svg = await satori(card({ background }), {
+const svg = await satori(card({
+  background,
+  named: { uri: namedUri, name: NAMED_PIN.name, meta: NAMED_PIN.meta },
+  bubbles: bubbleUris,
+}), {
   width: WIDTH,
   height: HEIGHT,
   fonts: [
-    { name: "Syne", data: syne, weight: 700, style: "normal" },
-    { name: "Space Grotesk", data: grotesk, weight: 500, style: "normal" },
+    { name: "Nohemi", data: nohemiThin, weight: 100, style: "normal" },
+    { name: "Nohemi", data: nohemiExtraLight, weight: 200, style: "normal" },
+    { name: "Nohemi", data: nohemiLight, weight: 300, style: "normal" },
+    { name: "Nohemi", data: nohemiRegular, weight: 400, style: "normal" },
+    { name: "Nohemi", data: nohemiMedium, weight: 500, style: "normal" },
+    { name: "Nohemi", data: nohemiExtraBold, weight: 800, style: "normal" },
   ],
 });
 
@@ -322,7 +423,7 @@ const rendered = new Resvg(svg, { fitTo: { mode: "width", value: WIDTH } }).rend
 // byte count is a product requirement here and not a micro-optimisation.
 const png = encodePalettedPng(rendered.pixels, rendered.width, rendered.height, {
   colors: 256,
-  matte: [0x0f, 0x0f, 0x12],
+  matte: [0xf4, 0xf1, 0xea],
 });
 
 const out = path.join(LANDING, "og.png");

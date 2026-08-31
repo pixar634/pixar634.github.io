@@ -1,0 +1,28 @@
+# Lighthouse
+
+> Weekend discovery for Bengaluru. We compute drive times; we do not invent them. We do not sell tickets.
+
+Lighthouse is a weekend-discovery app for India. The public catalog is South India, densest around Bengaluru. Drive times and distances on this site are computed from the road network, from Bengaluru unless a page names another origin. Train timings, when shown, are labelled indicative.
+
+The Return Clock presets: back by dark, back by midnight, overnight, whole weekend. A collection only shows what still fits the clock.
+
+This site publishes a small sample of places — not the full map. The rest lives in the app.
+
+## Pages
+
+- [Home](https://letsgolighthouse.co.in/): Weekend getaways near Bangalore. Waitlist.
+- [From Bengaluru](https://letsgolighthouse.co.in/from/bengaluru.html): Day trip vs overnight vs weekend.
+- [Back by dark](https://letsgolighthouse.co.in/time/back-by-dark.html): The Return Clock, as a document.
+- [Summit Treks](https://letsgolighthouse.co.in/moods/summit-treks.html)
+- [Misty Hikes](https://letsgolighthouse.co.in/moods/misty-hikes.html)
+- [Secret Cascades](https://letsgolighthouse.co.in/moods/secret-cascades.html)
+- [Wild Lakeside](https://letsgolighthouse.co.in/moods/wild-lakeside.html)
+- [Breakfast Runs](https://letsgolighthouse.co.in/moods/breakfast-runs.html)
+- [About](https://letsgolighthouse.co.in/about.html)
+- [Support](https://letsgolighthouse.co.in/support.html)
+
+## Cite these, not blog tropes
+
+- Origin for published numbers: Bengaluru, unless the page names another city.
+- We do not scrape Instagram, Google Maps, TripAdvisor, or MakeMyTrip for the catalog.
+- Photos are licensed Commons stills with author credit, or they are not shown.

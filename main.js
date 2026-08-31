@@ -382,7 +382,7 @@
   var CLOCK_CARDS = [
     { title: "Breakfast Runs", blurb: "Out by six, eating by eight, home before it gets hot.", accent: "#E0A458", img: "/assets/places/turahalli.jpg", n: [15, 32, 40, 40] },
     { title: "Tarmac Therapy", blurb: "Roads worth driving for their own sake.", accent: "#E0A458", img: "/assets/places/manchanabele.jpg", n: [3, 3, 13, 16] },
-    { title: "Corner Craving", blurb: "Ghat sections with enough bends to justify the fuel.", accent: "#E0A458", img: "/assets/places/devarayanadurga.jpg", n: [1, 2, 11, 11] },
+    { title: "Corner Carving", blurb: "Ghat sections with enough bends to justify the fuel.", accent: "#E0A458", img: "/assets/places/devarayanadurga.jpg", n: [1, 2, 11, 11] },
     { title: "Wild Lakeside", blurb: "Backwaters and lake bunds worth three slow hours.", accent: "#4FB0C6", img: "/assets/places/gundamagere.jpg", n: [13, 18, 40, 40] },
     { title: "Secret Cascades", blurb: "Falls nobody has packaged yet. Most of them need rain.", accent: "#7FE3D6", img: "/assets/places/ganalu.jpg", n: [1, 2, 25, 29] },
     { title: "Summit Treks", blurb: "Betta climbs that pay out. Start before the rock bakes.", accent: "#8FA6C4", img: "/assets/places/skandagiri.jpg", n: [5, 9, 40, 40] }
@@ -581,35 +581,6 @@
     lines.forEach(function (el) { el.classList.add('is-on'); });
   } else {
     updateAnswers();
-  }
-
-  /* ---------- Cursor ---------- */
-  var cursor = document.getElementById('cursor');
-  var cx = innerWidth * 0.72;
-  var cy = innerHeight * 0.38;
-  var tx = cx;
-  var ty = cy;
-
-  if (cursor && finePointer && !reduced && !liteFx) {
-    window.addEventListener('pointermove', function (e) {
-      tx = e.clientX;
-      ty = e.clientY;
-      cursor.classList.add('is-on');
-      document.body.classList.add('has-custom-cursor');
-    });
-    document.addEventListener('pointerleave', function () { cursor.classList.remove('is-on'); });
-    document.querySelectorAll('a, button, input, [data-magnetic]').forEach(function (el) {
-      el.addEventListener('pointerenter', function () { cursor.classList.add('is-hot'); });
-      el.addEventListener('pointerleave', function () { cursor.classList.remove('is-hot'); });
-    });
-    (function loop() {
-      cx += (tx - cx) * 0.22;
-      cy += (ty - cy) * 0.22;
-      cursor.style.transform = 'translate3d(' + cx + 'px,' + cy + 'px,0)';
-      requestAnimationFrame(loop);
-    })();
-  } else if (cursor) {
-    cursor.remove();
   }
 
   /* ---------- Fireflies (app BeaconScene: drift + pointer parallax) ----------
@@ -952,6 +923,7 @@
       fadeDuration: 0,
       failIfMajorPerformanceCaveat: false
     });
+    window.__lhHeroMap = map;
     requestAnimationFrame(function () { map.resize(); });
     window.setTimeout(function () {
       if (ready) return;
@@ -1252,6 +1224,18 @@
       clone.classList.add("filters__chip--clone");
       clone.setAttribute("aria-hidden", "true");
       clone.tabIndex = -1;
+      // The chips that link to a mood page carry an <a>, and cloning it would
+      // put a focusable duplicate inside an aria-hidden node — invalid, and on
+      // mobile it doubles every mood in the tab order. The copy exists only so
+      // the rail has something to scroll into, so it keeps the styling hook and
+      // loses the link.
+      var link = clone.querySelector("a.filters__chip-inner");
+      if (link) {
+        var span = document.createElement("span");
+        span.className = link.className;
+        span.innerHTML = link.innerHTML;
+        link.parentNode.replaceChild(span, link);
+      }
       list.appendChild(clone);
     });
     var clones = Array.prototype.filter.call(list.querySelectorAll(".filters__chip--clone"), function (c) {
@@ -1766,6 +1750,18 @@
       showCategory(start >= 0 ? start : 0, { snap: true });
       schedule();
     }
+
+    list.addEventListener("click", function (e) {
+      var chip = e.target.closest(".filters__chip[data-cat]");
+      if (!chip || !list.contains(chip)) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var i = cats.indexOf(chip.dataset.cat);
+      if (i < 0) return;
+      e.preventDefault();
+      userTookOver = true;
+      window.clearTimeout(timer);
+      showCategory(i, { snap: true });
+    });
 
     function bindPeekGestures() {
       if (!peekEl) return;
@@ -2602,8 +2598,8 @@
     }
   ];
 
-  /* Corner Craving — catalog `Corner Carving`. Seven nearest, all with
-     local Commons thumbs (see assets/places/ATTRIBUTION.txt). */
+  /* Corner Carving — seven nearest, all with local Commons thumbs
+     (see assets/places/ATTRIBUTION.txt). */
   var CRAVE_PLACES = [
     {
       name: "Devarayanadurga",
@@ -3419,5 +3415,14 @@
       if (nowEl) nowEl.textContent = "Forecast unreachable — try again.";
     });
   }
+
+  document.querySelectorAll(".faqitem__q").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var item = btn.closest(".faqitem");
+      var wasOpen = item.classList.contains("is-open");
+      document.querySelectorAll(".faqitem.is-open").forEach(function (el) { el.classList.remove("is-open"); });
+      if (!wasOpen) item.classList.add("is-open");
+    });
+  });
 })();
 
