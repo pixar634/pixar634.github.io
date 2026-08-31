@@ -11,13 +11,14 @@ This site publishes a small sample of places — not the full map. The rest live
 ## Pages
 
 - [Home](https://letsgolighthouse.co.in/): Weekend getaways near Bangalore. Waitlist.
-- [From Bengaluru](https://letsgolighthouse.co.in/from/bengaluru.html): Day trip vs overnight vs weekend.
-- [Back by dark](https://letsgolighthouse.co.in/time/back-by-dark.html): The Return Clock, as a document.
-- [Summit Treks](https://letsgolighthouse.co.in/moods/summit-treks.html)
-- [Misty Hikes](https://letsgolighthouse.co.in/moods/misty-hikes.html)
-- [Secret Cascades](https://letsgolighthouse.co.in/moods/secret-cascades.html)
-- [Wild Lakeside](https://letsgolighthouse.co.in/moods/wild-lakeside.html)
-- [Breakfast Runs](https://letsgolighthouse.co.in/moods/breakfast-runs.html)
+- [From Bengaluru](https://letsgolighthouse.co.in/from/bengaluru.html): Day trips, overnight, or the weekend from Bangalore.
+- [One day trips](https://letsgolighthouse.co.in/time/back-by-dark.html): Back before dark. The Return Clock, as a document.
+- [Treks near Bangalore](https://letsgolighthouse.co.in/moods/summit-treks.html)
+- [Ghat hikes](https://letsgolighthouse.co.in/moods/misty-hikes.html)
+- [Waterfalls near Bangalore](https://letsgolighthouse.co.in/moods/secret-cascades.html)
+- [Lakes near Bangalore](https://letsgolighthouse.co.in/moods/wild-lakeside.html)
+- [Early morning drives](https://letsgolighthouse.co.in/moods/breakfast-runs.html)
+- [Ghat roads near Bangalore](https://letsgolighthouse.co.in/moods/ghat-roads.html)
 - [About](https://letsgolighthouse.co.in/about.html)
 - [Support](https://letsgolighthouse.co.in/support.html)
 

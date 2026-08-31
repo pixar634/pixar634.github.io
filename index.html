@@ -561,13 +561,14 @@
             "@id": "https://letsgolighthouse.co.in/#moods",
             "name": "Weekend moods from Bengaluru",
             "itemListOrder": "https://schema.org/ItemListUnordered",
-            "numberOfItems": 5,
+            "numberOfItems": 6,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "name": "Summit Treks", "url": "https://letsgolighthouse.co.in/moods/summit-treks.html" },
               { "@type": "ListItem", "position": 2, "name": "Misty Hikes", "url": "https://letsgolighthouse.co.in/moods/misty-hikes.html" },
               { "@type": "ListItem", "position": 3, "name": "Secret Cascades", "url": "https://letsgolighthouse.co.in/moods/secret-cascades.html" },
               { "@type": "ListItem", "position": 4, "name": "Wild Lakeside", "url": "https://letsgolighthouse.co.in/moods/wild-lakeside.html" },
-              { "@type": "ListItem", "position": 5, "name": "Breakfast Runs", "url": "https://letsgolighthouse.co.in/moods/breakfast-runs.html" }
+              { "@type": "ListItem", "position": 5, "name": "Breakfast Runs", "url": "https://letsgolighthouse.co.in/moods/breakfast-runs.html" },
+              { "@type": "ListItem", "position": 6, "name": "Ghat roads", "url": "https://letsgolighthouse.co.in/moods/ghat-roads.html" }
             ]
           },
           {
@@ -595,7 +596,7 @@
                 "name": "Why isn't every place listed on this site?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "This site publishes a small sample — five moods, five places — so you can see the kind of answer the map gives. The rest of the catalog stays in the app. We do not publish the tourist-circuit roster."
+                  "text": "This site publishes a small sample — six moods, six places — so you can see the kind of answer the map gives. The rest of the catalog stays in the app. We do not publish the tourist-circuit roster."
                 }
               },
               {
@@ -604,6 +605,14 @@
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "Yes. Every place in the app shows train, bus, car, and bike options. Train timings are labelled indicative. Always double-check on IRCTC before you book."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are there ghat roads or road trips from Bangalore?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Eleven corner-carving roads and sixteen tarmac-therapy stretches sit in the catalog. This site publishes one: Kinnakorai, 347 km, overnight. Same-day ghats exist in the app; we do not list them here."
                 }
               },
               {
@@ -776,7 +785,7 @@
           <li class="filters__chip" tabindex="0" data-cat="Coastal Drives" aria-label="Coastal Drives, 12 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coastal Drives</span><span class="filters__chip-count">12 places</span></span></li>
           <li class="filters__chip" data-cat="Misty Hikes"><a class="filters__chip-inner" href="/moods/misty-hikes.html"><span class="filters__chip-name">Misty Hikes</span><span class="filters__chip-count">12 places</span></a></li>
           <li class="filters__chip" tabindex="0" data-cat="Tarmac Therapy" aria-label="Tarmac Therapy, 16 places"><span class="filters__chip-inner"><span class="filters__chip-name">Tarmac Therapy</span><span class="filters__chip-count">16 places</span></span></li>
-          <li class="filters__chip" tabindex="0" data-cat="Corner Carving" aria-label="Corner Carving, 11 places"><span class="filters__chip-inner"><span class="filters__chip-name">Corner Carving</span><span class="filters__chip-count">11 places</span></span></li>
+          <li class="filters__chip" data-cat="Corner Carving"><a class="filters__chip-inner" href="/moods/ghat-roads.html"><span class="filters__chip-name">Corner Carving</span><span class="filters__chip-count">11 places</span></a></li>
           <li class="filters__chip" tabindex="0" data-cat="Coffee Country" aria-label="Coffee Country, 4 places"><span class="filters__chip-inner"><span class="filters__chip-name">Coffee Country</span><span class="filters__chip-count">4 places</span></span></li>
           <li class="filters__chip" tabindex="0" data-cat="Hidden Forest Camps" aria-label="Hidden Forest Camps, 5 places"><span class="filters__chip-inner"><span class="filters__chip-name">Hidden Forest Camps</span><span class="filters__chip-count">5 places</span></span></li>
           <li class="filters__chip filters__chip--more"><a class="filters__chip-inner" href="/from/bengaluru.html"><span class="filters__chip-name">From Bengaluru</span></a></li>
@@ -1329,11 +1338,15 @@
           </div>
           <div class="faqitem">
             <button class="faqitem__q" type="button">Why isn't every place listed on this site?<span class="faqitem__chevron">+</span></button>
-            <div class="faqitem__a"><p>This site publishes a small sample — five moods, five places — so you can see the kind of answer the map gives. The rest of the catalog stays in the app. We do not publish the tourist-circuit roster.</p></div>
+            <div class="faqitem__a"><p>This site publishes a small sample — six moods, six places — so you can see the kind of answer the map gives. The rest of the catalog stays in the app. We do not publish the tourist-circuit roster.</p></div>
           </div>
           <div class="faqitem">
             <button class="faqitem__q" type="button">Can I use Lighthouse without a car?<span class="faqitem__chevron">+</span></button>
             <div class="faqitem__a"><p>Yes. Every place in the app shows train, bus, car, and bike options. Train timings are labelled indicative. Always double-check on IRCTC before you book.</p></div>
+          </div>
+          <div class="faqitem">
+            <button class="faqitem__q" type="button">Are there ghat roads or road trips from Bangalore?<span class="faqitem__chevron">+</span></button>
+            <div class="faqitem__a"><p>Eleven corner-carving roads and sixteen tarmac-therapy stretches sit in the catalog. This site publishes one: <a href="/moods/ghat-roads.html">Kinnakorai, 347 km, overnight</a>. Same-day ghats exist in the app; we do not list them here.</p></div>
           </div>
           <div class="faqitem">
             <button class="faqitem__q" type="button">Do you sell tickets or bookings?<span class="faqitem__chevron">+</span></button>
@@ -1420,6 +1433,7 @@
             <a class="footer__link" href="#vote" data-scrollto>Trip plans &amp; voting</a>
             <a class="footer__link" href="/from/bengaluru.html">From Bengaluru</a>
             <a class="footer__link" href="/moods/summit-treks.html">Summit Treks</a>
+            <a class="footer__link" href="/moods/ghat-roads.html">Ghat roads</a>
           </nav>
 
           <nav class="footer__col" aria-labelledby="fcol-company">

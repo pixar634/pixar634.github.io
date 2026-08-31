@@ -1,6 +1,6 @@
 # One-shot emitter for the public guide cluster. Run from landing/:
 #   python scripts/emit-guide-pages.py
-# Not a catalog dump — five places, five moods, two hubs.
+# Not a catalog dump — six places, six moods, two hubs.
 
 import json
 import urllib.parse
@@ -28,15 +28,15 @@ HEAD = """<!doctype html>
   <meta property="og:title" content="@@OG_TITLE@@" />
   <meta property="og:description" content="@@OG_DESCRIPTION@@" />
   <meta property="og:url" content="https://letsgolighthouse.co.in/@@PATH@@" />
-  <meta property="og:image" content="https://letsgolighthouse.co.in/og.png?v=6" />
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="A cream map of the country around Bangalore with weekend places pinned across it, under the words: Your next road trip is a swipe away." />
+  <meta property="og:image" content="@@OG_IMAGE@@" />
+  <meta property="og:image:type" content="@@OG_IMAGE_TYPE@@" />
+  <meta property="og:image:width" content="@@OG_IMAGE_W@@" />
+  <meta property="og:image:height" content="@@OG_IMAGE_H@@" />
+  <meta property="og:image:alt" content="@@OG_IMAGE_ALT@@" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="@@OG_TITLE@@" />
   <meta name="twitter:description" content="@@OG_DESCRIPTION@@" />
-  <meta name="twitter:image" content="https://letsgolighthouse.co.in/og.png?v=6" />
+  <meta name="twitter:image" content="@@OG_IMAGE@@" />
   <script type="application/ld+json">
 @@LD@@
   </script>
@@ -104,6 +104,7 @@ FOOT = """
         <a class="footer__link" href="/moods/secret-cascades.html">Secret Cascades</a>
         <a class="footer__link" href="/moods/wild-lakeside.html">Wild Lakeside</a>
         <a class="footer__link" href="/moods/breakfast-runs.html">Breakfast Runs</a>
+        <a class="footer__link" href="/moods/ghat-roads.html">Ghat roads</a>
       </nav>
       <nav class="footer__col" aria-labelledby="g-co">
         <p class="utility footer__coltitle" id="g-co">COMPANY</p>
@@ -165,6 +166,18 @@ def wa_href(meta):
     return "https://wa.me/?text=" + urllib.parse.quote(text, safe="")
 
 
+BRAND_OG = {
+    "og_image": "https://letsgolighthouse.co.in/og.png?v=6",
+    "og_image_type": "image/png",
+    "og_image_w": "1200",
+    "og_image_h": "630",
+    "og_image_alt": (
+        "A cream map of the country around Bangalore with weekend places "
+        "pinned across it, under the words: Your next road trip is a swipe away."
+    ),
+}
+
+
 def page(meta, body):
     subs = {
         "@@TITLE@@": meta["title"],
@@ -172,6 +185,11 @@ def page(meta, body):
         "@@PATH@@": meta["path"],
         "@@OG_TITLE@@": meta["og_title"],
         "@@OG_DESCRIPTION@@": meta["og_description"],
+        "@@OG_IMAGE@@": meta.get("og_image", BRAND_OG["og_image"]),
+        "@@OG_IMAGE_TYPE@@": meta.get("og_image_type", BRAND_OG["og_image_type"]),
+        "@@OG_IMAGE_W@@": meta.get("og_image_w", BRAND_OG["og_image_w"]),
+        "@@OG_IMAGE_H@@": meta.get("og_image_h", BRAND_OG["og_image_h"]),
+        "@@OG_IMAGE_ALT@@": meta.get("og_image_alt", BRAND_OG["og_image_alt"]),
         "@@NAV@@": meta["nav_label"],
         "@@LD@@": meta["ld"],
         "@@CSS@@": CSS,
@@ -256,6 +274,21 @@ def mood_ld(m):
             },
         ],
     }
+    faqs = m.get("faqs") or []
+    if faqs:
+        graph["@graph"].append(
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q,
+                        "acceptedAnswer": {"@type": "Answer", "text": a},
+                    }
+                    for q, a in faqs
+                ],
+            }
+        )
     return json.dumps(graph, ensure_ascii=False, indent=2)
 
 
@@ -341,7 +374,7 @@ PLACES = [
         mood_name="Secret Cascades",
         mood_path="moods/secret-cascades.html",
         title="Ganalu Falls From Bangalore — 98 km, ~1h 48m",
-        description="A Shimsha cascade a few kilometres before Shivanasamudra. 98 km from Bengaluru, computed drive about 1 hour 48 minutes. Aggressive in the monsoon. Uncommercialized.",
+        description="A waterfall near Bangalore that still needs rain — Ganalu on the Shimsha, 98 km, about 1 hour 48 minutes from Bengaluru. Aggressive in the monsoon. Uncommercialized.",
         og_title="Ganalu Falls — Lighthouse",
         og_description="98 km from Bengaluru. Needs rain. Not a packaged fall.",
         sub="On the Shimsha, a few kilometres before Shivanasamudra. Raw in the monsoon. Not a ticketed stop.",
@@ -383,7 +416,7 @@ PLACES = [
         mood_name="Wild Lakeside",
         mood_path="moods/wild-lakeside.html",
         title="Gundamagere Lake From Bangalore — 60 km, ~1h",
-        description="A quieter reservoir north of Doddaballapur. About 60 km and 1 hour from Bengaluru. Dirt last stretch, parking on the bund, no stalls. Carry supplies from Doddaballapur.",
+        description="A lake near Bangalore for a slow weekend hour — Gundamagere, 60 km and about 1 hour from Bengaluru. Dirt last stretch, parking on the bund, no stalls. Carry supplies from Doddaballapur.",
         og_title="Gundamagere Lake — Lighthouse",
         og_description="60 km from Bengaluru. Park on the bund. Bring your own food.",
         sub="North of Doddaballapur. Park on the bund. No shops. Thorns on the last track.",
@@ -426,7 +459,7 @@ PLACES = [
         mood_name="Summit Treks",
         mood_path="moods/summit-treks.html",
         title="Rayakottai Fort From Bangalore — 76 km, ~1h 12m",
-        description="An 18th-century hill fort on the interior road toward Salem. About 76 km and 1 hour 12 minutes from Bengaluru. Exposed granite, start before the sun is high. No entry fee.",
+        description="A same-day trek from Bangalore that is not Nandi — Rayakottai Fort, 76 km, about 1 hour 12 minutes. Exposed granite, start before the sun is high. No entry fee.",
         og_title="Rayakottai Fort — Lighthouse",
         og_description="76 km from Bengaluru. Start before the rock bakes. No ticket.",
         sub="Granite steps, ruined ramparts, the Bangalore–Salem line in the plains. No tree cover. Start early.",
@@ -469,7 +502,7 @@ PLACES = [
         mood_name="Misty Hikes",
         mood_path="moods/misty-hikes.html",
         title="Kakkadampoyil Ghat From Bangalore — 318 km, ~4h 27m",
-        description="Tight Western Ghats hairpins above Nilambur. About 318 km and 4 hours 27 minutes from Bengaluru. Afternoon fog can drop visibility to a few metres. Overnight, not a day trip.",
+        description="A ghat road from Bangalore that is not a day trip — Kakkadampoyil, 318 km, about 4 hours 27 minutes. Afternoon fog can drop visibility to a few metres. Overnight.",
         og_title="Kakkadampoyil Ghat — Lighthouse",
         og_description="318 km from Bengaluru. The fog is the point. Not a same-day loop.",
         sub="The road is the place. Tight hairpins, year-round canopy, fog that arrives without a warning.",
@@ -512,7 +545,7 @@ PLACES = [
         mood_name="Breakfast Runs",
         mood_path="moods/breakfast-runs.html",
         title="Muthathi From Bangalore — 92 km, ~1h 41m",
-        description="Kaveri inside Cauvery Wildlife Sanctuary. About 92 km and 1 hour 41 minutes from Bengaluru. The forest tarmac is the reason to go. Out early, home before it gets hot.",
+        description="An early morning drive from Bangalore — Muthathi on the Kaveri, 92 km, about 1 hour 41 minutes. The forest tarmac is the reason to go. Out early, home before it gets hot.",
         og_title="Muthathi River Bank — Lighthouse",
         og_description="92 km from Bengaluru. Forest road, Kaveri bank. Leave early.",
         sub="The Kaveri cutting through the sanctuary. The road in is a ribbon of tarmac through forest.",
@@ -545,10 +578,68 @@ PLACES = [
             ),
         ],
     ),
+    dict(
+        path="places/kinnakorai.html",
+        name="Kinnakorai",
+        h1="Kinnakorai",
+        eyebrow="GHAT ROADS · FROM BENGALURU",
+        nav_label="KINNAKORAI",
+        mood_name="Ghat roads",
+        mood_path="moods/ghat-roads.html",
+        title="Kinnakorai From Bangalore — 347 km, ~5h",
+        description="A ghat road from Bangalore that is not a same-day loop — Kinnakorai, past Manjoor, 347 km, about 5 hours. Narrow tarmac, tea estates, no network after Manjoor. Overnight.",
+        og_title="Kinnakorai — Lighthouse",
+        og_description="347 km from Bengaluru. The tarmac ends at the village. Not a day trip.",
+        sub="Past Manjoor, last village before the Kerala border. The road is the reason. The isolation is the catch.",
+        img="/assets/places/kinnakorai.jpg",
+        alt="Kinnakorai from Manjur, Nilgiris tea-estate road",
+        credit="L. Shyamal / Wikimedia Commons / CC BY-SA 3.0",
+        commons="https://commons.wikimedia.org/wiki/File:Kinnakorai_from_Manjur.jpg",
+        lat=11.222806,
+        lon=76.664879,
+        city="Kinnakorai",
+        state="Tamil Nadu",
+        drive="5h",
+        km="347 km",
+        on_site="overnight",
+        drive_copy="From Bengaluru the computed drive is about 5 hours and 347 kilometres by car — 298 minutes on the road network, not a straight-line guess. Lovedale is the nearest station on record; that timing is indicative. Typical time on site in the catalog is a full overnight. If something mechanical fails after Manjoor, help is hours away.",
+        notes=[
+            "Parking is limited to the side of the narrow village road",
+            "Carry your own food and water as options are minimal",
+            "Phone network is non-existent after leaving Manjoor",
+            "Road is well-paved but extremely narrow with blind corners",
+        ],
+        clock_copy="This is not a same-day trip. Set the Return Clock to overnight, or do not go. Back by dark from Bengaluru will shed this pin. The page says so because the kilometres do.",
+        faqs=[
+            (
+                "How far is Kinnakorai from Bangalore?",
+                "About 347 km and about 5 hours driving from Bengaluru, computed from the road network. Not a straight-line guess.",
+            ),
+            (
+                "Can I do Kinnakorai as a day trip from Bangalore?",
+                "No. The catalog's typical time on site is overnight. After Manjoor there is no phone network. Misjudge daylight and the ride back is long and slow.",
+            ),
+        ],
+    ),
 ]
 
 
 def mood_body(m, proof):
+    faqs = m.get("faqs") or []
+    faq_html = ""
+    if faqs:
+        items = "".join(
+            f"""      <div class="faqitem">
+        <button class="faqitem__q" type="button">{q}<span class="faqitem__chevron">+</span></button>
+        <div class="faqitem__a"><p>{a}</p></div>
+      </div>
+"""
+            for q, a in faqs
+        )
+        faq_html = f"""    <div class="faqlist">
+      <p class="utility faqcat">FROM BENGALURU</p>
+{items}    </div>
+"""
     return f"""    <section class="docpage__hero">
 {crumbs(("Home", "/"), ("From Bengaluru", "/from/bengaluru.html"), (m["name"], None))}
       <p class="utility docpage__eyebrow">{m['eyebrow']}</p>
@@ -572,7 +663,7 @@ def mood_body(m, proof):
       <p>{m['rest']}</p>
       <p><a href="/time/back-by-dark.html">Clock out when you need to be home.</a> Same-day or overnight is a setting, not a blog radius.</p>
     </div>
-"""
+{faq_html}"""
 
 
 MOODS = [
@@ -582,14 +673,24 @@ MOODS = [
         h1="Summit treks<br /><em>from Bengaluru.</em>",
         eyebrow="43 IN THE CATALOG · ONE ON THIS PAGE",
         nav_label="SUMMIT TREKS",
-        title="Summit Treks Near Bangalore — Bettas, Drive Times",
-        description="Betta climbs that pay out. Start before the rock bakes. One published climb from Bengaluru — Rayakottai Fort, 76 km. The rest of the 43 stays on the map.",
-        og_title="Summit Treks from Bengaluru — Lighthouse",
-        og_description="Start before the rock bakes. One climb published. The rest is on the map.",
+        title="Treks Near Bangalore — Same-Day Bettas, Drive Times",
+        description="Treks near Bangalore you can still finish the same day. One published climb from Bengaluru — Rayakottai Fort, 76 km. The rest of the 43 stays on the map.",
+        og_title="Treks near Bangalore — Lighthouse",
+        og_description="Same-day bettas. One climb published. The rest is on the map.",
         standfirst="Betta climbs that pay out. Start before the rock bakes.",
         lede="From Bengaluru, a summit is a Saturday if the Return Clock still has you home by dark — and a waste of granite if you start at noon. We publish one climb here, not the tourist-circuit roster and not the other forty-two in the collection.",
         rest="The map holds the set. This page holds the kind of answer: computed kilometres, an exposed path, a leave-early note. Join the waitlist for the rest.",
         proof_key="rayakottai",
+        faqs=[
+            (
+                "Are there treks near Bangalore I can do in a day?",
+                "Yes, if the Return Clock still has you home by dark. We publish one: Rayakottai Fort, 76 km, about 1 hour 12 minutes from Bengaluru. The other forty-two summit treks stay on the map.",
+            ),
+            (
+                "Is Skandagiri on this page?",
+                "No. Skandagiri is a demo pin in the phone replica. This site does not publish the tourist-circuit roster.",
+            ),
+        ],
     ),
     dict(
         path="moods/misty-hikes.html",
@@ -597,14 +698,24 @@ MOODS = [
         h1="Misty hikes<br /><em>from Bengaluru.</em>",
         eyebrow="12 IN THE CATALOG · ONE ON THIS PAGE",
         nav_label="MISTY HIKES",
-        title="Misty Hikes Near Bangalore — Fog, Ghats, Drive Times",
-        description="Better in bad weather. Low visibility is the point. One published ghat from Bengaluru — Kakkadampoyil, 318 km, overnight. The rest of the 12 stays on the map.",
-        og_title="Misty Hikes from Bengaluru — Lighthouse",
+        title="Ghat Hikes Near Bangalore — Better When It's Foggy",
+        description="Ghat hikes near Bangalore that get better when the weather turns. One published road from Bengaluru — Kakkadampoyil, 318 km, overnight. The rest of the 12 stays on the map.",
+        og_title="Ghat hikes near Bangalore — Lighthouse",
         og_description="Low visibility is the point. One ghat published. The rest is on the map.",
         standfirst="Better in bad weather. Low visibility is the point.",
         lede="Mist is not a filter. It is afternoon fog on a ghat, a canopy that stays wet, a clock that has to admit overnight. We publish one of those roads from Bengaluru. Not Mullayanagiri. Not a listicle of twelve names.",
         rest="Twelve misty hikes sit in the catalog. This page names one. The Return Clock decides whether the rest still fit your Saturday.",
         proof_key="kakkadampoyil",
+        faqs=[
+            (
+                "Are there misty hikes near Bangalore?",
+                "Twelve in the catalog. This page publishes one: Kakkadampoyil Ghat, 318 km from Bengaluru, overnight. Mullayanagiri is not on this site.",
+            ),
+            (
+                "Can I do a misty hike as a day trip from Bangalore?",
+                "Some, if the clock still fits. The one we publish here does not — Kakkadampoyil is overnight, and the page says so.",
+            ),
+        ],
     ),
     dict(
         path="moods/secret-cascades.html",
@@ -612,14 +723,24 @@ MOODS = [
         h1="Secret cascades<br /><em>from Bengaluru.</em>",
         eyebrow="29 IN THE CATALOG · ONE ON THIS PAGE",
         nav_label="SECRET CASCADES",
-        title="Secret Cascades Near Bangalore — Falls That Need Rain",
-        description="Falls nobody has packaged yet. Most of them need rain. One published cascade from Bengaluru — Ganalu Falls, 98 km. The rest of the 29 stays on the map.",
-        og_title="Secret Cascades from Bengaluru — Lighthouse",
+        title="Waterfalls Near Bangalore — Ones That Still Need Rain",
+        description="Waterfalls near Bangalore that still need rain — not a packaged fall. One published cascade from Bengaluru — Ganalu Falls, 98 km. The rest of the 29 stays on the map.",
+        og_title="Waterfalls near Bangalore — Lighthouse",
         og_description="Most of them need rain. One fall published. The rest is on the map.",
         standfirst="Falls nobody has packaged yet. Most of them need rain.",
         lede="A cascade without rain is a rock. The cards say so. We publish one Shimsha fall from Bengaluru — not twenty-nine names, and not the ticketed circus at the next river bend.",
         rest="Twenty-nine secret cascades in the catalog. One on this site. Weather on a place comes from Open-Meteo, in the app — this page will not pretend a live chart.",
         proof_key="ganalu",
+        faqs=[
+            (
+                "Are there unexplored waterfalls near Bangalore?",
+                "The catalog has twenty-nine secret cascades. This page publishes one: Ganalu Falls, 98 km from Bengaluru, aggressive in the monsoon. We do not list the rest by name.",
+            ),
+            (
+                "Can I do a waterfall as a day trip from Bangalore?",
+                "Ganalu still fits back-by-dark if you leave on time. Typical time on site is six hours. It needs rain — that is when it runs.",
+            ),
+        ],
     ),
     dict(
         path="moods/wild-lakeside.html",
@@ -627,14 +748,24 @@ MOODS = [
         h1="Wild lakeside<br /><em>from Bengaluru.</em>",
         eyebrow="67 IN THE CATALOG · ONE ON THIS PAGE",
         nav_label="WILD LAKESIDE",
-        title="Wild Lakeside Near Bangalore — Bunds Worth Slow Hours",
-        description="Backwaters and lake bunds worth three slow hours. One published lake from Bengaluru — Gundamagere, 60 km. The rest of the 67 stays on the map.",
-        og_title="Wild Lakeside from Bengaluru — Lighthouse",
+        title="Lakes Near Bangalore — Bunds, Not Resorts",
+        description="Lakes near Bangalore for a weekend hour on the bund — not a resort. One published lake from Bengaluru — Gundamagere, 60 km. The rest of the 67 stays on the map.",
+        og_title="Lakes near Bangalore — Lighthouse",
         og_description="Park on the bund. One lake published. The rest is on the map.",
         standfirst="Backwaters and lake bunds worth three slow hours.",
         lede="A lakeside from Bengaluru is a car picnic if the last stretch is honest and the bund is empty. We publish one reservoir north of Doddaballapur. Not the crowded Chikkaballapur circuit.",
         rest="Sixty-seven wild lakesides in the catalog. This page is a sample, not a directory. The clock still has to fit the drive home.",
         proof_key="gundamagere",
+        faqs=[
+            (
+                "Are there lakes near Bangalore for a weekend?",
+                "Sixty-seven wild lakesides in the catalog. This page publishes one: Gundamagere Lake, 60 km from Bengaluru. Park on the bund. Bring food. The rest stays on the map.",
+            ),
+            (
+                "Is Gundamagere a same-day trip from Bangalore?",
+                "Yes. About 1 hour driving, 60 km. The last stretch is dirt. There are no stalls.",
+            ),
+        ],
     ),
     dict(
         path="moods/breakfast-runs.html",
@@ -642,14 +773,49 @@ MOODS = [
         h1="Breakfast runs<br /><em>from Bengaluru.</em>",
         eyebrow="50 IN THE CATALOG · ONE ON THIS PAGE",
         nav_label="BREAKFAST RUNS",
-        title="Breakfast Runs Near Bangalore — Out by Six, Home Before Heat",
-        description="Out by six, eating by eight, home before it gets hot. One published morning from Bengaluru — Muthathi on the Kaveri, 92 km. The rest of the 50 stays on the map.",
-        og_title="Breakfast Runs from Bengaluru — Lighthouse",
+        title="Early Morning Drives From Bangalore — Back Before Heat",
+        description="Early morning drives from Bangalore — out by six, home before heat. One published morning from Bengaluru — Muthathi on the Kaveri, 92 km. The rest of the 50 stays on the map.",
+        og_title="Early morning drives from Bangalore — Lighthouse",
         og_description="Out by six. One morning published. The rest is on the map.",
         standfirst="Out by six, eating by eight, home before it gets hot.",
         lede="A breakfast run is a clock problem, not a cafe list. We publish one Kaveri bank you can reach before the sanctuary road bakes. Not fifty names. Not the city forest everyone already rides.",
         rest="Fifty breakfast runs in the catalog. One on this site. Set back-by-dark and leave at dawn — or do not go.",
         proof_key="muthathi",
+        faqs=[
+            (
+                "Are there early morning drives from Bangalore?",
+                "Fifty breakfast runs in the catalog. This page publishes one: Muthathi, 92 km, about 1 hour 41 minutes. Out by six. Turahalli is not the story here.",
+            ),
+            (
+                "Can I be back before it gets hot?",
+                "Yes, if you leave at dawn. Back by dark is easy from Muthathi. A noon start is not a breakfast run.",
+            ),
+        ],
+    ),
+    dict(
+        path="moods/ghat-roads.html",
+        name="Ghat roads",
+        h1="Ghat roads<br /><em>from Bengaluru.</em>",
+        eyebrow="11 CORNER CARVING · 16 TARMAC THERAPY · ONE ON THIS PAGE",
+        nav_label="GHAT ROADS",
+        title="Ghat Roads Near Bangalore — Hairpins, Not a Circuit",
+        description="Ghat roads near Bangalore worth the fuel — hairpins, not a tourist loop. One published drive from Bengaluru — Kinnakorai, 347 km, overnight. The rest stays on the map.",
+        og_title="Ghat roads near Bangalore — Lighthouse",
+        og_description="The road is the point. One ghat published. The rest is on the map.",
+        standfirst="Ghat sections with enough bends to justify the fuel.",
+        lede="A road trip from Bengaluru is a tarmac problem, not a destination list. We publish one Nilgiri-edge village you reach after Manjoor — narrow, blind corners, no network. Not eleven names. Not the Yelagiri loop everyone already rides.",
+        rest="Eleven corner-carving roads and sixteen tarmac-therapy stretches sit in the catalog. This page names one. Same-day ghats exist; this one does not fit back-by-dark, and the kilometres say so.",
+        proof_key="kinnakorai",
+        faqs=[
+            (
+                "Are there ghat roads near Bangalore?",
+                "Eleven corner-carving roads and sixteen tarmac-therapy stretches in the catalog. This page publishes one: Kinnakorai, 347 km, about 5 hours from Bengaluru. Overnight. We do not list the rest.",
+            ),
+            (
+                "Can I do a ghat drive as a day trip from Bangalore?",
+                "Some, if the Return Clock still fits. The one we publish here cannot — Kinnakorai is overnight. Kakkadampoyil, on the misty-hikes page, is the same kind of honesty.",
+            ),
+        ],
     ),
 ]
 
@@ -689,6 +855,13 @@ PROOF = {
         alt="Muthathi River Bank",
         blurb="92 km · 1h 41m from Bengaluru. Forest tarmac, Kaveri bank. Leave early.",
     ),
+    "kinnakorai": dict(
+        path="places/kinnakorai.html",
+        name="Kinnakorai",
+        img="/assets/places/kinnakorai.jpg",
+        alt="Kinnakorai from Manjur",
+        blurb="347 km · ~5h from Bengaluru. Overnight. Narrow tarmac. No network after Manjoor.",
+    ),
 }
 
 
@@ -703,6 +876,11 @@ def main():
             nav_label=p["nav_label"],
             ld=place_ld(p),
             share=f"{p['name']} — {p['km']} from Bengaluru, about {p['drive']} driving.",
+            og_image=f"https://letsgolighthouse.co.in{hero_of(p['img'])}",
+            og_image_type="image/jpeg",
+            og_image_w="1200",
+            og_image_h="800",
+            og_image_alt=p["alt"],
         )
         write(p["path"], page(meta, place_body(p)))
 
@@ -720,10 +898,10 @@ def main():
         write(m["path"], page(meta, mood_body(m, PROOF[m["proof_key"]])))
 
     beng = dict(
-        title="Weekend Getaways From Bengaluru — Day, Overnight, Weekend",
-        description="Day trips, overnight, or the whole weekend from Bengaluru. The Return Clock decides what still fits. Five moods, five published places. The rest is on the map.",
+        title="Day Trips, Overnight & Weekend Getaways From Bangalore",
+        description="Day trips, overnight, or the whole weekend from Bangalore. The Return Clock decides what still fits — about 100 km for a same-day clock. Six moods, six published places. The rest is on the map.",
         path="from/bengaluru.html",
-        og_title="From Bengaluru — Lighthouse",
+        og_title="Day trips from Bangalore — Lighthouse",
         og_description="Day, overnight, or the weekend. The clock decides. Not a top-ten list.",
         nav_label="FROM BENGALURU",
         name="From Bengaluru",
@@ -741,15 +919,16 @@ def main():
       <h2>Day trip</h2>
       <p>Back by dark — or by a time you set. The product’s free day-trip band is about 100 km. <a href="/places/gundamagere-lake.html">Gundamagere</a>, <a href="/places/rayakottai-fort.html">Rayakottai</a>, <a href="/places/ganalu-falls.html">Ganalu</a>, <a href="/places/muthathi.html">Muthathi</a> all still fit that if you leave on time.</p>
       <h2>Overnight</h2>
-      <p>Past the same-day window, still inside a weekend. <a href="/places/kakkadampoyil-ghat.html">Kakkadampoyil Ghat</a> is the published example: 318 km, fog in the afternoon, not a loop you squeeze before sunset.</p>
+      <p>Past the same-day window, still inside a weekend. <a href="/places/kakkadampoyil-ghat.html">Kakkadampoyil Ghat</a> and <a href="/places/kinnakorai.html">Kinnakorai</a> are the published examples: 318 km and 347 km. Fog, narrow tarmac, not a loop you squeeze before sunset.</p>
       <h2>Moods, not a roster</h2>
-      <p>Five collections, one proof place each. We do not publish the tourist circuit, and we do not publish the rest of the catalog.</p>
+      <p>Six collections, one proof place each. We do not publish the tourist circuit, and we do not publish the rest of the catalog.</p>
       <ul>
-        <li><a href="/moods/summit-treks.html">Summit Treks</a></li>
-        <li><a href="/moods/misty-hikes.html">Misty Hikes</a></li>
-        <li><a href="/moods/secret-cascades.html">Secret Cascades</a></li>
-        <li><a href="/moods/wild-lakeside.html">Wild Lakeside</a></li>
-        <li><a href="/moods/breakfast-runs.html">Breakfast Runs</a></li>
+        <li><a href="/moods/summit-treks.html">Summit Treks</a> — treks near Bangalore</li>
+        <li><a href="/moods/misty-hikes.html">Misty Hikes</a> — ghat hikes, better in fog</li>
+        <li><a href="/moods/secret-cascades.html">Secret Cascades</a> — waterfalls that still need rain</li>
+        <li><a href="/moods/wild-lakeside.html">Wild Lakeside</a> — lakes, bunds, not resorts</li>
+        <li><a href="/moods/breakfast-runs.html">Breakfast Runs</a> — early morning drives</li>
+        <li><a href="/moods/ghat-roads.html">Ghat roads</a> — hairpins, not a circuit</li>
       </ul>
       <p><a href="/time/back-by-dark.html">Read the Return Clock as a document.</a></p>
     </div>
@@ -757,11 +936,11 @@ def main():
     write(beng["path"], page(beng, beng_body))
 
     clock = dict(
-        title="Back by Dark From Bangalore — The Return Clock",
-        description="A same-day trip from Bengaluru is whatever still gets you home before dark. Drive times are computed, not guessed. Set the clock; the map sheds what no longer fits.",
+        title="One Day Trips From Bangalore — Back Before Dark",
+        description="One day trips from Bangalore: whatever still gets you home before dark. Drive times are computed, not guessed. Four published places still fit; one does not, and that page says so.",
         path="time/back-by-dark.html",
-        og_title="Back by dark — Lighthouse",
-        og_description="The Return Clock, written down. Same-day from Bengaluru is a sunset, not a radius.",
+        og_title="One day trips from Bangalore — Lighthouse",
+        og_description="Same-day from Bengaluru is a sunset, not a radius. The Return Clock, written down.",
         nav_label="BACK BY DARK",
         name="Back by dark",
         share="Which trips from Bengaluru still get you home before dark — worked out from real drive times, not vibes.",
@@ -777,7 +956,7 @@ def main():
       <p>The Return Clock is not a distance filter with a prettier name. It is a wall-clock deadline. Back by dark uses sunset. Back by midnight keeps your own bed. Overnight is one night away — a real ceiling, not “anywhere.” The weekend drops the bound.</p>
       <p>On these public pages, origin is Bengaluru, named. Live GPS belongs in the app. A share card that carries “56 km” without saying from where is a lie.</p>
       <h2>What still fits a same-day clock</h2>
-      <p>Of the five places we publish, four still work if you leave on time: <a href="/places/gundamagere-lake.html">Gundamagere Lake</a> (60 km), <a href="/places/rayakottai-fort.html">Rayakottai Fort</a> (76 km), <a href="/places/muthathi.html">Muthathi</a> (92 km), <a href="/places/ganalu-falls.html">Ganalu Falls</a> (98 km). <a href="/places/kakkadampoyil-ghat.html">Kakkadampoyil</a> does not — that is overnight, and the page says so.</p>
+      <p>Of the six places we publish, four still work if you leave on time: <a href="/places/gundamagere-lake.html">Gundamagere Lake</a> (60 km), <a href="/places/rayakottai-fort.html">Rayakottai Fort</a> (76 km), <a href="/places/muthathi.html">Muthathi</a> (92 km), <a href="/places/ganalu-falls.html">Ganalu Falls</a> (98 km). <a href="/places/kakkadampoyil-ghat.html">Kakkadampoyil</a> and <a href="/places/kinnakorai.html">Kinnakorai</a> do not — those are overnight, and the pages say so.</p>
       <h2>The other presets</h2>
       <p>Midnight, overnight, and the whole weekend live in the app. This document is the same-day setting, because that is the query Bangalore actually types: one-day return, under three hours, back before dark.</p>
       <p><a href="/from/bengaluru.html">From Bengaluru</a> · <a href="/#clock">See it on the map</a></p>

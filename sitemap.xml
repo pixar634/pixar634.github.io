@@ -57,6 +57,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://letsgolighthouse.co.in/moods/ghat-roads.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://letsgolighthouse.co.in/places/ganalu-falls.html</loc>
     <lastmod>2026-08-31</lastmod>
     <changefreq>monthly</changefreq>
@@ -109,6 +115,17 @@
       <image:loc>https://letsgolighthouse.co.in/assets/places/lg/muthathi.jpg</image:loc>
       <image:title>Muthathi River Bank</image:title>
       <image:caption>Nagaraj Sinhasan / Wikimedia Commons / CC BY-SA 4.0</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://letsgolighthouse.co.in/places/kinnakorai.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://letsgolighthouse.co.in/assets/places/lg/kinnakorai.jpg</image:loc>
+      <image:title>Kinnakorai</image:title>
+      <image:caption>L. Shyamal / Wikimedia Commons / CC BY-SA 3.0</image:caption>
     </image:image>
   </url>
   <url>

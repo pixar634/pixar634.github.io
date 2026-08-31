@@ -1,4 +1,4 @@
-# Pulls 1280px Commons renditions for the five published guide heroes into
+# Pulls 1280px Commons renditions for the published guide heroes into
 # assets/places/lg/. Run from landing/:
 #   python scripts/fetch-guide-heroes.py
 #
@@ -41,6 +41,7 @@ FILES = {
     "rayakottai.jpg": "Dilapidated_Structure_-1_, Tip_Sultan_Fort, Rayakottai, Tamilnadu, India.JPG",
     "kakkadampoyil.jpg": "Kakkadampoyil_Kerala_Western_Ghats_DSC09436.jpg",
     "muthathi.jpg": "Bank_of_River_Kaveri_at_Muthathi, Karnataka.jpg",
+    "kinnakorai.jpg": "Kinnakorai_from_Manjur.jpg",
 }
 
 UA = "LighthouseLandingBuild/1.0 (https://letsgolighthouse.co.in; hello@letsgolighthouse.co.in)"
