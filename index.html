@@ -173,6 +173,11 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { background: var(--bg); }
       html.is-theme-air {
+        --bg: #F4F1EA;
+        --surface: #FFFCF7;
+        --text: #1C1915;
+        --text-2: #3F3A36;
+        --text-3: #6B645C;
         --font-display: "Nohemi", "Clash Display", sans-serif;
         --font-accent: "Nohemi", "Clash Display", sans-serif;
         --font-body: "Nohemi", "Clash Display", sans-serif;
@@ -198,6 +203,7 @@
       }
       main { position: relative; z-index: 1; }
       em { font-style: normal; color: var(--mint); }
+      html.is-theme-air em { color: #A83F1C; }
       a { color: inherit; text-decoration: none; }
       .skip {
         position: absolute; left: var(--pad); top: 12px; z-index: 100;
@@ -235,34 +241,6 @@
         border-radius: 15px;
         font-family: "Nohemi", "Clash Display", sans-serif;
         box-shadow: 3px 6px 12px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      }
-      .nav__theme {
-        width: 40px; height: 40px; padding: 0; flex-shrink: 0;
-        border: 0; background: transparent; cursor: pointer;
-        color: var(--mint);
-      }
-      .nav__theme-radar {
-        display: block; width: 28px; height: 28px; margin: 0 auto;
-        position: relative;
-      }
-      .nav__theme-sweep, .nav__theme-halo, .nav__theme-orbit, .nav__theme-beacon {
-        position: absolute; border-radius: 50%;
-      }
-      .nav__theme-sweep {
-        inset: 0;
-        background: conic-gradient(from 0deg, transparent 0deg, rgba(93, 202, 165, 0.42) 28deg, transparent 70deg);
-        animation: hero-loader-sweep 2.4s linear infinite;
-      }
-      .nav__theme-halo {
-        inset: 0; border: 1.5px solid rgba(93, 202, 165, 0.45);
-      }
-      .nav__theme-orbit {
-        inset: 4px; border: 1px solid rgba(255, 255, 255, 0.14);
-      }
-      .nav__theme-beacon {
-        left: 50%; top: 50%; width: 7px; height: 7px;
-        margin: -3.5px 0 0 -3.5px; background: var(--mint);
-        box-shadow: 0 0 10px var(--mint);
       }
       .btn {
         display: inline-flex; align-items: center; justify-content: center;
@@ -305,9 +283,18 @@
       }
       .display__line { display: block; }
       .display__inner { display: block; }
+      .display__thin { font-weight: 100; }
+      .display__mid { font-weight: 500; }
+      .display__run { font-weight: 200; }
+      .display__hit { font-weight: 800; }
       .display__line--ghost .display__inner {
         font-weight: 500; color: transparent;
         -webkit-text-stroke: 1.4px rgba(255, 255, 255, 0.52);
+      }
+      .display__line--dest {
+        font-size: clamp(28px, calc((100vw - 4rem) / 17.5), 76px);
+        line-height: 1.08; letter-spacing: -0.038em;
+        padding-top: 0.06em; white-space: nowrap;
       }
       .display__line--end {
         font-family: "Nohemi", "Clash Display", sans-serif; font-weight: 300;
@@ -433,6 +420,9 @@
           line-height: 0.78; letter-spacing: -0.06em;
           margin-bottom: 36px; text-align: left;
         }
+        .display__line--dest {
+          font-size: clamp(22px, calc((100vw - 2.5rem) / 16.5), 40px);
+        }
       }
       @media (max-width: 560px) {
         .waitlist__field { flex-direction: column; gap: 14px; border-bottom: 0; padding-bottom: 0; }
@@ -449,8 +439,8 @@
         }
       }
     </style>
-    <link rel="preload" href="/styles.css?v=hero-sequence-113" as="style" id="full-css" />
-    <noscript><link rel="stylesheet" href="/styles.css?v=hero-sequence-113" /></noscript>
+    <link rel="preload" href="/styles.css?v=hero-sequence-141" as="style" id="full-css" />
+    <noscript><link rel="stylesheet" href="/styles.css?v=hero-sequence-141" /></noscript>
     <script>
       (function () {
         function arm(link) {
@@ -577,21 +567,6 @@
     <header class="nav" id="nav">
       <a class="nav__brand" href="/">LIGHTHOUSE<span class="nav__dot">.</span></a>
       <div class="nav__right">
-        <button
-          type="button"
-          class="nav__theme"
-          id="themeToggle"
-          aria-label="Switch to night look"
-          aria-pressed="false"
-          title="Night look"
-        >
-          <span class="nav__theme-radar" aria-hidden="true">
-            <span class="nav__theme-sweep"></span>
-            <span class="nav__theme-halo"></span>
-            <span class="nav__theme-orbit"></span>
-            <span class="nav__theme-beacon"></span>
-          </span>
-        </button>
         <span class="utility nav__label">BLR · WEEKEND TRAVEL</span>
         <a class="btn btn--ghost" href="#join" data-scrollto>Join waitlist</a>
       </div>
@@ -617,9 +592,9 @@
         </p>
 
         <h1 class="display" id="display">
-          <span class="display__line"><span class="display__inner" id="displayA">Your next</span></span>
-          <span class="display__line display__line--trip"><span class="display__inner" id="displayB">Road Trip to</span></span>
-          <span class="display__line display__line--place"><span class="display__place" id="placeWord">Skandagiri</span></span>
+          <span class="display__line"><span class="display__inner" id="displayA"><span class="display__thin">Your</span> <span class="display__mid">Next</span></span></span>
+          <span class="display__line display__line--trip"><span class="display__inner" id="displayB">Road Trip</span></span>
+          <span class="display__line display__line--dest"><span class="display__inner"><span class="display__run">destination</span> <span class="display__hit">Discovery</span></span></span>
           <span class="display__line display__line--end"><span class="display__inner" id="displayC"><em>is a <span class="display__pop" id="swipeWord">swipe</span> <span class="display__push" id="awayWord">away.</span></em></span></span>
         </h1>
 
@@ -736,12 +711,80 @@
           <li class="filters__chip filters__chip--more" tabindex="0"><span class="filters__chip-inner"><span class="filters__chip-name">Many more</span></span></li>
         </ul>
         </div>
-        <div class="filters__device" aria-hidden="true">
+        <p class="filters__hint">Swipe the card either way. <b>Let’s go</b> opens the place — then the route.</p>
+        <div class="filters__device">
           <div class="iphone">
             <div class="iphone__glass">
               <div class="iphone__screen">
                 <div class="filters__map is-theme-air" id="filters-map">
                   <div class="filters__gl" id="filters-gl"></div>
+                  <div class="filters__hud" id="filters-hud" aria-hidden="true">
+                    <div class="lh__rail">
+                      <span class="lh__see">See more</span>
+                      <span class="lh__facet" id="filters-facet">Summit Treks</span>
+                    </div>
+                    <span class="lh__clock">Back by 7pm</span>
+                  </div>
+                  <div class="filters__peek is-empty" id="filters-peek">
+                    <div class="filters__peek-rail" id="filters-peek-rail">
+                      <article class="filters__peek-slide" id="filters-peek-a">
+                        <div class="lh__card-inner">
+                          <span class="lh__thumb lh__thumb--empty" aria-hidden="true"></span>
+                          <div class="lh__copy">
+                            <h3></h3>
+                            <p></p>
+                            <span class="lh__tag"></span>
+                          </div>
+                          <button type="button" class="lh__go">Let's go</button>
+                        </div>
+                      </article>
+                      <article class="filters__peek-slide" id="filters-peek-b">
+                        <div class="lh__card-inner">
+                          <span class="lh__thumb lh__thumb--empty" aria-hidden="true"></span>
+                          <div class="lh__copy">
+                            <h3></h3>
+                            <p></p>
+                            <span class="lh__tag"></span>
+                          </div>
+                          <button type="button" class="lh__go">Let's go</button>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+                  <div class="filters__sheet" id="filters-sheet">
+                    <button class="filters__sheet-x" type="button" aria-label="Close details">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                    <div class="filters__sheet-hero">
+                      <img id="filters-sheet-img" alt="" width="640" height="360" decoding="async" />
+                      <span class="filters__sheet-chip" id="filters-sheet-chip"></span>
+                    </div>
+                    <div class="filters__sheet-body">
+                      <h3 id="filters-sheet-name"></h3>
+                      <p class="filters__sheet-city" id="filters-sheet-city"></p>
+                      <p class="filters__sheet-coords" id="filters-sheet-coords"></p>
+                      <div class="filters__sheet-stats">
+                        <span><b id="filters-sheet-drive"></b><small>driving</small></span>
+                        <span><b id="filters-sheet-km"></b><small>one way</small></span>
+                      </div>
+                      <p class="filters__sheet-why" id="filters-sheet-why"></p>
+                      <ul class="filters__sheet-gtk" id="filters-sheet-gtk"></ul>
+                    <button type="button" class="filters__sheet-go" id="filters-sheet-go">Let's go</button>
+                    </div>
+                  </div>
+                  <div class="filters__nav" id="filters-nav">
+                    <button type="button" class="filters__nav-back" id="filters-nav-back" aria-label="Back to the map">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>
+                    </button>
+                    <div class="filters__nav-legs">
+                      <div class="filters__nav-leg"><span>A</span><b id="filters-nav-from">Bengaluru</b></div>
+                      <div class="filters__nav-leg"><span>B</span><b id="filters-nav-to"></b></div>
+                    </div>
+                    <div class="filters__nav-card">
+                      <p class="filters__nav-eta"><b id="filters-nav-drive"></b><small id="filters-nav-km"></small></p>
+                      <button type="button" class="filters__nav-start" id="filters-nav-done">Back to the map</button>
+                    </div>
+                  </div>
                 </div>
                 <div class="iphone-chrome">
                   <div class="iphone-status"><span>9:41</span><span class="iphone-status__end"></span></div>
@@ -934,14 +977,18 @@
           </ul>
           <p class="pitch__feature">
             <span class="utility">THE RETURN CLOCK</span>
-            Make those memories. Clock out when you
-            need to be home. More than 20+ curated collections and 400+ locations
-            to choose from —
+            Explore the open map. Zoom in, zoom out, swipe the card,
+            go through the collection cards — the control is yours.
+            Clock out when you need to be home. More than 20+ curated
+            collections and 400+ locations to choose from —
             and each one only shows what still fits your time, with a calculated
             route, estimated round-trip time, weather, and more. Or drop the
             filters, set the clock, and explore everything that still gets you
             back. Same-day sunset to the whole weekend.
           </p>
+          <button type="button" class="clock__theme" id="themeToggle" aria-pressed="false">
+            Switch to dark mode
+          </button>
         </div>
         <div class="clock__device" aria-hidden="true">
           <div class="iphone">
@@ -987,16 +1034,28 @@
         </div>
       </section>
 
-      <section class="stage stage--flip" id="vote">
+      <section class="stage stage--flip stage--vote" id="vote">
+        <div class="stage__bg" aria-hidden="true">
+          <video class="stage__bg-vid" muted loop playsinline webkit-playsinline preload="none" data-poster="/assets/video/vote-bg.jpg" data-src-4k="/assets/video/vote-bg-4k.mp4?v=2" data-src-fhd="/assets/video/vote-bg-uhd.mp4?v=2" data-src-hd="/assets/video/vote-bg-uhd.mp4?v=2" data-src-sm="/assets/video/vote-bg-uhd.mp4?v=2"></video>
+        </div>
         <div class="stage__copy">
           <p class="utility stage__kicker">THE TRIP PLAN</p>
-          <h2 class="stage__title">Majority<br /><em>wins.</em></h2>
+          <h2 class="stage__title stage__title--mix">
+            <span class="stage__w stage__w--thin">har</span>
+            <span class="stage__w stage__w--mid">ek</span>
+            <span class="stage__w stage__w--pop">Macha,</span>
+            <br />
+            <span class="stage__w stage__w--hit">Zaroori</span>
+            <span class="stage__w stage__w--run">hota</span>
+            <span class="stage__w stage__w--pop">hai.</span>
+          </h2>
           <p class="stage__lede">
             Don't run the trip in the group chat. Shortlist a few places, send one invite,
             let them vote. When majority lands, that's the plan — not another “up to you.”
           </p>
+          <p class="stage__hint utility">ONE LINK · THEY VOTE · THAT'S THE PLAN</p>
         </div>
-        <div class="stage__device">
+        <div class="stage__device" id="vote-phone">
           <div class="iphone">
             <div class="iphone__glass">
             <div class="iphone__screen">
@@ -1035,7 +1094,7 @@
                   </span>
                   <div class="vote-app__titles">
                     <span class="utility">TRIP PLAN</span>
-                    <h3>Weekend north?</h3>
+                    <h3>Chikmagalur?</h3>
                   </div>
                   <span class="vote-app__icon" id="share-btn" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
@@ -1045,11 +1104,11 @@
                   <span class="vote-app__avas" id="trip-avas"></span>
                   <span class="vote-app__joined" id="vote-joined">1 joined</span>
                 </div>
-                <p class="vote-app__banner" id="vote-banner" hidden>They picked Skandagiri!</p>
+                <p class="vote-app__banner" id="vote-banner" hidden>They picked Mullayanagiri!</p>
                 <div class="vote-app__list" id="vote-list"></div>
                 <div class="finalize-bar" id="finalize-bar" hidden>
                   <span class="finalize-flag" aria-hidden="true">⚑</span>
-                  <p>Finalize with <strong>Skandagiri</strong>?</p>
+                  <p>Finalize with <strong>Mullayanagiri</strong>?</p>
                   <span class="finalize-go" id="finalize-go">Confirm</span>
                 </div>
                 <p class="vote-app__code utility">LH-7F3K2</p>
@@ -1080,7 +1139,7 @@
                   <span class="chat-who">You</span>
                   <div class="chat-bubble">
                     <div class="unfurl unfurl--sm" id="unfurl-chat"></div>
-                    <p>Vote on our trip plan: Weekend north?</p>
+                    <p>Vote on our trip plan: Chikmagalur?</p>
                   </div>
                 </div>
                 <div class="chat-joins" id="chat-joins"></div>
@@ -1095,7 +1154,6 @@
             </div>
             <img class="iphone__skin" src="/assets/device/galaxy-s-ultra.png?v=1" alt="" loading="lazy" decoding="async" />
           </div>
-          <p class="stage__hint utility">ONE LINK · THEY VOTE · THAT'S THE PLAN</p>
         </div>
       </section>
 
@@ -1289,7 +1347,7 @@
       </footer>
     </main>
 
-    <script src="/main.js?v=hero-sequence-62" defer></script>
+    <script src="/main.js?v=hero-sequence-78" defer></script>
     <script src="/analytics.js" defer></script>
   </body>
 </html>

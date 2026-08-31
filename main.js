@@ -44,6 +44,28 @@
     }, NAV_HIDE_AFTER_MS);
   }
 
+  var SEAM_FLOATS = [
+    { id: "mood", prop: "--seam-rise" },
+    { id: "clock", prop: "--seam-rise" },
+    { id: "vote", prop: "--vote-rise" }
+  ];
+  function floatSeamPhones() {
+    var mid = innerHeight * 0.5;
+    var span = innerHeight * 0.42;
+    SEAM_FLOATS.forEach(function (item) {
+      var section = document.getElementById(item.id);
+      if (!section) return;
+      if (reduced || liteFx) {
+        section.style.setProperty(item.prop, "0px");
+        return;
+      }
+      var seam = section.getBoundingClientRect().bottom;
+      var t = clamp((mid - seam) / span, -1, 1);
+      var eased = t * (1 - Math.abs(t) * 0.35);
+      section.style.setProperty(item.prop, (eased * -72).toFixed(1) + "px");
+    });
+  }
+
   function onScroll(y, limit) {
     scrollYNow = y;
     if (nav) {
@@ -60,7 +82,11 @@
       }
     }
     document.documentElement.style.setProperty('--beam-rot', (y * 0.045).toFixed(2) + 'deg');
+    floatSeamPhones();
   }
+
+  floatSeamPhones();
+  window.addEventListener("resize", floatSeamPhones, { passive: true });
 
   function initScroll() {
     if (reduced || typeof window.Lenis === 'undefined') {
@@ -807,52 +833,6 @@
     return el;
   }
 
-  /* Lockup stays: Your next / Road Trip [place] / is a swipe away.
-     Only the place name cycles. */
-  var placeIdx = 0;
-  var placeTimer = 0;
-
-  function swipeHeadline() {
-    var swipe = document.getElementById("swipeWord");
-    var away = document.getElementById("awayWord");
-    if (!swipe) return;
-    swipe.classList.remove("is-swiping");
-    if (away) away.classList.remove("is-swiping");
-    void swipe.offsetWidth;
-    swipe.classList.add("is-swiping");
-    if (away) away.classList.add("is-swiping");
-  }
-
-  function paintPlace(name) {
-    var el = document.getElementById("placeWord");
-    if (!el || !name) return;
-    if (reduced) {
-      el.textContent = name;
-      return;
-    }
-    el.classList.remove("is-entering");
-    el.classList.add("is-leaving");
-    window.setTimeout(function () {
-      el.textContent = name;
-      el.classList.remove("is-leaving");
-      void el.offsetWidth;
-      el.classList.add("is-entering");
-    }, 180);
-  }
-
-  function cycleHeroPlace() {
-    var el = document.getElementById("placeWord");
-    if (!el || !HERO_SPOTS.length) return;
-    el.textContent = HERO_SPOTS[0].name;
-    if (reduced) return;
-    function tick() {
-      swipeHeadline();
-      placeIdx = (placeIdx + 1) % HERO_SPOTS.length;
-      paintPlace(HERO_SPOTS[placeIdx].name);
-    }
-    placeTimer = window.setInterval(tick, 3200);
-  }
-  cycleHeroPlace();
   var HERO_THEME_IDS = ["air", "night", "warm"];
   var HERO_MAP_THEMES = ["air", "night"];
   var themeIdx = 0;
@@ -872,7 +852,7 @@
       if (mapWrap) mapWrap.classList.toggle("is-theme-" + HERO_THEME_IDS[i], on);
       if (filtersMap) filtersMap.classList.toggle("is-theme-" + HERO_THEME_IDS[i], on);
     }
-    var bubbles = document.querySelectorAll("#hero-map .hero-pin__bubble");
+    var bubbles = document.querySelectorAll("#hero-map .hero-pin__bubble, #filters-map .hero-pin__bubble");
     for (i = 0; i < bubbles.length; i++) {
       var og = bubbles[i].getAttribute("data-og-color") || "#5DCAA5";
       if (name === "warm") bubbles[i].style.borderColor = i % 2 ? "#F4E8D6" : "#E0A458";
@@ -881,8 +861,7 @@
     }
     if (btn) {
       btn.setAttribute("aria-pressed", night ? "true" : "false");
-      btn.setAttribute("aria-label", night ? "Switch to white map" : "Switch to night look");
-      btn.title = night ? "White map" : "Night look";
+      btn.textContent = night ? "Switch to light mode" : "Switch to dark mode";
     }
   }
 
@@ -1195,88 +1174,63 @@
   }
 
   /* ---------- Filters section: real places behind the chip river ----------
-     Every chip is a real category with real members — 5 closest per lane,
-     pulled from lighthouse-backend/config/places_seed.yaml, not invented.
-     One pin per active category gets the full bubble; the rest stay dots,
-     same "one detailed, rest quiet" pattern as the hero tour. No thumbnails:
-     most of these catalog places don't have a prepared image asset yet, and
-     a broken-image icon reads worse than no photo at all. */
+     Only places with a prepared Commons thumb land on the Moody phone —
+     no empty-dot bubbles, no peek card without a photo. Categories with
+     none of those assets stay a bare map. Summit Treks opens the S2
+     PlaceDetail sheet on Nijagal Betta. */
   var CATEGORY_SPOTS = {
     "Wild Lakeside": [
-      { name: "Iggalur Dam", meta: "33m · 26 km", lat: 12.781144, lon: 77.701449 },
-      { name: "Muninagara Dam", meta: "39m · 34 km", lat: 12.747621, lon: 77.5411 },
-      { name: "Thally Lake", meta: "46m · 41 km", lat: 12.706188, lon: 77.79252 },
-      { name: "Dabbaguli", meta: "56m · 44 km", lat: 12.892845, lon: 77.322024 },
-      { name: "Maralawadi Dam", meta: "59m · 48 km", lat: 12.612133, lon: 77.525212 },
+      { name: "Gundamagere Lake", meta: "1h · 60 km", lat: 13.437969, lon: 77.479104, img: "/assets/places/gundamagere.jpg" },
     ],
     "Summit Treks": [
-      { name: "Nijagal Betta", meta: "47m · 53 km", lat: 13.247256, lon: 77.217321 },
-      { name: "Hutridurga", meta: "1h 17m · 70 km", lat: 12.961743, lon: 77.123189 },
-      { name: "Huliyurdurga", meta: "1h 20m · 81 km", lat: 12.829908, lon: 77.035017 },
-      { name: "Gudibande Fort", meta: "1h 38m · 93 km", lat: 13.676317, lon: 77.701001 },
-      { name: "Channarayana Durga", meta: "1h 34m · 98 km", lat: 13.597742, lon: 77.208665 },
+      { name: "Skandagiri", meta: "1h 2m · 60 km", lat: 13.417256, lon: 77.682669, img: "/assets/places/skandagiri.jpg" },
+      {
+        name: "Nijagal Betta",
+        meta: "47m · 53 km",
+        lat: 13.247256,
+        lon: 77.217321,
+        img: "/assets/places/nijagal.jpg",
+        city: "Halenijagal · Karnataka",
+        coords: "13.2473, 77.2173",
+        drive: "47m",
+        km: "53",
+        why: "Steep rocky hike off NH48 that most people miss on the Chitradurga run — fort walls, then a temple and a dargah sharing the summit.",
+        notes: ["No marked trail — rock scrambling", "No shade on the climb", "Informal parking by the railway tracks"],
+        sheet: true
+      },
+      { name: "Makalidurga", meta: "56m · 57 km", lat: 13.432865, lon: 77.501498, img: "/assets/places/makalidurga.jpg" },
+      { name: "Savandurga", meta: "1h 4m · 56 km", lat: 12.915961, lon: 77.297772, img: "/assets/places/savandurga.jpg" },
     ],
-    "Night Drives": [
-      { name: "The Bidadi Midnight Sprint (NH275)", meta: "36m · 33 km", lat: 12.7984, lon: 77.397 },
-      { name: "The Kolar Night Run (NH75 East)", meta: "59m · 66 km", lat: 13.1362, lon: 78.1291 },
-      { name: "The Kunigal Bypass (Stargazing Sprint)", meta: "1h 12m · 73 km", lat: 13.0233, lon: 77.0145 },
-    ],
+    "Night Drives": [],
     "Breakfast Runs": [
-      { name: "Turahalli Forest", meta: "22m · 18 km", lat: 12.88275, lon: 77.525668 },
-      { name: "Nrityagram", meta: "38m · 32 km", lat: 13.1634, lon: 77.459703 },
-      { name: "Devanahalli Fort", meta: "37m · 36 km", lat: 13.243559, lon: 77.709153 },
-      { name: "Indian Paratha Company (The Airport Runway)", meta: "43m · 39 km", lat: 13.2625, lon: 77.7126 },
-      { name: "Rocky Ridge Cafe & Malur Backroads", meta: "42m · 45 km", lat: 13.0033, lon: 77.9405 },
+      { name: "Turahalli Forest", meta: "22m · 18 km", lat: 12.88275, lon: 77.525668, img: "/assets/places/turahalli.jpg" },
     ],
     "Secret Cascades": [
-      { name: "Hemagiri", meta: "1h 26m · 85 km", lat: 12.813244, lon: 77.048844 },
-      { name: "Ganalu Falls", meta: "1h 48m · 98 km", lat: 12.348032, lon: 77.197294 },
-      { name: "Avulapalle Waterfalls", meta: "2h 32m · 170 km", lat: 13.402787, lon: 78.823388 },
-      { name: "Chunchanakatte Falls", meta: "2h 38m · 193 km", lat: 12.503849, lon: 76.293375 },
-      { name: "Amirthi Falls", meta: "2h 52m · 206 km", lat: 12.731921, lon: 79.056128 },
+      { name: "Ganalu Falls", meta: "1h 48m · 98 km", lat: 12.348032, lon: 77.197294, img: "/assets/places/ganalu.jpg" },
     ],
     "Coastal Drives": [
-      { name: "Dharmadam Island", meta: "4h 48m · 319 km", lat: 11.769611, lon: 75.450726 },
-      { name: "Muzhappilangad Beach", meta: "4h 50m · 320 km", lat: 11.794446, lon: 75.443321 },
-      { name: "Chootad Beach", meta: "5h 8m · 334 km", lat: 12.02132, lon: 75.231798 },
-      { name: "Kavvayi Backwaters", meta: "5h 9m · 339 km", lat: 12.092158, lon: 75.182112 },
-      { name: "Ezhimala", meta: "5h 19m · 341 km", lat: 12.032369, lon: 75.209597 },
+      { name: "Om Beach", meta: "9h · 480 km", lat: 14.5222, lon: 74.3175, img: "/assets/places/ombeach.jpg" },
+      { name: "Kapu Lighthouse", meta: "8h · 400 km", lat: 13.2241, lon: 74.738, img: "/assets/places/kapu.jpg" },
     ],
     "Misty Hikes": [
-      { name: "Kaurava Kunda", meta: "1h 10m · 65 km", lat: 13.477793, lon: 77.717368 },
-      { name: "Guthirayan Peak", meta: "2h · 99 km", lat: 12.263501, lon: 77.854388 },
-      { name: "Agani Peak", meta: "3h 32m · 261 km", lat: 12.961391, lon: 75.677888 },
-      { name: "Tadiandamol Peak", meta: "3h 49m · 269 km", lat: 12.217564, lon: 75.608815 },
-      { name: "Mullayanagiri Peak & Seethalayyanagiri", meta: "3h 37m · 269 km", lat: 13.3909, lon: 75.7214 },
+      { name: "Mullayanagiri Peak & Seethalayyanagiri", meta: "3h 37m · 269 km", lat: 13.3909, lon: 75.7214, img: "/assets/places/mullayanagiri.jpg" },
     ],
     "Tarmac Therapy": [
-      { name: "Manchanabele Reservoir Viewpoint", meta: "57m · 44 km", lat: 12.89887, lon: 77.326947 },
-      { name: "Kailasagiri", meta: "1h 13m · 75 km", lat: 13.39151, lon: 78.025448 },
-      { name: "Minakanagurki", meta: "1h 12m · 78 km", lat: 13.519337, lon: 77.610156 },
-      { name: "Mogili Ghat", meta: "2h 3m · 148 km", lat: 13.186611, lon: 78.832454 },
-      { name: "Melpattu", meta: "3h 11m · 164 km", lat: 12.356268, lon: 78.662195 },
+      { name: "Manchanabele Reservoir Viewpoint", meta: "57m · 44 km", lat: 12.89887, lon: 77.326947, img: "/assets/places/manchanabele.jpg" },
     ],
     "Corner Carving": [
-      { name: "Devarayanadurga (DD Hills)", meta: "1h 7m · 69 km", lat: 13.3719, lon: 77.2096 },
-      { name: "Muthathi River Bank", meta: "1h 41m · 92 km", lat: 12.305418, lon: 77.311772 },
-      { name: "Alangayam Ghat", meta: "2h 33m · 173 km", lat: 12.622667, lon: 78.752504 },
-      { name: "Jogimatti", meta: "2h 48m · 206 km", lat: 14.176981, lon: 76.388974 },
-      { name: "Paalchuram", meta: "4h 5m · 263 km", lat: 11.848952, lon: 75.914528 },
+      { name: "Devarayanadurga (DD Hills)", meta: "1h 7m · 69 km", lat: 13.3719, lon: 77.2096, img: "/assets/places/devarayanadurga.jpg" },
+      { name: "Muthathi River Bank", meta: "1h 41m · 92 km", lat: 12.305418, lon: 77.311772, img: "/assets/places/muthathi.jpg" },
+      { name: "Alangayam Ghat", meta: "2h 33m · 173 km", lat: 12.622667, lon: 78.752504, img: "/assets/places/alangayam.jpg" },
+      { name: "Jogimatti", meta: "2h 48m · 206 km", lat: 14.176981, lon: 76.388974, img: "/assets/places/jogimatti.jpg" },
     ],
-    "Coffee Country": [
-      { name: "Glenmorgan", meta: "3h 46m · 272 km", lat: 11.499757, lon: 76.591471 },
-      { name: "Baba Budangiri & The Datta Peeta Ridge", meta: "3h 58m · 280 km", lat: 13.4242, lon: 75.7667 },
-      { name: "Devaramane & The Mudigere Twisties", meta: "3h 54m · 302 km", lat: 13.0649, lon: 75.5415 },
-      { name: "Charmadi Ghat (The Green Ribbon)", meta: "3h 59m · 321 km", lat: 13.0485, lon: 75.4323 },
-    ],
-    "Hidden Forest Camps": [
-      { name: "K. Gudi Wilderness (BR Hills)", meta: "2h 55m · 181 km", lat: 11.8973, lon: 77.135 },
-      { name: "Devala", meta: "3h 29m · 264 km", lat: 11.471192, lon: 76.3738 },
-      { name: "Aralam Wildlife Sanctuary", meta: "4h 2m · 274 km", lat: 11.993157, lon: 75.682689 },
-      { name: "Bisle Reserve Forest", meta: "3h 51m · 277 km", lat: 12.7214, lon: 75.6888 },
-      { name: "Sharavathi Valley & Honnemardu", meta: "5h 55m · 436 km", lat: 14.1283, lon: 74.8694 },
-    ],
+    "Coffee Country": [],
+    "Hidden Forest Camps": [],
   };
+
+  function photoSpots(cat) {
+    return (CATEGORY_SPOTS[cat] || []).filter(function (s) { return !!s.img; });
+  }
 
   function initFiltersMap() {
     var wrap = document.getElementById("filters-map");
@@ -1331,23 +1285,255 @@
 
     var pinsByCat = {};
     var idx = -1;
+    var spotIdx = 0;
     var timer = 0;
+    var sheetTimer = 0;
+    var swipeTimer = 0;
+    var peekBusy = false;
+    var userTookOver = false;
+    var photoHops = 0;
     var inView = true;
     var railRaf = 0;
     var RAIL_MS = 960;
+    var SWIPE_MS = 440;
+    var peekEl = document.getElementById("filters-peek");
+    var peekRail = document.getElementById("filters-peek-rail");
+    var peekA = document.getElementById("filters-peek-a");
+    var peekB = document.getElementById("filters-peek-b");
 
     function filtersPad() {
-      /* Phone is half-clipped at the bottom, so the labelled pin has to
-         sit in the top half of the Ultra — the part that's actually on
-         screen. */
+      /* Leave the bottom well for the peek card; the labelled pin sits
+         in the open map above it. */
       var h = wrap.clientHeight || 400;
       var w = wrap.clientWidth || 280;
       return {
-        top: Math.max(56, Math.round(h * 0.1)),
-        bottom: Math.max(90, Math.round(h * 0.52)),
+        top: Math.max(72, Math.round(h * 0.18)),
+        bottom: Math.max(118, Math.round(h * 0.3)),
         left: Math.max(18, Math.round(w * 0.08)),
         right: Math.max(18, Math.round(w * 0.08))
       };
+    }
+
+    function pinColor() {
+      return document.documentElement.classList.contains("is-theme-air") ? "#BA5A36" : "#5DCAA5";
+    }
+
+    function makeFiltersPin(spot, i) {
+      if (!spot || !spot.img) return null;
+      var el = document.createElement("div");
+      el.className = "hero-pin filters-pin" + (i === 0 ? " is-on" : "");
+      var color = pinColor();
+      el.innerHTML =
+        '<div class="hero-pin__bubble" style="border-color:' + color + '" data-og-color="#5DCAA5">' +
+          '<img class="hero-pin__dot" alt="" src="' + spot.img + '" width="36" height="36" decoding="async" />' +
+          '<span class="hero-pin__meta"><b>' + spot.name + "</b><small>" + spot.meta + "</small></span>" +
+        "</div>";
+      var pic = el.querySelector(".hero-pin__dot");
+      if (pic) {
+        pic.addEventListener("error", function () {
+          el.classList.remove("is-cat-on");
+          el.remove();
+        });
+      }
+      return el;
+    }
+
+    function setPeekVisible(on) {
+      var peek = document.getElementById("filters-peek");
+      if (peek) peek.classList.toggle("is-empty", !on);
+    }
+
+    function fillPeekCard(el, cat, spot) {
+      if (!el || !spot || !spot.img) return false;
+      var thumb = el.querySelector(".lh__thumb");
+      var name = el.querySelector("h3");
+      var meta = el.querySelector("p");
+      var tag = el.querySelector(".lh__tag");
+      if (name) name.textContent = spot.name;
+      if (meta) meta.textContent = spot.meta;
+      if (tag) tag.textContent = cat;
+      if (thumb) {
+        thumb.classList.remove("lh__thumb--empty");
+        thumb.style.backgroundImage = "url(" + spot.img + ")";
+      }
+      return true;
+    }
+
+    function paintFiltersPeek(cat, spot) {
+      var card = document.getElementById("filters-peek-a");
+      if (!spot || !spot.img || !fillPeekCard(card, cat, spot)) {
+        setPeekVisible(false);
+        return;
+      }
+      setPeekVisible(true);
+    }
+
+    function metaParts(spot) {
+      var bits = String(spot.meta || "").split("·").map(function (s) { return s.trim(); });
+      var kmBit = (bits[1] || "").replace(/[^\d.]/g, "");
+      return {
+        drive: spot.drive || bits[0] || "",
+        km: spot.km || kmBit
+      };
+    }
+
+    function paintFiltersSheet(cat, spot) {
+      var root = document.getElementById("filters-sheet");
+      var img = document.getElementById("filters-sheet-img");
+      var chip = document.getElementById("filters-sheet-chip");
+      var name = document.getElementById("filters-sheet-name");
+      var city = document.getElementById("filters-sheet-city");
+      var coords = document.getElementById("filters-sheet-coords");
+      var drive = document.getElementById("filters-sheet-drive");
+      var km = document.getElementById("filters-sheet-km");
+      var why = document.getElementById("filters-sheet-why");
+      var gtk = document.getElementById("filters-sheet-gtk");
+      if (!name || !spot) return;
+      var parts = metaParts(spot);
+      if (img) img.src = spot.img;
+      if (chip) {
+        chip.textContent = (cat || "place").toLowerCase() +
+          (parts.km ? " · " + parts.km + " km out" : "");
+      }
+      name.textContent = spot.name;
+      if (city) {
+        city.textContent = spot.city || "";
+        city.hidden = !spot.city;
+      }
+      if (coords) {
+        coords.textContent = spot.coords ||
+          (spot.lat != null ? spot.lat.toFixed(4) + ", " + spot.lon.toFixed(4) : "");
+      }
+      if (drive) drive.textContent = parts.drive;
+      if (km) km.textContent = parts.km;
+      if (why) {
+        why.textContent = spot.why || "";
+        why.hidden = !spot.why;
+      }
+      if (gtk) {
+        gtk.innerHTML = "";
+        (spot.notes || []).forEach(function (note) {
+          var li = document.createElement("li");
+          li.textContent = note;
+          gtk.appendChild(li);
+        });
+        gtk.hidden = !gtk.childElementCount;
+      }
+      if (root) root.classList.toggle("is-thin", !spot.why && !(spot.notes && spot.notes.length));
+    }
+
+    function setFiltersSheet(open) {
+      if (!wrap) return;
+      wrap.classList.toggle("is-sheet", !!open);
+      if (open) wrap.classList.remove("is-nav");
+    }
+
+    var NAV_ORIGIN = { name: "Bengaluru", lat: 12.9716, lon: 77.5946 };
+    var navMarkers = [];
+
+    function routeCoords(from, to) {
+      var mx = (from.lon + to.lon) / 2;
+      var my = (from.lat + to.lat) / 2;
+      var dx = to.lon - from.lon;
+      var dy = to.lat - from.lat;
+      return [
+        [from.lon, from.lat],
+        [mx - dy * 0.14, my + dx * 0.14],
+        [to.lon, to.lat]
+      ];
+    }
+
+    function navLineColor() {
+      return document.documentElement.classList.contains("is-theme-air") ? "#BA5A36" : "#5DCAA5";
+    }
+
+    function ensureNavLayer() {
+      if (!map) return;
+      var empty = { type: "Feature", geometry: { type: "LineString", coordinates: [] } };
+      if (!map.getSource("nav-route")) {
+        map.addSource("nav-route", { type: "geojson", data: empty });
+        map.addLayer({
+          id: "nav-route-line",
+          type: "line",
+          source: "nav-route",
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": navLineColor(),
+            "line-width": 3.6,
+            "line-opacity": 0.92
+          }
+        });
+      }
+    }
+
+    function makeNavDot(letter) {
+      var el = document.createElement("div");
+      el.className = "filters-nav-pin";
+      el.textContent = letter;
+      return el;
+    }
+
+    function clearNavRoute() {
+      navMarkers.forEach(function (m) { try { m.remove(); } catch (e) { /* gone */ } });
+      navMarkers = [];
+      if (map && map.getSource("nav-route")) {
+        map.getSource("nav-route").setData({
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: [] }
+        });
+      }
+    }
+
+    function openNavFor(spot) {
+      if (!spot || !spot.img || !wrap) return;
+      setFiltersSheet(false);
+      wrap.classList.add("is-nav");
+      var parts = metaParts(spot);
+      var toEl = document.getElementById("filters-nav-to");
+      var driveEl = document.getElementById("filters-nav-drive");
+      var kmEl = document.getElementById("filters-nav-km");
+      if (toEl) toEl.textContent = spot.name;
+      if (driveEl) driveEl.textContent = parts.drive;
+      if (kmEl) kmEl.textContent = parts.km ? parts.km + " km" : "";
+      if (!map) return;
+      ensureNavLayer();
+      clearNavRoute();
+      var line = routeCoords(NAV_ORIGIN, spot);
+      map.getSource("nav-route").setData({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: line }
+      });
+      try { map.setPaintProperty("nav-route-line", "line-color", navLineColor()); } catch (e) { /* ok */ }
+      var a = new window.maplibregl.Marker({ element: makeNavDot("A"), anchor: "center" })
+        .setLngLat([NAV_ORIGIN.lon, NAV_ORIGIN.lat])
+        .addTo(map);
+      var b = new window.maplibregl.Marker({ element: makeNavDot("B"), anchor: "center" })
+        .setLngLat([spot.lon, spot.lat])
+        .addTo(map);
+      navMarkers = [a, b];
+      var west = Math.min(NAV_ORIGIN.lon, spot.lon);
+      var east = Math.max(NAV_ORIGIN.lon, spot.lon);
+      var south = Math.min(NAV_ORIGIN.lat, spot.lat);
+      var north = Math.max(NAV_ORIGIN.lat, spot.lat);
+      map.fitBounds([[west, south], [east, north]], {
+        padding: { top: 78, bottom: 92, left: 28, right: 28 },
+        duration: reduced ? 0 : 900,
+        essential: true,
+        maxZoom: 9.2
+      });
+    }
+
+    function closeNav(opts) {
+      if (!wrap) return;
+      wrap.classList.remove("is-nav");
+      clearNavRoute();
+      if (opts && opts.silent) return;
+      var spots = photoSpots(cats[idx] || "");
+      if (spots[spotIdx]) {
+        paintFiltersPeek(cats[idx], spots[spotIdx]);
+        markSpot(cats[idx], spotIdx);
+        flyToSpot(spots, spotIdx, false);
+      }
     }
 
     function railLeft(el) {
@@ -1358,16 +1544,94 @@
       return Math.max(0, Math.min(max, next));
     }
 
-    function labelledZoom(spots) {
-      if (spots.length < 2) return 8.4;
-      var origin = spots[0];
+    function labelledZoom(spots, focus) {
+      var origin = spots[focus != null ? focus : 0] || spots[0];
+      if (!origin || spots.length < 2) return 8.4;
       var maxD = 0;
-      for (var i = 1; i < spots.length; i += 1) {
+      var i;
+      for (i = 0; i < spots.length; i += 1) {
         maxD = Math.max(maxD, Math.hypot(spots[i].lat - origin.lat, spots[i].lon - origin.lon));
       }
       if (maxD > 1.8) return 6.6;
       if (maxD > 0.9) return 7.4;
       return 8.2;
+    }
+
+    function markSpot(cat, i) {
+      (pinsByCat[cat] || []).forEach(function (el, n) {
+        el.classList.toggle("is-on", n === i);
+      });
+    }
+
+    function flyToSpot(spots, i, snap) {
+      if (!map || !spots[i]) return;
+      map.easeTo({
+        center: [spots[i].lon, spots[i].lat],
+        zoom: labelledZoom(spots, i),
+        padding: filtersPad(),
+        duration: snap || reduced ? 0 : 900,
+        essential: true
+      });
+    }
+
+    function resetPeekRail() {
+      if (!peekRail) return;
+      peekRail.style.transition = "none";
+      peekRail.style.transform = "translate3d(0,0,0)";
+    }
+
+    function neighborIdx(spots, from, dir) {
+      if (!spots.length) return 0;
+      return (from + (dir < 0 ? 1 : -1) + spots.length) % spots.length;
+    }
+
+    function openSheetFor(spot) {
+      if (!spot || !spot.img) return;
+      paintFiltersSheet(cats[idx], spot);
+      setFiltersSheet(true);
+    }
+
+    function swipeTo(nextIdx, dir, done) {
+      var cat = cats[idx];
+      var spots = photoSpots(cat);
+      var from = spots[spotIdx];
+      var to = spots[nextIdx];
+      if (!from || !to || !from.img || !to.img) {
+        if (done) done();
+        return;
+      }
+      dir = dir < 0 ? -1 : 1;
+      if (reduced || !peekRail || !peekA || !peekB) {
+        spotIdx = nextIdx;
+        paintFiltersPeek(cat, to);
+        markSpot(cat, nextIdx);
+        flyToSpot(spots, nextIdx, true);
+        if (done) done();
+        return;
+      }
+      peekBusy = true;
+      setPeekVisible(true);
+      if (dir < 0) {
+        fillPeekCard(peekA, cat, from);
+        fillPeekCard(peekB, cat, to);
+      } else {
+        fillPeekCard(peekA, cat, to);
+        fillPeekCard(peekB, cat, from);
+      }
+      peekRail.style.transition = "none";
+      peekRail.style.transform = dir < 0 ? "translate3d(0,0,0)" : "translate3d(-50%,0,0)";
+      void peekRail.offsetWidth;
+      peekRail.style.transition = "transform " + SWIPE_MS + "ms var(--ease-standard)";
+      peekRail.style.transform = dir < 0 ? "translate3d(-50%,0,0)" : "translate3d(0,0,0)";
+      spotIdx = nextIdx;
+      markSpot(cat, nextIdx);
+      flyToSpot(spots, nextIdx, false);
+      window.setTimeout(function () {
+        resetPeekRail();
+        fillPeekCard(peekA, cat, to);
+        peekBusy = false;
+        if (done) done();
+      }, SWIPE_MS + 20);
     }
 
     function animateRail(to, done) {
@@ -1398,6 +1662,8 @@
       list.querySelectorAll(".filters__chip[data-cat]").forEach(function (c) {
         c.classList.toggle("is-on", c.dataset.cat === cat);
       });
+      var facet = document.getElementById("filters-facet");
+      if (facet) facet.textContent = cat || "";
     }
 
     function showCategory(i, opts) {
@@ -1428,32 +1694,202 @@
         (pinsByCat[c] || []).forEach(function (el) { el.classList.toggle("is-cat-on", c === cat); });
       });
       if (!map) return;
-      var spots = CATEGORY_SPOTS[cat] || [];
-      if (!spots.length) return;
-      // Always park the labelled pin (spots[0]) in the open well. fitBounds on
-      // the whole cluster pushed Glenmorgan / coastal pins to the south edge,
-      // which on a phone is below the section — "no spot" for Coffee Country.
-      map.easeTo({
-        center: [spots[0].lon, spots[0].lat],
-        zoom: labelledZoom(spots),
-        padding: filtersPad(),
-        duration: reduced || (opts && opts.snap) ? 0 : 1400,
-        essential: true
-      });
+      var spots = photoSpots(cat);
+      window.clearTimeout(sheetTimer);
+      window.clearTimeout(swipeTimer);
+      if (snap && prev === i && spots[spotIdx]) {
+        if (wrap && wrap.classList.contains("is-nav")) return;
+        markSpot(cat, spotIdx);
+        flyToSpot(spots, spotIdx, true);
+        return;
+      }
+      closeNav({ silent: true });
+      spotIdx = 0;
+      peekBusy = false;
+      resetPeekRail();
+      setFiltersSheet(false);
+      if (!spots.length) {
+        setPeekVisible(false);
+        return;
+      }
+      paintFiltersPeek(cat, spots[0]);
+      markSpot(cat, 0);
+      flyToSpot(spots, 0, snap);
+      photoHops += 1;
+      if (userTookOver) return;
+      // First bubble, then a swipe. On Summit Treks the second card is
+      // Nijagal Betta and the details sheet opens after that swipe.
+      if (spots.length >= 2 && !reduced) {
+        swipeTimer = window.setTimeout(function () {
+          var dir = Math.random() < 0.5 ? -1 : 1;
+          var next = cat === "Summit Treks" ? 1 : neighborIdx(spots, 0, dir);
+          swipeTo(next, dir, function () {
+            if (spots[next] && spots[next].sheet) {
+              sheetTimer = window.setTimeout(function () {
+                openSheetFor(spots[next]);
+                sheetTimer = window.setTimeout(function () {
+                  openNavFor(spots[next]);
+                }, 1700);
+              }, 640);
+            }
+          });
+        }, snap ? 900 : 1600);
+      }
+    }
+
+    function nextPhotoCat(from) {
+      var i = from;
+      var n;
+      for (n = 0; n < cats.length; n += 1) {
+        i = (i + 1) % cats.length;
+        if (photoSpots(cats[i]).length) return i;
+      }
+      return (from + 1) % cats.length;
     }
 
     function schedule() {
       window.clearTimeout(timer);
-      if (reduced || !inView) return;
+      if (reduced || !inView || userTookOver) return;
+      var cat = cats[idx] || "";
+      var spots = photoSpots(cat);
+      var sheetOn = wrap && wrap.classList.contains("is-sheet");
+      var navOn = wrap && wrap.classList.contains("is-nav");
+      var dwell = navOn ? 5200 : sheetOn || (spots[1] && spots[1].sheet) ? 10000 : 4200;
       timer = window.setTimeout(function () {
-        showCategory((idx + 1) % cats.length);
+        showCategory(nextPhotoCat(idx));
         schedule();
-      }, 4200);
+      }, dwell);
     }
 
     function bootChips() {
-      showCategory(0, { snap: true });
+      var start = cats.indexOf("Summit Treks");
+      showCategory(start >= 0 ? start : 0, { snap: true });
       schedule();
+    }
+
+    function bindPeekGestures() {
+      if (!peekEl) return;
+      var dragId = null;
+      var startX = 0;
+      var startY = 0;
+      var lastDx = 0;
+
+      function currentSpots() {
+        return photoSpots(cats[idx] || "");
+      }
+
+      function layoutDrag(dx) {
+        if (!peekRail || !peekA || !peekB) return;
+        var spots = currentSpots();
+        if (spots.length < 2) return;
+        var w = peekEl.clientWidth || 200;
+        var clamped = Math.max(-w, Math.min(w, dx));
+        peekRail.style.transition = "none";
+        if (clamped < 0) {
+          fillPeekCard(peekA, cats[idx], spots[spotIdx]);
+          fillPeekCard(peekB, cats[idx], spots[neighborIdx(spots, spotIdx, -1)]);
+          peekRail.style.transform = "translate3d(" + clamped + "px,0,0)";
+        } else {
+          fillPeekCard(peekA, cats[idx], spots[neighborIdx(spots, spotIdx, 1)]);
+          fillPeekCard(peekB, cats[idx], spots[spotIdx]);
+          peekRail.style.transform = "translate3d(" + (-w + clamped) + "px,0,0)";
+        }
+      }
+
+      function settle(e, cancelled) {
+        if (dragId === null || e.pointerId !== dragId) return;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        var w = peekEl.clientWidth || 200;
+        var threshold = Math.min(56, Math.max(28, w * 0.18));
+        dragId = null;
+        peekEl.classList.remove("is-dragging");
+        if (peekEl.hasPointerCapture && peekEl.hasPointerCapture(e.pointerId)) {
+          peekEl.releasePointerCapture(e.pointerId);
+        }
+        var spots = currentSpots();
+        if (!cancelled && spots.length >= 2 && Math.abs(dx) >= threshold && Math.abs(dx) > Math.abs(dy) * 1.05) {
+          var dir = dx < 0 ? -1 : 1;
+          swipeTo(neighborIdx(spots, spotIdx, dir), dir);
+          return;
+        }
+        resetPeekRail();
+        paintFiltersPeek(cats[idx], spots[spotIdx]);
+      }
+
+      peekEl.addEventListener("dragstart", function (e) { e.preventDefault(); });
+      peekEl.addEventListener("pointerdown", function (e) {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        if (e.target.closest(".lh__go")) return;
+        if (wrap && wrap.classList.contains("is-sheet")) return;
+        var spots = currentSpots();
+        if (spots.length < 2 || peekBusy) return;
+        userTookOver = true;
+        window.clearTimeout(timer);
+        window.clearTimeout(swipeTimer);
+        window.clearTimeout(sheetTimer);
+        dragId = e.pointerId;
+        startX = e.clientX;
+        startY = e.clientY;
+        lastDx = 0;
+        peekEl.classList.add("is-dragging");
+        if (peekEl.setPointerCapture) peekEl.setPointerCapture(e.pointerId);
+      });
+      peekEl.addEventListener("pointermove", function (e) {
+        if (dragId === null || e.pointerId !== dragId) return;
+        lastDx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        if (Math.abs(lastDx) < 4 || Math.abs(lastDx) <= Math.abs(dy)) return;
+        e.preventDefault();
+        layoutDrag(lastDx);
+      });
+      peekEl.addEventListener("pointerup", function (e) { settle(e, false); });
+      peekEl.addEventListener("pointercancel", function (e) { settle(e, true); });
+      peekEl.addEventListener("click", function (e) {
+        var go = e.target.closest(".lh__go");
+        if (!go) return;
+        e.preventDefault();
+        var spots = currentSpots();
+        var spot = spots[spotIdx];
+        if (spot && spot.img) {
+          userTookOver = true;
+          window.clearTimeout(timer);
+          window.clearTimeout(swipeTimer);
+          openSheetFor(spot);
+        }
+      });
+      function closeDetails() {
+        closeNav();
+        setFiltersSheet(false);
+        if (!userTookOver) schedule();
+      }
+      var closeBtn = document.querySelector("#filters-sheet .filters__sheet-x");
+      if (closeBtn) closeBtn.addEventListener("click", closeDetails);
+      var sheetGo = document.getElementById("filters-sheet-go");
+      if (sheetGo) {
+        sheetGo.addEventListener("click", function () {
+          var spots = currentSpots();
+          var spot = spots[spotIdx];
+          if (!spot || !spot.img) return;
+          userTookOver = true;
+          window.clearTimeout(timer);
+          window.clearTimeout(sheetTimer);
+          openNavFor(spot);
+        });
+      }
+      var navBack = document.getElementById("filters-nav-back");
+      var navDone = document.getElementById("filters-nav-done");
+      if (navBack) navBack.addEventListener("click", closeDetails);
+      if (navDone) navDone.addEventListener("click", closeDetails);
+    }
+    bindPeekGestures();
+
+    var themeBtn = document.getElementById("themeToggle");
+    if (themeBtn) {
+      themeBtn.addEventListener("click", function () {
+        if (!map || !map.getLayer("nav-route-line")) return;
+        try { map.setPaintProperty("nav-route-line", "line-color", navLineColor()); } catch (e) { /* ok */ }
+      });
     }
 
     if (map) {
@@ -1473,20 +1909,17 @@
           if (idx >= 0) showCategory(idx, { snap: true });
         }
         cats.forEach(function (cat) {
-          var spots = CATEGORY_SPOTS[cat] || [];
-          pinsByCat[cat] = spots.map(function (spot, i) {
-            var el = document.createElement("div");
-            el.className = "filters-pin" + (i === 0 ? " is-on" : "");
-            el.innerHTML =
-              '<div class="filters-pin__dot"></div>' +
-              '<div class="filters-pin__bubble"><b>' + spot.name + '</b><small>' + spot.meta + '</small></div>';
+          pinsByCat[cat] = photoSpots(cat).map(function (spot, i) {
+            var el = makeFiltersPin(spot, i);
+            if (!el) return null;
             new window.maplibregl.Marker({ element: el, anchor: "bottom" })
               .setLngLat([spot.lon, spot.lat])
               .addTo(map);
             return el;
-          });
+          }).filter(Boolean);
         });
 
+        ensureNavLayer();
         bootChips();
         sizeMap();
         requestAnimationFrame(sizeMap);
@@ -1536,14 +1969,14 @@
   }
 
   (function armSectionPosters() {
-    ["mood", "clock"].forEach(function (id) {
+    ["mood", "clock", "vote"].forEach(function (id) {
       var section = document.getElementById(id);
       if (!section) return;
       var vid = section.querySelector("video");
       var poster = vid && vid.getAttribute("data-poster");
       if (!poster) return;
       function paint() {
-        var host = section.querySelector(".filters__bg, .pitch__bg");
+        var host = section.querySelector(".filters__bg, .pitch__bg, .stage__bg");
         if (!host || host.getAttribute("data-posted")) return;
         host.setAttribute("data-posted", "1");
         host.style.backgroundImage = 'url("' + poster + '")';
@@ -1566,7 +1999,8 @@
     var desktop = innerWidth >= 721 && !liteFx;
     var films = [
       { id: "hero", sel: ".hero__bg-vid" },
-      { id: "mood", sel: ".filters__bg-vid" }
+      { id: "mood", sel: ".filters__bg-vid" },
+      { id: "vote", sel: ".stage__bg-vid" }
     ];
     // Desktop: 4K. Phone: 1080p (the -uhd cuts). 540p is only a last-resort
     // fallback. Mobile still waits for canplaythrough so a 4–9MB file does
@@ -2525,13 +2959,13 @@
 
   /* ---------- Trip flow (GroupVote, 510f @ 30fps) ---------- */
   var FLOW_TOTAL = 510;
-  var TITLE_TRIP = "Weekend north?";
+  var TITLE_TRIP = "Chikmagalur?";
   var CHAT_JOINS = ["Rohan", "Samira", "Kabir", "Diya", "Mira"];
   var MEMBERS = ["A", "R", "S", "K", "D", "M"];
   var VOTE = [
-    { name: "Skandagiri", vote: "yes", yes: 5, maybe: 1, no: 0, img: PLACES[0].img },
-    { name: "Makalidurga", vote: "maybe", yes: 2, maybe: 3, no: 1, img: PLACES[1].img },
-    { name: "Savandurga", vote: "no", yes: 1, maybe: 1, no: 3, img: PLACES[2].img }
+    { name: "Mullayanagiri", cat: "misty hike", vote: "yes", yes: 5, maybe: 1, no: 0, img: "/assets/places/mullayanagiri.jpg" },
+    { name: "Makalidurga", cat: "trek", vote: "maybe", yes: 2, maybe: 3, no: 1, img: PLACES[1].img },
+    { name: "Savandurga", cat: "trek", vote: "no", yes: 1, maybe: 1, no: 3, img: PLACES[2].img }
   ];
   var voteRaf = 0;
   var voteStart = 0;
@@ -2566,7 +3000,7 @@
   }
 
   function unfurlHtml() {
-    return '<img alt="" src="' + PLACES[0].img + '" />' +
+    return '<img alt="" src="' + VOTE[0].img + '" />' +
       '<div class="unfurl__scrim"><span>LIGHTHOUSE · 3 VOTING</span><b>' + TITLE_TRIP + "</b></div>";
   }
 
@@ -2767,7 +3201,7 @@
             '<img class="vote-card__thumb" alt="" src="' + c.img + '" width="64" height="64" />' +
             '<div class="vote-card__body">' +
               '<div class="vote-card__name">' + voteTrophy + c.name + "</div>" +
-              '<span class="vote-card__cat">trek</span>' +
+              '<span class="vote-card__cat">' + (c.cat || "trek") + "</span>" +
               '<div class="vote-tally">' +
                 '<div class="vote-tally__bar"><i class="is-yes"></i><i class="is-maybe"></i><i class="is-no"></i></div>' +
                 '<div class="vote-tally__n"></div>' +
