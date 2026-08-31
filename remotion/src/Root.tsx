@@ -1,4 +1,7 @@
 import { Composition, registerRoot } from "remotion";
+import { loadNohemi } from "./loadNohemi";
+
+loadNohemi();
 import { ExplorePeek } from "./compositions/ExplorePeek";
 import { HeroMorph } from "./compositions/HeroMorph";
 import { ReelImport } from "./compositions/ReelImport";

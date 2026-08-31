@@ -22,7 +22,7 @@ import { IPhoneChrome, SAFE_BOTTOM, SAFE_TOP } from "../components/IPhoneChrome"
 const SUCCESS = "#10B981";
 const WARNING = "#F59E0B";
 const DANGER = "#EF4444";
-const TITLE = "Weekend north?";
+const TITLE = "Chikmagalur?";
 const CODE = "LH-7F3K2";
 
 export const FLOW = {
@@ -37,13 +37,13 @@ export const FLOW = {
 
 const CANDIDATES = [
   {
-    name: "Skandagiri",
-    cat: "trek",
+    name: "Mullayanagiri",
+    cat: "misty hike",
     yes: 5,
     maybe: 1,
     no: 0,
     vote: "yes" as const,
-    img: staticFile("places/skandagiri.jpg"),
+    img: staticFile("places/mullayanagiri.jpg"),
   },
   {
     name: "Makalidurga",
@@ -504,7 +504,7 @@ const TripScene: React.FC<{
           color: COLORS.text,
         }}
       >
-        They picked Skandagiri!
+        They picked Mullayanagiri!
       </div>
     ) : null}
     <CandidateList frame={frame} mode={mode} staged={staged} />
@@ -523,7 +523,7 @@ const TripScene: React.FC<{
       >
         <IconFlag />
         <span style={{ flex: 1, fontSize: 13, color: COLORS.text }}>
-          Finalize with <b>Skandagiri</b>?
+          Finalize with <b>Mullayanagiri</b>?
         </span>
         <span
           style={{

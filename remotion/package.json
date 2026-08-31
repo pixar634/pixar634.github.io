@@ -17,7 +17,8 @@
     "render:weather": "remotion render src/Root.tsx Weather ../assets/video/remotion/weather.mp4 --log=verbose",
     "render:logistics": "remotion render src/Root.tsx Logistics ../assets/video/remotion/logistics.mp4 --log=verbose",
     "render:collections": "remotion render src/Root.tsx CollectionsFriends ../assets/video/remotion/collectionsfriends.mp4 --log=verbose",
-    "render:pro": "remotion render src/Root.tsx ProUpgrade ../assets/video/remotion/proupgrade.mp4 --log=verbose"
+    "render:pro": "remotion render src/Root.tsx ProUpgrade ../assets/video/remotion/proupgrade.mp4 --log=verbose",
+    "render:frags": "node render-frags.mjs"
   },
   "dependencies": {
     "@remotion/cli": "4.0.229",

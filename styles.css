@@ -988,6 +988,8 @@ html.is-lite-fx .hero__bg-vid { filter: none; }
 .hero.is-theme-air .quote-cycle *,
 .hero.is-theme-air .waitlist,
 .hero.is-theme-air .waitlist *,
+.hero.is-theme-air .wshare,
+.hero.is-theme-air .wshare *,
 .hero.is-theme-air .hero__meta,
 .hero.is-theme-air .hero__meta * {
   font-family: "Nohemi", "Clash Display", sans-serif;
@@ -1119,6 +1121,83 @@ html.is-theme-air .hero .waitlist__btn.btn--ghost:active {
   background: rgba(8, 8, 10, 0.46);
   box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.35);
 }
+html.is-theme-air .hero .wshare__lede em {
+  color: #FBF4EC;
+  border-bottom-color: #E8916A;
+}
+html.is-theme-air .hero .wshare__inbox-note {
+  color: #E8916A;
+  border-color: rgba(232, 145, 106, 0.4);
+}
+html.is-theme-air .hero .wshare__dot.is-on {
+  background: #E8916A;
+  box-shadow: 0 0 12px -2px rgba(168, 63, 28, 0.7);
+}
+html.is-theme-air .hero .wshare__progress.is-complete .wshare__count {
+  color: #E8916A;
+}
+html.is-theme-air .hero .wshare__linkrow {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 8, 10, 0.42);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow:
+    3px 6px 12px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+html.is-theme-air .hero .wshare__link {
+  color: #FBF4EC;
+}
+html.is-theme-air .hero .wshare__copy,
+html.is-theme-air .hero .wshare__wa.btn {
+  font-family: "Nohemi", "Clash Display", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: #FBF4EC;
+  background: rgba(8, 8, 10, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 15px;
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow:
+    3px 6px 12px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-shadow: none;
+  filter: none;
+}
+html.is-theme-air .hero .wshare__copy {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+html.is-theme-air .hero .wshare__wa.btn {
+  padding: 16px 28px;
+}
+html.is-theme-air .hero .wshare__copy:hover,
+html.is-theme-air .hero .wshare__wa.btn:hover {
+  color: #FFFCF7;
+  background: rgba(8, 8, 10, 0.55);
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    4px 8px 16px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transform: none;
+}
+html.is-theme-air .hero .wshare__copy:focus-visible,
+html.is-theme-air .hero .wshare__wa.btn:focus-visible {
+  outline: 2px solid #A83F1C;
+  outline-offset: 3px;
+}
+html.is-theme-air .hero .wshare__copy:active,
+html.is-theme-air .hero .wshare__wa.btn:active {
+  color: #FBF4EC;
+  background: rgba(8, 8, 10, 0.46);
+  box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.35);
+  transform: none;
+}
 .hero.is-theme-air .waitlist__note {
   font-family: "Nohemi", "Clash Display", sans-serif;
   color: var(--hero-muted);
@@ -1143,6 +1222,23 @@ html.is-theme-air .hero .waitlist__btn.btn--ghost:active {
 }
 
 /* 2 — night: OG mint/white. Rotating lockup stays Nohemi. */
+.hero.is-theme-night .wshare__wa.btn--ghost {
+  background: var(--mint);
+  color: #08110D;
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(93, 202, 165, 0.25),
+    0 8px 24px -8px rgba(93, 202, 165, 0.45),
+    0 24px 80px -24px rgba(93, 202, 165, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.5);
+}
+.hero.is-theme-night .wshare__wa.btn--ghost:hover {
+  box-shadow:
+    0 0 0 1px rgba(93, 202, 165, 0.45),
+    0 12px 32px -8px rgba(93, 202, 165, 0.6),
+    0 32px 96px -24px rgba(93, 202, 165, 0.45),
+    0 4px 16px rgba(0, 0, 0, 0.5);
+}
 
 /* 3 — warm: magazine serif + amber ink + skeuomorphic controls. */
 .hero.is-theme-warm {
@@ -4733,6 +4829,54 @@ html.is-theme-air .clock__theme:focus-visible {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Clock Ultra is ~half a real phone. Full-size collection cards blow the
+   type and clip the blurb after a few letters. */
+.clock__device .search-app__label {
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  margin-bottom: 4px;
+}
+.clock__device .search-app__basis {
+  font-size: 9px;
+  line-height: 1.3;
+}
+.clock__device .search-app__cards {
+  gap: 6px;
+  margin-top: 6px;
+}
+.clock__device .search-card {
+  gap: 7px;
+  padding: 5px 6px 5px 5px;
+  border-radius: 16px;
+}
+.clock__device .search-card__thumb {
+  width: 48px;
+  height: 36px;
+  border-radius: 11px;
+}
+.clock__device .search-card__body { gap: 1px; }
+.clock__device .search-card__n {
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  min-height: 8px;
+}
+.clock__device .search-card__shimmer {
+  width: 42px;
+  height: 6px;
+  margin: 1px 0;
+}
+.clock__device .search-card__title {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.clock__device .search-card__blurb {
+  font-size: 8px;
+  line-height: 1.25;
+  -webkit-line-clamp: 1;
 }
 
 .votestrip {

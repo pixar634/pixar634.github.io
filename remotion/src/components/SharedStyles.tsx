@@ -16,9 +16,9 @@ export const COLORS = {
 };
 
 export const FONTS = {
-  display: "'Clash Display', 'Space Grotesk', sans-serif",
-  accent: "'Syne', 'Space Grotesk', sans-serif",
-  body: "'Space Grotesk', sans-serif",
+  display: '"Nohemi", "Clash Display", sans-serif',
+  accent: '"Nohemi", "Clash Display", sans-serif',
+  body: '"Nohemi", "Clash Display", sans-serif',
 };
 
 export const EASES = {
