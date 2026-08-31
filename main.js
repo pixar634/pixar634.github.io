@@ -97,10 +97,8 @@
   });
 
   /* ---------- Hero-map loader ----------
-     Copy (nav, coords, headline, quote, waitlist) paints on its own. This
-     cover sits only on #hero-map. The sonar can idle while tiles fetch; the
-     scan-open splash waits until MapLibre has actually painted, so we never
-     wipe onto a black rectangle. */
+     Copy paints on its own. This cover sits only on #hero-map until tiles
+     have painted, then it fades off — no sonar, no scan-open, no torch. */
   var heroLoaderDone = false;
   var heroFxReady = false;
   var heroMapPainted = false;
@@ -112,80 +110,12 @@
     heroMapPainted = true;
     document.dispatchEvent(new CustomEvent(HERO_MAP_PAINTED_EVENT));
   }
-  function finishHeroLoader(loader) {
-    window.setTimeout(function () {
-      heroLoaderDone = true;
-      document.dispatchEvent(new CustomEvent(HERO_LOADER_DONE_EVENT));
-    }, 560);
-    window.setTimeout(function () { loader.remove(); }, 660);
-  }
   function initHeroLoader() {
-    var loader = document.getElementById("hero-loader");
-    var bar = document.getElementById("hero-loader-bar");
     var torch = document.getElementById("hero-torch");
-    var torchStage = "";
-
-    function focusTorch(stage) {
-      if (!torch || reduced || torchStage === stage) return;
-      torchStage = stage;
-      torch.classList.remove("is-headline", "is-loader", "is-clearing");
-      torch.classList.add("is-" + stage);
-    }
-
-    if (torch && (reduced || liteFx)) {
-      torch.remove();
-      torch = null;
-    }
-
-    // Copy no longer waits on the map. Release it on the first frame so any
-    // leftover `.hero__lede` / go-glitch rules still run, without hiding the
-    // quote or the form.
+    if (torch) torch.remove();
     releaseHeroCopy();
-
-    if (!loader) {
-      heroLoaderDone = true;
-      announceHeroMapPainted();
-      if (torch) {
-        torch.remove();
-        torch = null;
-      }
-      return;
-    }
-
-    function finishReduced() {
-      if (bar) bar.style.transform = "scaleX(1)";
-      loader.classList.add("is-fading");
-      heroLoaderDone = true;
-      document.dispatchEvent(new CustomEvent(HERO_LOADER_DONE_EVENT));
-      window.setTimeout(function () { loader.remove(); }, 280);
-    }
-
-    function splash() {
-      if (loader.getAttribute("data-splashed") === "1") return;
-      loader.setAttribute("data-splashed", "1");
-      if (bar) bar.style.transform = "scaleX(1)";
-      if (reduced) {
-        finishReduced();
-        return;
-      }
-      // A short ping, then the scan-open — both only after tiles exist, so
-      // the wipe never lands on a black field and never sits on the type
-      // while we wait.
-      loader.classList.add("is-running");
-      focusTorch("loader");
-      window.setTimeout(function () {
-        focusTorch("clearing");
-        loader.classList.add("is-opening");
-        finishHeroLoader(loader);
-      }, 180);
-    }
-
-    if (heroMapPainted) splash();
-    else document.addEventListener(HERO_MAP_PAINTED_EVENT, splash, { once: true });
-
-    window.setTimeout(function () {
-      if (!heroLoaderDone) splash();
-    }, 6000);
+    heroLoaderDone = true;
+    document.dispatchEvent(new CustomEvent(HERO_LOADER_DONE_EVENT));
   }
 
   /* Copy is already on the first paint. This class remains for the leftover
@@ -260,7 +190,8 @@
         schedule();
       }, 7000);
     }
-    schedule();
+    // Appear on load, then start the cycle. Do not wait for the map.
+    if (!reduced) window.setTimeout(schedule, 1200);
 
     // Pause on hover/focus so a long quote doesn't change mid-read.
     el.addEventListener("mouseenter", function () { window.clearTimeout(timer); });
@@ -794,30 +725,12 @@
     if (!offset) return;
     HERO_SPOTS = HERO_SPOTS.slice(offset).concat(HERO_SPOTS.slice(0, offset));
   })();
-  (function pickHeroWeather() {
-    if (liteFx) return;
-    // Two rain scenes and two mist scenes per load, always on different places.
-    // Assignment—not the number of effects—is random, so the tour keeps its
-    // rhythm without making every destination look stormy.
-    var order = HERO_SPOTS.map(function (_, i) { return i; });
-    for (var i = order.length - 1; i > 0; i -= 1) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var swap = order[i];
-      order[i] = order[j];
-      order[j] = swap;
-    }
-    HERO_SPOTS[order[0]].weather = "rain";
-    HERO_SPOTS[order[1]].weather = "rain";
-    HERO_SPOTS[order[2]].weather = "mist";
-    HERO_SPOTS[order[3]].weather = "mist";
-  })();
   var HERO_YOU = { lat: 12.9716, lon: 77.5946 };
-  // A regional frame over the peninsular tip — wide enough to hold every place
-  // in the tour, so the opening reads as "here's the region" before the camera
-  // commits to one of them.
-  var HERO_OVERVIEW = [[74.0, 9.8], [79.8, 15.3]];
-  var HERO_DIVE_MS = 2600;
+  var HERO_START_ZOOM = 11.05;
   var HERO_DWELL_MS = 1000;
+  // swipe-nudge peaks at 30% of 600ms — camera leaves on that beat so the
+  // hop reads as the word shoving the map.
+  var HERO_SWIPE_LEAD_MS = 200;
   var HERO_STYLE = "https://tiles.openfreemap.org/styles/liberty";
   var HERO_RASTER = {
     version: 8,
@@ -840,16 +753,13 @@
   };
 
   function heroPad() {
-    var hero = document.getElementById("hero");
+    var clock = document.getElementById("clock");
     var w = innerWidth;
-    var h = (hero && hero.clientHeight) || innerHeight;
+    var h = (clock && clock.clientHeight) || innerHeight;
     if (w < 720) {
-      // Asymmetric on purpose: MapLibre centers the visible pin cluster away
-      // from the padded side, and the headline sits left-aligned over the top
-      // ~60% of this width — a symmetric pad put pins right on top of it.
-      return { top: 72, bottom: Math.round(h * 0.52), left: Math.round(w * 0.42), right: 20 };
+      return { top: 96, bottom: Math.round(h * 0.48), left: 24, right: 24 };
     }
-    return { top: 88, bottom: Math.round(h * 0.3), left: Math.round(w * 0.36), right: 80 };
+    return { top: 80, bottom: Math.round(h * 0.28), left: Math.round(w * 0.34), right: Math.round(w * 0.2) };
   }
 
   function hopMs(from, to) {
@@ -890,19 +800,158 @@
       : 'data-src="' + spot.img + '"';
     el.className = "hero-pin" + (i === 0 ? " is-on" : "");
     el.innerHTML =
-      '<div class="hero-pin__bubble" style="border-color:' + spot.color + '">' +
+        '<div class="hero-pin__bubble" style="border-color:' + spot.color + '" data-og-color="' + spot.color + '">' +
         '<img class="hero-pin__dot" alt="" ' + srcAttr + ' width="36" height="36" decoding="async" />' +
         '<span class="hero-pin__meta"><b>' + spot.name + "</b><small>" + spot.meta + "</small></span>" +
       "</div>";
     return el;
   }
 
+  /* Lockup stays: Your next / Road Trip [place] / is a swipe away.
+     Only the place name cycles. */
+  var placeIdx = 0;
+  var placeTimer = 0;
+
+  function swipeHeadline() {
+    var swipe = document.getElementById("swipeWord");
+    var away = document.getElementById("awayWord");
+    if (!swipe) return;
+    swipe.classList.remove("is-swiping");
+    if (away) away.classList.remove("is-swiping");
+    void swipe.offsetWidth;
+    swipe.classList.add("is-swiping");
+    if (away) away.classList.add("is-swiping");
+  }
+
+  function paintPlace(name) {
+    var el = document.getElementById("placeWord");
+    if (!el || !name) return;
+    if (reduced) {
+      el.textContent = name;
+      return;
+    }
+    el.classList.remove("is-entering");
+    el.classList.add("is-leaving");
+    window.setTimeout(function () {
+      el.textContent = name;
+      el.classList.remove("is-leaving");
+      void el.offsetWidth;
+      el.classList.add("is-entering");
+    }, 180);
+  }
+
+  function cycleHeroPlace() {
+    var el = document.getElementById("placeWord");
+    if (!el || !HERO_SPOTS.length) return;
+    el.textContent = HERO_SPOTS[0].name;
+    if (reduced) return;
+    function tick() {
+      swipeHeadline();
+      placeIdx = (placeIdx + 1) % HERO_SPOTS.length;
+      paintPlace(HERO_SPOTS[placeIdx].name);
+    }
+    placeTimer = window.setInterval(tick, 3200);
+  }
+  cycleHeroPlace();
+  var HERO_THEME_IDS = ["air", "night", "warm"];
+  var HERO_MAP_THEMES = ["air", "night"];
+  var themeIdx = 0;
+
+  function applyHeroTheme(name) {
+    var hero = document.getElementById("hero");
+    var mapWrap = document.getElementById("hero-map");
+    var filtersMap = document.getElementById("filters-map");
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    var i;
+    var night = name === "night";
+    for (i = 0; i < HERO_THEME_IDS.length; i++) {
+      var on = HERO_THEME_IDS[i] === name;
+      root.classList.toggle("is-theme-" + HERO_THEME_IDS[i], on);
+      if (hero) hero.classList.toggle("is-theme-" + HERO_THEME_IDS[i], on);
+      if (mapWrap) mapWrap.classList.toggle("is-theme-" + HERO_THEME_IDS[i], on);
+      if (filtersMap) filtersMap.classList.toggle("is-theme-" + HERO_THEME_IDS[i], on);
+    }
+    var bubbles = document.querySelectorAll("#hero-map .hero-pin__bubble");
+    for (i = 0; i < bubbles.length; i++) {
+      var og = bubbles[i].getAttribute("data-og-color") || "#5DCAA5";
+      if (name === "warm") bubbles[i].style.borderColor = i % 2 ? "#F4E8D6" : "#E0A458";
+      else if (name === "air") bubbles[i].style.borderColor = "#BA5A36";
+      else bubbles[i].style.borderColor = og;
+    }
+    if (btn) {
+      btn.setAttribute("aria-pressed", night ? "true" : "false");
+      btn.setAttribute("aria-label", night ? "Switch to white map" : "Switch to night look");
+      btn.title = night ? "White map" : "Night look";
+    }
+  }
+
+  function toggleHeroTheme() {
+    themeIdx = (themeIdx + 1) % HERO_MAP_THEMES.length;
+    applyHeroTheme(HERO_MAP_THEMES[themeIdx]);
+  }
+
+  (function bindThemeToggle() {
+    var btn = document.getElementById("themeToggle");
+    if (!btn) return;
+    applyHeroTheme(HERO_MAP_THEMES[themeIdx]);
+    btn.addEventListener("click", function () {
+      toggleHeroTheme();
+    });
+  })();
+
+  function pulseMintWords() {
+    var display = document.getElementById("display");
+    if (reduced || !display) return;
+    var words = display.querySelectorAll(".display__pop, .display__push");
+    var i;
+    for (i = 0; i < words.length; i++) {
+      words[i].classList.remove("is-swiping");
+      void words[i].offsetWidth;
+      words[i].classList.add("is-swiping");
+    }
+  }
+
+  function paintHead(head) {
+    var display = document.getElementById("display");
+    var a = document.getElementById("displayA");
+    var b = document.getElementById("displayB");
+    var c = document.getElementById("displayC");
+    if (!display || !a || !b || !c) return;
+    display.classList.toggle("is-compact", !!head.compact);
+    a.textContent = head.a;
+    b.textContent = head.b;
+    c.innerHTML = "<em>" + head.c + "</em>";
+  }
+
+  function hopHeadline() {
+    var display = document.getElementById("display");
+    if (!display || !HERO_HEADS.length) return;
+    var next = (headIdx + 1) % HERO_HEADS.length;
+    function show() {
+      headIdx = next;
+      paintHead(HERO_HEADS[headIdx]);
+      if (reduced) return;
+      display.classList.remove("is-leaving");
+      display.classList.add("is-entering");
+      window.setTimeout(function () {
+        display.classList.remove("is-entering");
+      }, 560);
+    }
+    if (headTimer) window.clearTimeout(headTimer);
+    if (reduced) {
+      show();
+      return;
+    }
+    display.classList.remove("is-entering");
+    display.classList.add("is-leaving");
+    headTimer = window.setTimeout(show, 280);
+  }
+
   function initHeroTour() {
     var wrap = document.getElementById("hero-map");
     var gl = document.getElementById("hero-gl");
-    var hero = document.getElementById("hero");
-    var swipeWord = document.getElementById("swipeWord");
-    var awayWord = document.getElementById("awayWord");
+    var clock = document.getElementById("clock");
     if (!wrap || !gl) {
       announceHeroMapPainted();
       return;
@@ -913,11 +962,12 @@
       return;
     }
 
+    var origin = HERO_SPOTS[0];
     var map = new window.maplibregl.Map({
       container: gl,
       style: HERO_STYLE,
-      center: [76.9, 12.5],
-      zoom: innerWidth < 720 ? 6.3 : 7,
+      center: [origin.lon, origin.lat],
+      zoom: HERO_START_ZOOM,
       interactive: false,
       attributionControl: false,
       fadeDuration: 0,
@@ -933,10 +983,10 @@
     var pinEls = [];
     var idx = 0;
     var timer = 0;
+    var kickTimer = 0;
     var inView = true;
     var ready = false;
     var settled = false;
-    var weatherTimer = 0;
     var fxArmed = false;
 
     function setOn(i) {
@@ -955,35 +1005,6 @@
       if (reduced || liteFx) return;
       wrap.classList.add("is-pulse");
       window.setTimeout(function () { wrap.classList.remove("is-pulse"); }, 440);
-    }
-
-    // The headline's "swipe" nudges right and springs back in step with every
-    // hop the map makes, so the one interactive word in the hero reads as a
-    // live echo of the motion happening beside it, not a static label.
-    function pulseSwipeWord() {
-      if (reduced || !swipeWord) return;
-      swipeWord.classList.remove("is-swiping");
-      void swipeWord.offsetWidth;
-      swipeWord.classList.add("is-swiping");
-      if (awayWord) {
-        awayWord.classList.remove("is-swiping");
-        void awayWord.offsetWidth;
-        awayWord.classList.add("is-swiping");
-      }
-    }
-
-    function setWeather(kind, immediate) {
-      var wx = document.getElementById("hero-wx");
-      if (!wx) return;
-      if (weatherTimer) {
-        window.clearTimeout(weatherTimer);
-        weatherTimer = 0;
-      }
-      wx.classList.remove("is-rain", "is-mist");
-      if (liteFx || reduced || !fxArmed || !kind) return;
-      var show = function () { wx.classList.add("is-" + kind); };
-      if (immediate) show();
-      else weatherTimer = window.setTimeout(show, 180);
     }
 
     function armHeroFx() {
@@ -1006,7 +1027,6 @@
           fxArmed = true;
           heroFxReady = true;
           document.dispatchEvent(new CustomEvent(HERO_FX_READY_EVENT));
-          setWeather(HERO_SPOTS[idx] && HERO_SPOTS[idx].weather, true);
         }
         requestAnimationFrame(sample);
       }
@@ -1025,22 +1045,30 @@
     function flyTo(i, duration) {
       var spot = HERO_SPOTS[i];
       var prev = HERO_SPOTS[idx];
-      idx = i;
-      setOn(i);
-      setWeather(spot.weather);
-      pulse();
-      pulseSwipeWord();
-      map.flyTo({
-        center: [spot.lon, spot.lat],
-        zoom: hopZoom(prev, spot),
-        duration: reduced ? 0 : duration,
-        padding: heroPad(),
-        essential: true
-      });
+      function go() {
+        kickTimer = 0;
+        idx = i;
+        setOn(i);
+        pulse();
+        map.flyTo({
+          center: [spot.lon, spot.lat],
+          zoom: hopZoom(prev, spot),
+          duration: reduced ? 0 : duration,
+          padding: heroPad(),
+          essential: true
+        });
+      }
+      if (reduced) {
+        go();
+        return;
+      }
+      if (kickTimer) window.clearTimeout(kickTimer);
+      kickTimer = window.setTimeout(go, HERO_SWIPE_LEAD_MS);
     }
 
     function stopTour() {
       if (timer) { window.clearTimeout(timer); timer = 0; }
+      if (kickTimer) { window.clearTimeout(kickTimer); kickTimer = 0; }
     }
 
     function schedule() {
@@ -1048,11 +1076,12 @@
       if (!heroLoaderDone || !ready || !settled || reduced || !inView || document.hidden) return;
       var next = (idx + 1) % HERO_SPOTS.length;
       var ms = hopMs(HERO_SPOTS[idx], HERO_SPOTS[next]);
+      var lead = reduced ? 0 : HERO_SWIPE_LEAD_MS;
       // Re-arm on landing, not on landing plus a dwell, so HERO_DWELL_MS is the
       // whole pause between hops rather than half of it.
       timer = window.setTimeout(function () {
         flyTo(next, ms);
-        timer = window.setTimeout(schedule, ms);
+        timer = window.setTimeout(schedule, ms + lead);
       }, HERO_DWELL_MS);
     }
 
@@ -1061,10 +1090,13 @@
       wrap.classList.add("is-live");
       ready = true;
       map.resize();
-      // fitBounds folds the padding into the camera it computes instead of
-      // setting it on the map, which is what keeps the region in the open space
+      // Padding folds into the camera so the pin sits in the open space
       // beside the headline rather than centred under it.
-      map.fitBounds(HERO_OVERVIEW, { padding: heroPad(), duration: 0 });
+      map.jumpTo({
+        center: [origin.lon, origin.lat],
+        zoom: HERO_START_ZOOM,
+        padding: heroPad()
+      });
 
       HERO_SPOTS.forEach(function (spot, i) {
         var el = makeHeroPin(spot, i);
@@ -1073,6 +1105,7 @@
           .setLngLat([spot.lon, spot.lat])
           .addTo(map);
       });
+      applyHeroTheme(HERO_MAP_THEMES[themeIdx]);
 
       var you = document.createElement("div");
       you.className = "hero-you";
@@ -1083,45 +1116,9 @@
 
       function beginHeroTour() {
         if (settled) return;
-        var origin = HERO_SPOTS[0];
-        if (reduced) {
-          map.jumpTo({
-            center: [origin.lon, origin.lat],
-            zoom: 11.05,
-            padding: heroPad()
-          });
-          settled = true;
-          return;
-        }
-
-        // A short beat on the region before the camera commits — without it the
-        // overview is gone before the scan-open has finished handing it over.
-        wrap.classList.add("is-farview");
-        window.setTimeout(function dive() {
-          if (!liteFx) {
-            wrap.style.setProperty("--hero-dive-ms", HERO_DIVE_MS + "ms");
-            wrap.classList.add("is-dive");
-          }
-          map.flyTo({
-            center: [origin.lon, origin.lat],
-            zoom: 11.05,
-            duration: HERO_DIVE_MS,
-            curve: 1.42,
-            padding: heroPad(),
-            essential: true
-          });
-          // Pins come back before the camera stops, so the place is already
-          // labelled as you arrive instead of popping in after the fact.
-          window.setTimeout(function () {
-            wrap.classList.remove("is-farview");
-          }, HERO_DIVE_MS - 620);
-          map.once("moveend", function () {
-            wrap.classList.remove("is-dive", "is-farview");
-            settled = true;
-            schedule();
-            armHeroFx();
-          });
-        }, 650);
+        settled = true;
+        schedule();
+        armHeroFx();
       }
 
       var paintedOnce = false;
@@ -1136,13 +1133,13 @@
       if (map.loaded() && !map.isMoving()) onPainted();
     });
 
-    if ("IntersectionObserver" in window && hero) {
+    if ("IntersectionObserver" in window && clock) {
       var io = new IntersectionObserver(function (entries) {
         inView = entries.some(function (e) { return e.isIntersecting; });
         if (inView) schedule();
         else stopTour();
       }, { threshold: 0.2 });
-      io.observe(hero);
+      io.observe(clock);
     }
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) stopTour();
@@ -1568,8 +1565,8 @@
     if (reduced || saveData) return;
     var desktop = innerWidth >= 721 && !liteFx;
     var films = [
-      { id: "mood", sel: ".filters__bg-vid" },
-      { id: "clock", sel: ".pitch__bg-vid" }
+      { id: "hero", sel: ".hero__bg-vid" },
+      { id: "mood", sel: ".filters__bg-vid" }
     ];
     // Desktop: 4K. Phone: 1080p (the -uhd cuts). 540p is only a last-resort
     // fallback. Mobile still waits for canplaythrough so a 4–9MB file does
@@ -1675,6 +1672,7 @@
   /* ---------- Click sonar ---------- */
   if (!reduced) {
     document.addEventListener('pointerdown', function (e) {
+      if (document.documentElement.classList.contains("is-theme-air")) return;
       var ring = document.createElement('span');
       ring.className = 'sonar-ring';
       ring.style.left = e.clientX + 'px';

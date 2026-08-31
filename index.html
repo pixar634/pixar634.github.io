@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-IN">
+<html lang="en-IN" class="is-theme-air">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -62,6 +62,10 @@
       content="A dark map of the country around Bangalore with weekend places pinned across it, under the words: Your next road trip is a swipe away."
     />
 
+    <link rel="preload" href="/fonts/Nohemi-Thin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Nohemi-Medium.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Nohemi-ExtraBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Nohemi-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://unpkg.com" crossorigin />
@@ -72,7 +76,7 @@
       data-async-style
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,144,500;0,144,600;0,144,700;1,144,600;1,144,800&display=swap"
       rel="stylesheet"
       media="print"
       data-async-style
@@ -80,7 +84,7 @@
     <link rel="stylesheet" href="https://unpkg.com/lenis@1.1.9/dist/lenis.css" media="print" data-async-style />
     <noscript>
       <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=syne@700,800&display=swap" rel="stylesheet" />
-      <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,144,500;0,144,600;0,144,700;1,144,600;1,144,800&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="https://unpkg.com/lenis@1.1.9/dist/lenis.css" />
     </noscript>
     <!-- deferred, not blocking: main.js is itself deferred and already guards on
@@ -111,6 +115,48 @@
          render delay). Keep this subset in lockstep with styles.css tokens,
          .nav, .hero, .display, .waitlist. -->
     <style>
+      @font-face {
+        font-family: "Nohemi";
+        src: url("/fonts/Nohemi-Thin.woff2") format("woff2");
+        font-weight: 100;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Nohemi";
+        src: url("/fonts/Nohemi-Medium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Nohemi";
+        src: url("/fonts/Nohemi-ExtraBold.woff2") format("woff2");
+        font-weight: 800;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Nohemi";
+        src: url("/fonts/Nohemi-Light.woff2") format("woff2");
+        font-weight: 300;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Nohemi";
+        src: url("/fonts/Nohemi-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Nohemi";
+        src: url("/fonts/Nohemi-SemiBold.woff2") format("woff2");
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
       :root {
         --bg: #0F0F12; --text: #fff; --text-2: #D1D5DB; --text-3: #9CA3AF;
         --mint: #5DCAA5; --mint-dim: rgba(93, 202, 165, 0.14); --amber: #E0A458;
@@ -126,6 +172,25 @@
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { background: var(--bg); }
+      html.is-theme-air {
+        --font-display: "Nohemi", "Clash Display", sans-serif;
+        --font-accent: "Nohemi", "Clash Display", sans-serif;
+        --font-body: "Nohemi", "Clash Display", sans-serif;
+        --glass: rgba(255, 252, 247, 0.38);
+        --glass-hot: rgba(255, 252, 247, 0.52);
+        --glass-ink: #3F3A36;
+        --glass-ink-hot: #1C1915;
+        --glass-edge: rgba(255, 255, 255, 0.7);
+        --glass-lift: 8px 12px 22px rgba(120, 108, 90, 0.28), -6px -6px 14px rgba(255, 255, 255, 0.88), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        --glass-lift-hot: 10px 14px 26px rgba(120, 108, 90, 0.32), -7px -7px 16px rgba(255, 255, 255, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --glass-press: inset 6px 6px 12px rgba(155, 145, 130, 0.48), inset -6px -6px 12px rgba(255, 255, 255, 0.88);
+      }
+      html.is-theme-air, html.is-theme-air body {
+        background: #F4F1EA;
+        font-family: "Nohemi", "Clash Display", sans-serif;
+        font-style: normal;
+        font-synthesis: none;
+      }
       body {
         font-family: var(--font-body); color: var(--text-2);
         font-size: 16px; line-height: 1.6; overflow-x: clip;
@@ -151,13 +216,54 @@
         padding: 22px var(--pad);
       }
       .nav__brand {
-        font-family: var(--font-display); font-weight: 600;
+        font-family: "Nohemi", "Clash Display", sans-serif; font-weight: 600;
         font-size: 15px; letter-spacing: 0.22em; color: var(--text);
       }
       .nav__dot { color: var(--mint); }
-      .nav__right { display: flex; align-items: center; gap: 20px; }
-      .nav__label { display: none; }
+      .nav__right { display: flex; align-items: center; gap: 16px; }
+      .nav__label { display: none; font-family: "Nohemi", "Clash Display", sans-serif; }
       @media (min-width: 640px) { .nav__label { display: inline; } }
+      .nav .btn { font-family: "Nohemi", "Clash Display", sans-serif; }
+      html.is-theme-air .nav__brand { color: #FBF4EC; }
+      html.is-theme-air .nav__label { color: rgba(251, 244, 236, 0.62); font-family: "Nohemi", "Clash Display", sans-serif; }
+      html.is-theme-air .nav .btn.btn--ghost {
+        color: #FBF4EC;
+        background: rgba(8, 8, 10, 0.42);
+        -webkit-backdrop-filter: blur(14px) saturate(1.1);
+        backdrop-filter: blur(14px) saturate(1.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 15px;
+        font-family: "Nohemi", "Clash Display", sans-serif;
+        box-shadow: 3px 6px 12px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      .nav__theme {
+        width: 40px; height: 40px; padding: 0; flex-shrink: 0;
+        border: 0; background: transparent; cursor: pointer;
+        color: var(--mint);
+      }
+      .nav__theme-radar {
+        display: block; width: 28px; height: 28px; margin: 0 auto;
+        position: relative;
+      }
+      .nav__theme-sweep, .nav__theme-halo, .nav__theme-orbit, .nav__theme-beacon {
+        position: absolute; border-radius: 50%;
+      }
+      .nav__theme-sweep {
+        inset: 0;
+        background: conic-gradient(from 0deg, transparent 0deg, rgba(93, 202, 165, 0.42) 28deg, transparent 70deg);
+        animation: hero-loader-sweep 2.4s linear infinite;
+      }
+      .nav__theme-halo {
+        inset: 0; border: 1.5px solid rgba(93, 202, 165, 0.45);
+      }
+      .nav__theme-orbit {
+        inset: 4px; border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .nav__theme-beacon {
+        left: 50%; top: 50%; width: 7px; height: 7px;
+        margin: -3.5px 0 0 -3.5px; background: var(--mint);
+        box-shadow: 0 0 10px var(--mint);
+      }
       .btn {
         display: inline-flex; align-items: center; justify-content: center;
         font-family: var(--font-body); font-weight: 600; font-size: 14px;
@@ -174,14 +280,15 @@
         display: flex; flex-direction: column; justify-content: flex-end;
         padding: 120px var(--pad) clamp(48px, 8vh, 96px); overflow: hidden;
       }
-      .hero > *:not(.hero__map) { position: relative; z-index: 2; }
-      .hero__map {
+      .hero.is-theme-air { background: #1a1410; }
+      .hero > *:not(.hero__film) { position: relative; z-index: 2; }
+      .hero__film {
         position: absolute; inset: 0; z-index: 0; overflow: hidden;
-        pointer-events: none; background: #0F0F12;
+        pointer-events: none; background: #1a1410;
       }
-      .hero__gl {
+      .hero__bg-vid {
         position: absolute; inset: 0; width: 100%; height: 100%;
-        contain: strict;
+        object-fit: cover; opacity: 0;
       }
       .hero__meta {
         display: flex; justify-content: space-between; gap: 24px;
@@ -189,9 +296,10 @@
       }
       .hero__meta span:last-child { color: var(--mint); }
       .display {
-        font-family: var(--font-display); font-weight: 600;
-        font-size: clamp(68px, 16.5vw, 176px); line-height: 0.82;
-        letter-spacing: -0.055em; color: var(--text);
+        font-family: "Nohemi", "Clash Display", sans-serif; font-weight: 100;
+        font-synthesis: none;
+        font-size: clamp(58px, 13.8vw, 148px); line-height: 0.82;
+        letter-spacing: -0.04em; color: var(--text);
         text-shadow: 0 8px 40px rgba(15, 15, 18, 0.55);
         margin-bottom: clamp(28px, 4vh, 48px);
       }
@@ -202,23 +310,45 @@
         -webkit-text-stroke: 1.4px rgba(255, 255, 255, 0.52);
       }
       .display__line--end {
-        font-family: var(--font-accent); font-weight: 800;
+        font-family: "Nohemi", "Clash Display", sans-serif; font-weight: 300;
         font-size: 0.58em; line-height: 1.02; letter-spacing: -0.04em;
         padding-top: 0.12em; text-align: right;
       }
       .display__line--end em {
-        font-family: var(--font-accent); font-style: italic; font-weight: 800;
+        font-family: "Nohemi", "Clash Display", sans-serif; font-style: normal; font-weight: 300;
         color: var(--text); -webkit-text-stroke: 0;
       }
-      .display__pop { display: inline-block; color: var(--mint); }
-      .display__push { display: inline-block; }
+      .display__pop { display: inline-block; font-weight: 800; color: var(--mint); }
+      .display__push { display: inline-block; font-weight: 400; }
       .spine, .hero__attrib { display: none; }
-      .hero-loader {
-        position: absolute; inset: 0; z-index: 6; background: var(--bg);
+      .hero.is-theme-air .display {
+        color: #FBF4EC;
+        text-shadow: none;
+        font-family: "Nohemi", "Clash Display", sans-serif;
+        font-weight: 100;
+      }
+      .hero.is-theme-air .display__line--end em { color: #FBF4EC; }
+      .hero.is-theme-air .display__line--trip .display__inner {
+        color: #FBF4EC;
+        font-weight: 800;
+      }
+      .hero.is-theme-air .waitlist__input { color: #FBF4EC; }
+      .hero.is-theme-air .display__pop { color: #E8916A; }
+      .hero.is-theme-air .hero__meta span:last-child { color: #E8916A; }
+      .hero.is-theme-air .waitlist__input::placeholder { color: rgba(251, 244, 236, 0.48); }
+      @keyframes hero-loader-sweep {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes fade-up {
+        from { opacity: 0; transform: translateY(24px); filter: blur(8px); }
+        to { opacity: 1; transform: translateY(0); filter: blur(0); }
       }
       .quote-cycle {
         max-width: 46ch; min-height: 106px;
         margin: 0 0 clamp(14px, 2.4vh, 26px);
+      }
+      .quote-cycle.reveal {
+        animation: fade-up 1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
       }
       .quote-cycle__text {
         margin: 0 0 10px;
@@ -230,16 +360,67 @@
         font-family: var(--font-body); font-size: 11px; font-weight: 500;
         letter-spacing: 0.14em; text-transform: uppercase; color: var(--mint);
       }
+      .hero.is-theme-air .quote-cycle,
+      .hero.is-theme-air .quote-cycle *,
+      .hero.is-theme-air .waitlist,
+      .hero.is-theme-air .waitlist * {
+        font-family: "Nohemi", "Clash Display", sans-serif;
+        font-style: normal;
+        font-synthesis: none;
+      }
+      .hero.is-theme-air .quote-cycle__text {
+        color: #FBF4EC;
+        font-family: "Nohemi", "Clash Display", sans-serif;
+        font-style: normal;
+        font-weight: 400;
+      }
+      .hero.is-theme-air .quote-cycle__author {
+        color: #E8916A;
+        font-weight: 500;
+        font-family: "Nohemi", "Clash Display", sans-serif;
+      }
+      .hero.is-theme-air .waitlist__note.utility {
+        color: rgba(251, 244, 236, 0.72);
+        font-family: "Nohemi", "Clash Display", sans-serif;
+      }
+      .hero.is-theme-air .waitlist__btn.btn--ghost,
+      .hero.is-theme-air .waitlist__btn-label {
+        font-family: "Nohemi", "Clash Display", sans-serif;
+      }
+      .hero.is-theme-air .waitlist__input::placeholder {
+        font-family: "Nohemi", "Clash Display", sans-serif;
+        color: #8A847C;
+      }
       .waitlist { max-width: 560px; width: 100%; }
       .waitlist__field {
         display: flex; align-items: stretch; gap: 16px;
         border-bottom: 1px solid var(--hairline-strong); padding-bottom: 10px;
+      }
+      .hero.is-theme-air .waitlist__field {
+        border-bottom: 0; padding: 0; gap: 16px;
+        background: transparent; box-shadow: none;
+      }
+      .hero.is-theme-air .waitlist__input {
+        background: transparent; border-radius: 0; padding: 8px 0 10px;
+        color: #3F3A36;
+        border-bottom: 1px solid rgba(28, 25, 21, 0.22);
+        box-shadow: none;
       }
       .waitlist__input {
         flex: 1; min-width: 0; font-family: var(--font-body); font-size: 18px;
         color: var(--text); background: transparent; border: 0; padding: 8px 0; outline: none;
       }
       .waitlist__btn { flex: none; padding: 10px 22px; align-self: center; }
+      .hero.is-theme-air .waitlist__btn.btn--ghost {
+        color: #3F3A36;
+        border: 0;
+        border-radius: 15px;
+        background: #F4F1EA;
+        padding: 16px 28px;
+        box-shadow:
+          7px 7px 14px rgba(155, 145, 130, 0.42),
+          -7px -7px 14px rgba(255, 255, 255, 0.95);
+      }
       .waitlist__note { margin-top: 16px; }
       @media (min-width: 721px) {
         .display__line--end { text-align: left; }
@@ -257,10 +438,19 @@
         .waitlist__field { flex-direction: column; gap: 14px; border-bottom: 0; padding-bottom: 0; }
         .waitlist__input { border-bottom: 1px solid var(--hairline-strong); padding: 12px 0; }
         .waitlist__btn { width: 100%; }
+        .hero.is-theme-air .waitlist__field {
+          padding: 0; border-radius: 0; background: transparent; box-shadow: none;
+        }
+        .hero.is-theme-air .waitlist__input {
+          border-bottom: 1px solid rgba(28, 25, 21, 0.22);
+          padding: 12px 0;
+          background: transparent;
+          box-shadow: none;
+        }
       }
     </style>
-    <link rel="preload" href="/styles.css?v=hero-sequence-61" as="style" id="full-css" />
-    <noscript><link rel="stylesheet" href="/styles.css?v=hero-sequence-61" /></noscript>
+    <link rel="preload" href="/styles.css?v=hero-sequence-113" as="style" id="full-css" />
+    <noscript><link rel="stylesheet" href="/styles.css?v=hero-sequence-113" /></noscript>
     <script>
       (function () {
         function arm(link) {
@@ -387,6 +577,21 @@
     <header class="nav" id="nav">
       <a class="nav__brand" href="/">LIGHTHOUSE<span class="nav__dot">.</span></a>
       <div class="nav__right">
+        <button
+          type="button"
+          class="nav__theme"
+          id="themeToggle"
+          aria-label="Switch to night look"
+          aria-pressed="false"
+          title="Night look"
+        >
+          <span class="nav__theme-radar" aria-hidden="true">
+            <span class="nav__theme-sweep"></span>
+            <span class="nav__theme-halo"></span>
+            <span class="nav__theme-orbit"></span>
+            <span class="nav__theme-beacon"></span>
+          </span>
+        </button>
         <span class="utility nav__label">BLR · WEEKEND TRAVEL</span>
         <a class="btn btn--ghost" href="#join" data-scrollto>Join waitlist</a>
       </div>
@@ -397,28 +602,9 @@
     </aside>
 
     <main>
-      <section class="hero" id="hero">
-        <div class="hero__map" id="hero-map" aria-hidden="true">
-          <div class="hero__gl" id="hero-gl"></div>
-          <canvas class="hero__motes" id="motes"></canvas>
-          <div class="hero__wx" id="hero-wx">
-            <span class="hero__wx-far"></span>
-            <span class="hero__wx-mid"></span>
-            <span class="hero__wx-near"></span>
-            <span class="hero__wx-glass"></span>
-            <span class="hero__wx-front"></span>
-          </div>
-          <p class="hero__attrib">© OpenStreetMap</p>
-          <div class="hero-loader" id="hero-loader">
-            <div class="hero-loader__radar">
-              <span class="hero-loader__sweep"></span>
-              <span class="hero-loader__halo"></span>
-              <span class="hero-loader__halo hero-loader__halo--late"></span>
-              <span class="hero-loader__orbit"></span>
-              <span class="hero-loader__beacon"></span>
-            </div>
-            <div class="hero-loader__track"><span id="hero-loader-bar"></span></div>
-          </div>
+      <section class="hero is-theme-air" id="hero">
+        <div class="hero__film" aria-hidden="true">
+          <video class="hero__bg-vid" muted loop playsinline webkit-playsinline preload="none" data-poster="/assets/video/clock-bg.jpg" data-src-4k="/assets/video/clock-bg-4k.mp4?v=1" data-src-fhd="/assets/video/clock-bg-uhd.mp4?v=1" data-src-hd="/assets/video/clock-bg.mp4?v=3" data-src-sm="/assets/video/clock-bg-sm.mp4?v=1"></video>
         </div>
         <div class="hero__torch" id="hero-torch" aria-hidden="true">
           <span class="hero__torch-shade"></span>
@@ -431,9 +617,10 @@
         </p>
 
         <h1 class="display" id="display">
-          <span class="display__line"><span class="display__inner">Your next</span></span>
-          <span class="display__line display__line--ghost"><span class="display__inner">road trip is</span></span>
-          <span class="display__line display__line--end"><span class="display__inner"><em>a <span class="display__pop" id="swipeWord">swipe</span> <span class="display__push" id="awayWord">away.</span></em></span></span>
+          <span class="display__line"><span class="display__inner" id="displayA">Your next</span></span>
+          <span class="display__line display__line--trip"><span class="display__inner" id="displayB">Road Trip to</span></span>
+          <span class="display__line display__line--place"><span class="display__place" id="placeWord">Skandagiri</span></span>
+          <span class="display__line display__line--end"><span class="display__inner" id="displayC"><em>is a <span class="display__pop" id="swipeWord">swipe</span> <span class="display__push" id="awayWord">away.</span></em></span></span>
         </h1>
 
         <figure class="quote-cycle reveal" id="quoteCycle">
@@ -463,7 +650,7 @@
               inputmode="email"
               required
             />
-            <button class="btn btn--solid waitlist__btn" type="submit" data-magnetic>
+            <button class="btn btn--ghost waitlist__btn" type="submit" data-magnetic>
               <span class="waitlist__btn-label">Get early access</span>
             </button>
           </div>
@@ -512,6 +699,11 @@
           </a>
         </div>
         </div><!-- /#join -->
+        <a class="hero__scroll" href="#mood" data-scrollto aria-label="Keep scrolling">
+          <svg class="hero__scroll-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </a>
       </section>
 
       <section class="filters" id="mood">
@@ -520,13 +712,14 @@
         </div>
         <div class="filters__content">
         <p class="utility filters__kicker">IN CASE YOU GET MOODY</p>
-        <h2 class="filters__title">Choose your <em>vibe</em>.<br /><em>Match</em> your filter.</h2>
+        <h2 class="filters__title"><span class="filters__thin">Choose your</span> <em>vibe</em>.<br /><em>Match</em> <span class="filters__thin">your</span> filter.</h2>
         <p class="filters__lede">
-          You saw it on a reel. Then Maps, then the weather, then reviews —
-          and by then you’d lost interest. So you keep scrolling, still
-          hunting for something that fits your mood. Skip the relay: every
-          card already knows how far it is, how it looks, what the sky’s
-          doing and what to watch for. Just swipe by mood.
+          You saw it on a <b>reel</b>. Then <b>Maps</b>, then the weather, then
+          <b>reviews</b> — and by then you’d <b>lost interest</b>. So you keep
+          scrolling, still hunting for something that fits your <b>mood</b>.
+          <b>Skip the relay</b>: every card already knows how far it is, how it
+          looks, what the sky’s doing and what to watch for.
+          <b>Just swipe by mood.</b>
         </p>
         <ul class="filters__list" id="filters-list">
           <li class="filters__chip" tabindex="0" data-cat="Wild Lakeside" aria-label="Wild Lakeside, 67 places"><span class="filters__chip-inner"><span class="filters__chip-name">Wild Lakeside</span><span class="filters__chip-count">67 places</span></span></li>
@@ -547,7 +740,7 @@
           <div class="iphone">
             <div class="iphone__glass">
               <div class="iphone__screen">
-                <div class="filters__map" id="filters-map">
+                <div class="filters__map is-theme-air" id="filters-map">
                   <div class="filters__gl" id="filters-gl"></div>
                 </div>
                 <div class="iphone-chrome">
@@ -722,7 +915,11 @@
 
       <section class="pitch pitch--clock" id="clock">
         <div class="pitch__bg" aria-hidden="true">
-          <video class="pitch__bg-vid" muted loop playsinline webkit-playsinline preload="none" data-poster="/assets/video/clock-bg.jpg" data-src-4k="/assets/video/clock-bg-4k.mp4?v=1" data-src-fhd="/assets/video/clock-bg-uhd.mp4?v=1" data-src-hd="/assets/video/clock-bg.mp4?v=3" data-src-sm="/assets/video/clock-bg-sm.mp4?v=1"></video>
+          <div class="hero__map is-theme-air" id="hero-map">
+            <div class="hero__gl" id="hero-gl"></div>
+            <canvas class="hero__motes" id="motes"></canvas>
+            <p class="hero__attrib">© OpenStreetMap</p>
+          </div>
         </div>
         <div class="pitch__copy">
           <h2 class="pitch__title pitch__title--babe">
@@ -1092,7 +1289,7 @@
       </footer>
     </main>
 
-    <script src="/main.js?v=hero-sequence-45" defer></script>
+    <script src="/main.js?v=hero-sequence-62" defer></script>
     <script src="/analytics.js" defer></script>
   </body>
 </html>
